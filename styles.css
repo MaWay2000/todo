@@ -293,32 +293,19 @@ button.secondary:hover {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-}
-
-.tab-header {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  background: transparent;
-  color: var(--text);
-  border: none;
-  padding: 0;
-  text-align: left;
-  box-shadow: none;
   cursor: grab;
 }
 
-.tab-header:active {
+.todo-shell:active {
   cursor: grabbing;
 }
 
-.tab-title {
+.todo-title {
   font-weight: 700;
   font-size: 1rem;
 }
 
-.todo-item.completed .tab-title {
+.todo-item.completed .todo-title {
   color: var(--muted);
   text-decoration: line-through;
 }
@@ -344,19 +331,11 @@ button.secondary:hover {
   color: #b7f7c5;
 }
 
-.tab-expand-indicator {
-  display: none;
-}
-
 .action-row {
-  display: none;
+  display: flex;
   gap: 0.3rem;
   flex-wrap: wrap;
   padding-left: 0;
-}
-
-.todo-item.open .action-row {
-  display: flex;
 }
 
 .action-button {

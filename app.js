@@ -105,36 +105,16 @@ function renderTodos() {
     const shell = document.createElement("div");
     shell.className = "todo-shell";
 
-    const tabHeader = document.createElement("button");
-    tabHeader.type = "button";
-    tabHeader.className = "tab-header";
-    let preventClickToggle = false;
-    tabHeader.addEventListener("click", () => {
-      if (preventClickToggle) {
-        preventClickToggle = false;
-        return;
-      }
-      item.classList.toggle("open");
-      updateCanvasHeight();
-    });
-
     const status = document.createElement("span");
     status.className = "status-pill";
     status.textContent = todo.completed ? "Done" : "";
 
     const title = document.createElement("span");
-    title.className = "tab-title";
+    title.className = "todo-title";
     title.textContent = todo.text;
 
-    const indicator = document.createElement("span");
-    indicator.className = "tab-expand-indicator";
-    indicator.textContent = "›";
-
-    tabHeader.appendChild(status);
-    tabHeader.appendChild(title);
-    tabHeader.appendChild(indicator);
-
-    shell.appendChild(tabHeader);
+    shell.appendChild(status);
+    shell.appendChild(title);
 
     const actions = document.createElement("div");
     actions.className = "action-row";
@@ -158,7 +138,6 @@ function renderTodos() {
     );
 
     const detailsBtn = makeActionButton("▢", "Expand info", () => {
-      item.classList.add("open");
       item.classList.toggle("details-open");
       const isOpen = item.classList.contains("details-open");
       detailsBtn.textContent = isOpen ? "▣" : "▢";
@@ -193,20 +172,7 @@ function renderTodos() {
     item.appendChild(actions);
     item.appendChild(details);
     item.appendChild(resizeHandle);
-    attachDrag(tabHeader, item, todo.id, {
-      onDragStart: () => {
-        preventClickToggle = true;
-      },
-      onDragEnd: (wasDragging) => {
-        if (wasDragging) {
-          setTimeout(() => {
-            preventClickToggle = false;
-          });
-        } else {
-          preventClickToggle = false;
-        }
-      },
-    });
+    attachDrag(shell, item, todo.id);
     attachResize(resizeHandle, item, todo.id);
     listEl.appendChild(item);
   });
