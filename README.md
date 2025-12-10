@@ -7,8 +7,13 @@ This repository provides a minimal static frontend and a reusable JavaScript API
 - `js/apiClient.js` – Client-side API wrapper around the onit.lt PHP endpoints.
 - `js/app.js` – Frontend behavior that connects UI events to API calls and renders results.
 
+## Configuration
+- Runtime configuration is read from `window.__TODO_CONFIG`, set in `js/runtime-config.js`.
+- Copy `js/runtime-config.example.js` to `js/runtime-config.js` for local development and fill in the values for your PHP host, token, and CORS needs.
+- For deployments, generate `js/runtime-config.js` during your build/release pipeline (e.g., using `envsubst`) so the static assets ship with the correct API base and credentials.
+
 ## Endpoints
-The client is configured to call the following PHP endpoints, assuming they live under the `https://onit.lt/php/todos` base. Adjust the `BASE_URL` constant in `js/apiClient.js` if the deployment path differs.
+The client is configured to call the following PHP endpoints, assuming they live under the `https://onit.lt/php/todos` base. Configure the base via `js/runtime-config.js` or an environment-specific runtime file if the deployment path differs.
 
 | Operation | Method | URL | Body | Success response |
 |-----------|--------|-----|------|------------------|
@@ -23,8 +28,10 @@ The client is configured to call the following PHP endpoints, assuming they live
 - PHP endpoints that do not support PUT/DELETE can be configured to accept POST overrides via the `methodOverride` helper in `js/apiClient.js` if needed.
 
 ## Authentication and CORS
-- If the API requires an authentication token or session cookie, set the `API_AUTH_TOKEN` environment variable before building/deploying, or edit `AUTH_TOKEN` in `js/apiClient.js`. Tokens are sent as `Authorization: Bearer <token>`.
-- All requests opt into CORS; ensure the onit.lt host allows the frontend origin and headers (`Content-Type`, `Authorization`). Error messages expose CORS failures to make debugging easier.
+- Configure API connectivity in `js/runtime-config.js` (a placeholder is committed) or by copying `js/runtime-config.example.js` to `js/runtime-config.js` and editing the values. The file runs before the ES modules and sets `window.__TODO_CONFIG`, which the client reads at runtime.
+- Available keys: `apiBaseUrl` (e.g., `https://onit.lt/php/todos`), `authToken` (for `Authorization: Bearer <token>`), `fetchMode` (e.g., `cors`, `same-origin`), `credentials` (`omit`, `same-origin`, or `include`), and `extraHeaders` (merged into every request).
+- For local development, set `apiBaseUrl` to your tunnel or LAN PHP host. If the API needs a token, place it in `authToken` so it never lives in version control. If the API uses cookies, set `credentials: 'include'`.
+- For deployments, you can generate `js/runtime-config.js` from the example using environment variables (e.g., `envsubst < js/runtime-config.example.js > js/runtime-config.js`) so the static files ship with the correct base URL and tokens. Ensure your PHP host allows the frontend origin and headers (`Content-Type`, `Authorization` plus any `extraHeaders`) in its CORS policy.
 
 ## Running the frontend
 No build step is required. Serve the `index.html` file from any static server (or open it directly) to interact with the onit.lt backend. Example using Python:
