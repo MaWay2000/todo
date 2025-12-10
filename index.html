@@ -17,7 +17,6 @@
         </div>
         <button id="clear-all" class="secondary" type="button">Clear all</button>
         <button id="open-add" type="button">Add</button>
-        <button id="open-panel" class="secondary" type="button">Task window</button>
       </div>
     </header>
 
@@ -49,50 +48,6 @@
 
     <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
   </main>
-
-  <div class="todo-panel" data-panel hidden aria-hidden="true">
-    <div class="todo-panel__backdrop" data-panel-dismiss></div>
-    <div
-      class="todo-panel__dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="taskPanelTitle"
-      aria-describedby="taskPanelHelper"
-    >
-      <div class="todo-panel__header">
-        <div>
-          <h2 class="todo-panel__title" id="taskPanelTitle">Tasks</h2>
-          <p class="todo-panel__subtitle">Review and resize your tasks in one place.</p>
-        </div>
-        <button type="button" class="todo-panel__close" data-panel-close aria-label="Close task panel">
-          &times;
-        </button>
-      </div>
-
-      <p class="todo-panel__status" data-panel-status hidden></p>
-      <p class="todo-panel__helper" id="taskPanelHelper">
-        Edits here update your board. Text areas resize vertically like the example provided.
-      </p>
-      <p class="todo-panel__empty" data-panel-empty hidden>
-        No tasks yet. Add a reminder to get started.
-      </p>
-      <ul class="todo-panel__list" data-panel-list role="list"></ul>
-
-      <div class="todo-panel__actions">
-        <button type="button" class="todo-panel__button" data-panel-add>
-          + Add task
-        </button>
-        <div class="todo-panel__action-buttons">
-          <button type="button" class="todo-panel__button" data-panel-close>
-            Close
-          </button>
-          <button type="button" class="todo-panel__button todo-panel__button--primary" data-panel-save>
-            Save changes
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
   <script src="app.js"></script>
 </body>
 </html>
