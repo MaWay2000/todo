@@ -21,20 +21,23 @@ body {
   min-height: 100vh;
   color: var(--text);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1.25rem 3rem;
 }
 
 .app {
-  width: min(900px, 100%);
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 24px;
-  padding: 2rem;
+  padding: 2.25rem 2rem 2.5rem;
   box-shadow: 0 10px 60px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
+  min-height: calc(100vh - 5.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .header {
@@ -42,7 +45,15 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .eyebrow {
@@ -68,7 +79,7 @@ h1 {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 input,
@@ -125,9 +136,9 @@ button.secondary:hover {
 .controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
 
