@@ -173,15 +173,9 @@ function renderTodos() {
     details.appendChild(created);
     details.appendChild(comments);
 
-    const resizeHandle = document.createElement("button");
-    resizeHandle.className = "resize-handle";
-    resizeHandle.type = "button";
-    resizeHandle.setAttribute("aria-label", "Resize task");
-
     item.appendChild(shell);
     item.appendChild(actions);
     item.appendChild(details);
-    item.appendChild(resizeHandle);
     attachDrag(tabHeader, item, todo.id, {
       onDragStart: () => {
         preventClickToggle = true;
@@ -196,7 +190,6 @@ function renderTodos() {
         }
       },
     });
-    attachResize(item, resizeHandle, todo.id);
     listEl.appendChild(item);
   });
 
@@ -346,54 +339,6 @@ function attachDrag(handle, item, id, callbacks = {}) {
   };
 
   handle.addEventListener("pointerdown", startDrag);
-}
-
-function attachResize(item, handle, id) {
-  const startResize = (event) => {
-    event.preventDefault();
-    const todo = todos.find((t) => t.id === id);
-    if (!todo) return;
-    const startX = event.clientX;
-    const startY = event.clientY;
-    const startWidth = item.offsetWidth;
-    const startHeight = item.offsetHeight;
-
-    handle.setPointerCapture(event.pointerId);
-    item.classList.add("resizing");
-
-    const onMove = (moveEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-      const nextWidth = Math.max(240, startWidth + deltaX);
-      const nextHeight = Math.max(80, startHeight + deltaY);
-      item.style.width = `${nextWidth}px`;
-      item.style.height = `${nextHeight}px`;
-      updateCanvasHeight();
-    };
-
-    const onUp = () => {
-      handle.releasePointerCapture(event.pointerId);
-      item.classList.remove("resizing");
-      const width = parseFloat(item.style.width) || item.offsetWidth;
-      const height = parseFloat(item.style.height) || item.offsetHeight;
-      todos = todos.map((todoItem) =>
-        todoItem.id === id
-          ? { ...todoItem, size: { width, height } }
-          : todoItem
-      );
-      saveTodos();
-      updateCanvasHeight();
-      handle.removeEventListener("pointermove", onMove);
-      handle.removeEventListener("pointerup", onUp);
-      handle.removeEventListener("pointercancel", onUp);
-    };
-
-    handle.addEventListener("pointermove", onMove);
-    handle.addEventListener("pointerup", onUp);
-    handle.addEventListener("pointercancel", onUp);
-  };
-
-  handle.addEventListener("pointerdown", startResize);
 }
 
 function updateCanvasHeight() {
