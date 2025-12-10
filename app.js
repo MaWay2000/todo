@@ -1,6 +1,6 @@
 const STORAGE_KEY = "local-todo-items";
 let todos = [];
-let filter = "all";
+let filter = "active";
 
 const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
@@ -73,13 +73,19 @@ function ensureLayoutDefaults() {
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
     const showActions = todo.showActions ?? false;
+    const deleted = todo.deleted ?? false;
     if (!todo.position || !todo.size) {
       mutated = true;
     }
-    if (!todo.createdAt || todo.comments === undefined || todo.showActions === undefined) {
+    if (
+      !todo.createdAt ||
+      todo.comments === undefined ||
+      todo.showActions === undefined ||
+      todo.deleted === undefined
+    ) {
       mutated = true;
     }
-    return { ...todo, position, size, createdAt, comments, showActions };
+    return { ...todo, position, size, createdAt, comments, showActions, deleted };
   });
 
   if (mutated) {
@@ -102,23 +108,33 @@ function saveTodos() {
 }
 
 function updateCounts() {
-  countAllEl.textContent = `${todos.length} total`;
-  const active = todos.filter((todo) => !todo.completed).length;
+  const visibleTodos = todos.filter((todo) => !todo.deleted);
+  countAllEl.textContent = `${visibleTodos.length} total`;
+  const active = visibleTodos.filter((todo) => !todo.completed).length;
   countActiveEl.textContent = `${active} active`;
 }
 
 function renderTodos() {
   listEl.innerHTML = "";
-  const filtered = todos.filter((todo) => {
-    if (filter === "active") return !todo.completed;
-    if (filter === "completed") return todo.completed;
-    return true;
-  });
+  const includeDeleted = filter === "deleted";
+  const filtered = todos
+    .filter((todo) => (includeDeleted ? todo.deleted : !todo.deleted))
+    .filter((todo) => {
+      if (filter === "active") return !todo.completed;
+      if (filter === "completed") return todo.completed;
+      return true;
+    });
 
   if (filtered.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty-state";
-    empty.textContent = "No tasks yet. Add something above!";
+    const emptyMessages = {
+      active: "No active tasks. Add something above!",
+      completed: "No completed tasks yet.",
+      deleted: "No deleted tasks.",
+      all: "No tasks yet. Add something above!",
+    };
+    empty.textContent = emptyMessages[filter] ?? emptyMessages.all;
     listEl.appendChild(empty);
     listEl.style.height = `${canvasMinHeight}px`;
     updateCounts();
@@ -127,7 +143,10 @@ function renderTodos() {
 
   filtered.forEach((todo) => {
     const item = document.createElement("li");
-    item.className = "todo-item" + (todo.completed ? " completed" : "");
+    item.className =
+      "todo-item" +
+      (todo.completed && !todo.deleted ? " completed" : "") +
+      (todo.deleted ? " deleted" : "");
     item.dataset.id = todo.id;
     item.style.left = `${todo.position.x}px`;
     item.style.top = `${todo.position.y}px`;
@@ -141,7 +160,7 @@ function renderTodos() {
 
     const status = document.createElement("span");
     status.className = "status-pill";
-    status.textContent = todo.completed ? "Done" : "";
+    status.textContent = todo.deleted ? "Deleted" : todo.completed ? "Done" : "";
 
     const title = document.createElement("span");
     title.className = "todo-title";
@@ -149,6 +168,7 @@ function renderTodos() {
     title.addEventListener("pointerdown", (event) => event.stopPropagation());
     title.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (todo.deleted) return;
       toggleActionsVisibility(todo.id);
     });
 
@@ -184,6 +204,12 @@ function renderTodos() {
       detailsBtn.setAttribute("aria-label", isOpen ? "Hide info" : "Expand info");
       updateCanvasHeight();
     });
+
+    if (todo.deleted) {
+      editBtn.disabled = true;
+      toggleBtn.disabled = true;
+      detailsBtn.disabled = true;
+    }
 
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
@@ -235,6 +261,7 @@ function addTodo(text, comments = "") {
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
     showActions: false,
+    deleted: false,
   });
   saveTodos();
   renderTodos();
@@ -243,7 +270,9 @@ function addTodo(text, comments = "") {
 
 function toggleActionsVisibility(id) {
   todos = todos.map((todo) =>
-    todo.id === id ? { ...todo, showActions: !todo.showActions } : todo
+    todo.id === id && !todo.deleted
+      ? { ...todo, showActions: !todo.showActions }
+      : todo
   );
   saveTodos();
   renderTodos();
@@ -251,21 +280,32 @@ function toggleActionsVisibility(id) {
 
 function toggleTodo(id) {
   todos = todos.map((todo) =>
-    todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    todo.id === id && !todo.deleted
+      ? { ...todo, completed: !todo.completed }
+      : todo
   );
   saveTodos();
   renderTodos();
 }
 
 function deleteTodo(id) {
-  todos = todos.filter((todo) => todo.id !== id);
+  let changed = false;
+  todos = todos.flatMap((todo) => {
+    if (todo.id !== id) return [todo];
+    changed = true;
+    if (todo.deleted) {
+      return [];
+    }
+    return [{ ...todo, deleted: true, showActions: false }];
+  });
+  if (!changed) return;
   saveTodos();
   renderTodos();
 }
 
 function editTodo(id) {
   const todo = todos.find((t) => t.id === id);
-  if (!todo) return;
+  if (!todo || todo.deleted) return;
   const nextText = prompt("Edit task", todo.text);
   if (nextText === null) return;
   const trimmed = nextText.trim();
@@ -297,7 +337,7 @@ function attachDrag(handle, item, id, callbacks = {}) {
     if (event.button !== 0) return;
 
     const todo = todos.find((t) => t.id === id);
-    if (!todo) return;
+    if (!todo || todo.deleted) return;
     const containerRect = listEl.getBoundingClientRect();
     const startX = event.clientX;
     const startY = event.clientY;
@@ -379,7 +419,7 @@ function attachResize(handle, item, id) {
     if (event.button !== 0 && event.pointerType === "mouse") return;
 
     const todo = todos.find((t) => t.id === id);
-    if (!todo) return;
+    if (!todo || todo.deleted) return;
 
     const startX = event.clientX;
     const startY = event.clientY;
@@ -481,4 +521,4 @@ filterButtons.forEach((button) => {
 
 loadTodos();
 ensureLayoutDefaults();
-renderTodos();
+setFilter(filter);

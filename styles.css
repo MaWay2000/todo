@@ -314,6 +314,15 @@ button.secondary:hover {
   text-decoration: line-through;
 }
 
+.todo-item.deleted {
+  opacity: 0.9;
+}
+
+.todo-item.deleted .todo-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
 .status-pill {
   padding: 0.15rem 0.5rem;
   border-radius: 10px;
@@ -333,6 +342,12 @@ button.secondary:hover {
   background: rgba(74, 222, 128, 0.12);
   border-color: rgba(74, 222, 128, 0.4);
   color: #b7f7c5;
+}
+
+.todo-item.deleted .status-pill {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
 }
 
 .action-row {
