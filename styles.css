@@ -42,8 +42,8 @@ body {
 
 .header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -53,7 +53,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .eyebrow {
@@ -179,6 +179,7 @@ button.secondary:hover {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  width: 100%;
 }
 
 .todo-item {
@@ -190,6 +191,7 @@ button.secondary:hover {
   border-radius: 16px;
   padding: 0.75rem 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  width: 100%;
 }
 
 .todo-item .text {
