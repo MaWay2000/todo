@@ -231,13 +231,14 @@ button.secondary:hover {
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
-  padding: 0.65rem 0.75rem 0.9rem;
+  padding: 0.5rem 0.65rem 0.7rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-  width: 340px;
+  min-width: 220px;
+  max-width: 320px;
   cursor: default;
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
@@ -253,7 +254,7 @@ button.secondary:hover {
 .todo-shell {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .tab-header {
@@ -311,7 +312,7 @@ button.secondary:hover {
 
 .action-row {
   display: none;
-  gap: 0.4rem;
+  gap: 0.3rem;
   flex-wrap: wrap;
   padding-left: 0;
 }
@@ -323,8 +324,8 @@ button.secondary:hover {
 .action-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.7rem;
+  gap: 0;
+  padding: 0.45rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   color: var(--text);
