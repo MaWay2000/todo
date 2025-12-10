@@ -95,20 +95,12 @@ function renderTodos() {
     const actions = document.createElement("div");
     actions.className = "actions";
 
-    const dragHandle = document.createElement("button");
-    dragHandle.className = "icon-button drag-handle";
-    dragHandle.type = "button";
-    dragHandle.title = "Drag task";
-    dragHandle.setAttribute("aria-label", "Drag task");
-    dragHandle.textContent = "Move";
-
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "icon-button";
     deleteBtn.type = "button";
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", () => deleteTodo(todo.id));
 
-    actions.appendChild(dragHandle);
     actions.appendChild(deleteBtn);
 
     const resizeHandle = document.createElement("button");
@@ -120,7 +112,7 @@ function renderTodos() {
     item.appendChild(text);
     item.appendChild(actions);
     item.appendChild(resizeHandle);
-    attachDrag(item, dragHandle, todo.id);
+    attachDrag(item, todo.id);
     attachResize(item, resizeHandle, todo.id);
     listEl.appendChild(item);
   });
@@ -188,9 +180,19 @@ function setFilter(nextFilter) {
   renderTodos();
 }
 
-function attachDrag(item, handle, id) {
+function attachDrag(item, id) {
   const startDrag = (event) => {
-    event.preventDefault();
+    if (event.button !== 0) return;
+
+    const target = event.target;
+    const isResizeHandle = target.closest(".resize-handle");
+    const isDeleteButton = target.closest(".icon-button");
+    const isCheckbox = target instanceof HTMLInputElement;
+
+    if (isResizeHandle || isDeleteButton || isCheckbox) {
+      return;
+    }
+
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     const containerRect = listEl.getBoundingClientRect();
@@ -199,12 +201,24 @@ function attachDrag(item, handle, id) {
     const startLeft = todo.position?.x ?? 0;
     const startTop = todo.position?.y ?? 0;
 
-    handle.setPointerCapture(event.pointerId);
-    item.classList.add("dragging");
+    item.setPointerCapture(event.pointerId);
+
+    let isDragging = false;
+    const dragThreshold = 3;
 
     const onMove = (moveEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
+      if (!isDragging) {
+        const hasMoved =
+          Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold;
+        if (!hasMoved) {
+          return;
+        }
+        isDragging = true;
+        item.classList.add("dragging");
+      }
+
       const desiredX = startLeft + deltaX;
       const desiredY = startTop + deltaY;
       const containerWidth = listEl.clientWidth || containerRect.width;
@@ -226,28 +240,32 @@ function attachDrag(item, handle, id) {
     };
 
     const onUp = () => {
-      handle.releasePointerCapture(event.pointerId);
+      item.releasePointerCapture(event.pointerId);
       item.classList.remove("dragging");
-      const left = parseFloat(item.style.left) || 0;
-      const top = parseFloat(item.style.top) || 0;
-      todos = todos.map((todoItem) =>
-        todoItem.id === id
-          ? { ...todoItem, position: { x: left, y: top } }
-          : todoItem
-      );
-      saveTodos();
-      updateCanvasHeight();
-      handle.removeEventListener("pointermove", onMove);
-      handle.removeEventListener("pointerup", onUp);
-      handle.removeEventListener("pointercancel", onUp);
+
+      if (isDragging) {
+        const left = parseFloat(item.style.left) || 0;
+        const top = parseFloat(item.style.top) || 0;
+        todos = todos.map((todoItem) =>
+          todoItem.id === id
+            ? { ...todoItem, position: { x: left, y: top } }
+            : todoItem
+        );
+        saveTodos();
+        updateCanvasHeight();
+      }
+
+      item.removeEventListener("pointermove", onMove);
+      item.removeEventListener("pointerup", onUp);
+      item.removeEventListener("pointercancel", onUp);
     };
 
-    handle.addEventListener("pointermove", onMove);
-    handle.addEventListener("pointerup", onUp);
-    handle.addEventListener("pointercancel", onUp);
+    item.addEventListener("pointermove", onMove);
+    item.addEventListener("pointerup", onUp);
+    item.addEventListener("pointercancel", onUp);
   };
 
-  handle.addEventListener("pointerdown", startDrag);
+  item.addEventListener("pointerdown", startDrag);
 }
 
 function attachResize(item, handle, id) {
