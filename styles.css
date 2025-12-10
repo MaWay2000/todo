@@ -332,6 +332,7 @@ button.secondary:hover {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  flex-wrap: wrap;
   cursor: grab;
 }
 
@@ -359,7 +360,7 @@ button.secondary:hover {
   text-decoration: line-through;
 }
 
-.status-pill {
+.status-pill { 
   padding: 0.15rem 0.5rem;
   border-radius: 10px;
   background: rgba(56, 189, 248, 0.12);
@@ -368,6 +369,27 @@ button.secondary:hover {
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.deleted-meta {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.meta-chip {
+  background: rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--muted);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.meta-chip.danger {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fecaca;
 }
 
 .status-pill:empty {
