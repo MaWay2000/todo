@@ -13,15 +13,6 @@ const dialogEl = document.getElementById("add-dialog");
 const filterButtons = document.querySelectorAll(".filter-button");
 const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
-const openPanelEl = document.getElementById("open-panel");
-const panelEl = document.querySelector("[data-panel]");
-const panelListEl = document.querySelector("[data-panel-list]");
-const panelEmptyEl = document.querySelector("[data-panel-empty]");
-const panelStatusEl = document.querySelector("[data-panel-status]");
-const panelAddEl = document.querySelector("[data-panel-add]");
-const panelCloseEls = document.querySelectorAll("[data-panel-close]");
-const panelDismissEl = document.querySelector("[data-panel-dismiss]");
-const panelSaveEl = document.querySelector("[data-panel-save]");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const MIN_CARD_WIDTH = 220;
@@ -80,167 +71,6 @@ function updateCounts() {
   countAllEl.textContent = `${todos.length} total`;
   const active = todos.filter((todo) => !todo.completed).length;
   countActiveEl.textContent = `${active} active`;
-}
-
-function updatePanelEmptyState() {
-  if (!panelListEl) return;
-  const hasItems = panelListEl.children.length > 0;
-  panelEmptyEl?.toggleAttribute("hidden", hasItems);
-}
-
-function showPanelStatus(message, tone = "error") {
-  if (!panelStatusEl) return;
-  panelStatusEl.textContent = message;
-  if (tone === "error") {
-    panelStatusEl.style.background = "rgba(248, 113, 113, 0.12)";
-    panelStatusEl.style.borderColor = "rgba(248, 113, 113, 0.35)";
-    panelStatusEl.style.color = "#fecdd3";
-  } else {
-    panelStatusEl.style.background = "rgba(74, 222, 128, 0.12)";
-    panelStatusEl.style.borderColor = "rgba(74, 222, 128, 0.35)";
-    panelStatusEl.style.color = "#bbf7d0";
-  }
-  panelStatusEl.hidden = false;
-}
-
-function clearPanelStatus() {
-  if (!panelStatusEl) return;
-  panelStatusEl.hidden = true;
-  panelStatusEl.textContent = "";
-}
-
-function createPanelItem(todo, index) {
-  const item = document.createElement("li");
-  item.className = "todo-panel__item";
-  if (todo.id) {
-    item.dataset.id = todo.id;
-  }
-
-  const label = document.createElement("label");
-  label.className = "todo-panel__label";
-
-  const indexBadge = document.createElement("span");
-  indexBadge.className = "todo-panel__index";
-  indexBadge.textContent = `${index + 1}.`;
-
-  const textInput = document.createElement("textarea");
-  textInput.className = "todo-panel__input";
-  textInput.value = todo.text ?? "";
-  textInput.rows = 2;
-  textInput.dataset.field = "text";
-  textInput.placeholder = "Task details";
-  textInput.required = true;
-
-  const commentInput = document.createElement("textarea");
-  commentInput.className = "todo-panel__input";
-  commentInput.value = todo.comments ?? "";
-  commentInput.rows = 2;
-  commentInput.dataset.field = "comments";
-  commentInput.placeholder = "Comments (optional)";
-
-  label.appendChild(indexBadge);
-  label.appendChild(textInput);
-  label.appendChild(document.createElement("span"));
-  label.lastChild.className = "todo-panel__index";
-  label.lastChild.textContent = "";
-  label.appendChild(commentInput);
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.type = "button";
-  deleteBtn.className = "todo-panel__delete";
-  deleteBtn.textContent = "Delete";
-  deleteBtn.addEventListener("click", () => {
-    item.remove();
-    updatePanelEmptyState();
-  });
-
-  item.appendChild(label);
-  item.appendChild(deleteBtn);
-  return item;
-}
-
-function renderPanel() {
-  if (!panelListEl) return;
-  clearPanelStatus();
-  panelListEl.innerHTML = "";
-  if (!todos.length) {
-    panelEmptyEl?.removeAttribute("hidden");
-    return;
-  }
-
-  panelEmptyEl?.setAttribute("hidden", "true");
-  todos.forEach((todo, index) => {
-    panelListEl.appendChild(createPanelItem(todo, index));
-  });
-  updatePanelEmptyState();
-}
-
-function updatePanelVisibility(isOpen) {
-  if (!panelEl) return;
-  panelEl.toggleAttribute("hidden", !isOpen);
-  panelEl.setAttribute("aria-hidden", String(!isOpen));
-  panelEl.classList.toggle("is-open", isOpen);
-  if (isOpen) {
-    renderPanel();
-    const firstInput = panelListEl?.querySelector("textarea");
-    firstInput?.focus();
-  }
-}
-
-function addPanelItem() {
-  if (!panelListEl) return;
-  const newItem = createPanelItem(
-    {
-      id: "",
-      text: "",
-      comments: "",
-    },
-    panelListEl.children.length
-  );
-  panelListEl.appendChild(newItem);
-  newItem.querySelector("textarea")?.focus();
-  updatePanelEmptyState();
-}
-
-function savePanelChanges() {
-  if (!panelListEl) return;
-  const items = Array.from(panelListEl.querySelectorAll(".todo-panel__item"));
-  const nextTodos = [];
-  for (const [index, item] of items.entries()) {
-    const textField = item.querySelector('textarea[data-field="text"]');
-    const commentField = item.querySelector('textarea[data-field="comments"]');
-    const text = textField?.value.trim() ?? "";
-    if (!text) {
-      showPanelStatus("Please fill in the task description for each item.");
-      textField?.focus();
-      return;
-    }
-    const comments = commentField?.value.trim() ?? "";
-    const existing = todos.find((t) => t.id === item.dataset.id);
-    const position = existing?.position ?? { x: 12, y: index * 90 };
-    const size = existing?.size ?? { width: DEFAULT_CARD_WIDTH, height: null };
-    const createdAt = existing?.createdAt ?? new Date().toISOString();
-    const completed = existing?.completed ?? false;
-    const id = existing?.id ?? crypto.randomUUID();
-
-    nextTodos.push({
-      id,
-      text,
-      completed,
-      position,
-      size: {
-        width: clamp(size.width, MIN_CARD_WIDTH, MAX_CARD_WIDTH),
-        height: size.height ? clamp(size.height, MIN_CARD_HEIGHT, MAX_CARD_HEIGHT) : null,
-      },
-      createdAt,
-      comments,
-    });
-  }
-
-  todos = nextTodos;
-  saveTodos();
-  renderTodos();
-  showPanelStatus("Changes saved", "success");
 }
 
 function renderTodos() {
@@ -604,20 +434,6 @@ cancelAddEl.addEventListener("click", () => {
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
-});
-
-openPanelEl?.addEventListener("click", () => updatePanelVisibility(true));
-panelDismissEl?.addEventListener("click", () => updatePanelVisibility(false));
-panelCloseEls.forEach((button) =>
-  button.addEventListener("click", () => updatePanelVisibility(false))
-);
-panelAddEl?.addEventListener("click", addPanelItem);
-panelSaveEl?.addEventListener("click", savePanelChanges);
-
-panelEl?.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    updatePanelVisibility(false);
-  }
 });
 
 loadTodos();
