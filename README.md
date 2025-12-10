@@ -5,8 +5,8 @@ A simple, device-first todo list that keeps tasks in your browser's local storag
 ## Usage
 
 1. Open `index.html` in any modern browser, or serve the folder with a simple server (for example `python -m http.server 8000`).
-2. Add tasks with the input field. Click a task to edit, check the box to mark complete, and use **Delete** to remove it.
-3. Switch between **All**, **Active**, and **Completed** filters. Use **Clear all** to wipe the list stored locally.
+2. Add tasks with the New button and input field. Click a task to edit, check the box to mark complete, and use **Delete** to remove it.
+3. Switch between **All**, **Active**, and **Completed** filters.
 
 ## Storage
 
