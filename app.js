@@ -190,12 +190,6 @@ function renderTodos() {
     const title = document.createElement("span");
     title.className = "todo-title";
     title.textContent = todo.text;
-    title.addEventListener("pointerdown", (event) => event.stopPropagation());
-    title.addEventListener("click", (event) => {
-      event.stopPropagation();
-      if (todo.deleted) return;
-      toggleActionsVisibility(todo.id);
-    });
 
     shell.appendChild(status);
     shell.appendChild(title);
@@ -288,7 +282,12 @@ function renderTodos() {
     item.appendChild(actions);
     item.appendChild(details);
     item.appendChild(resizeHandle);
-    attachDrag(shell, item, todo.id);
+    attachDrag(item, item, todo.id, {
+      onTap: () => {
+        if (todo.deleted) return;
+        toggleActionsVisibility(todo.id);
+      },
+    });
     attachResize(resizeHandle, item, todo.id);
     listEl.appendChild(item);
   });
@@ -385,6 +384,10 @@ function attachDrag(handle, item, id, callbacks = {}) {
   const startDrag = (event) => {
     if (event.button !== 0) return;
 
+    const interactiveSelector =
+      "button, .resize-handle, input, textarea, select, option, a";
+    if (event.target.closest(interactiveSelector)) return;
+
     const todo = todos.find((t) => t.id === id);
     if (!todo || todo.deleted) return;
     const containerRect = listEl.getBoundingClientRect();
@@ -392,16 +395,26 @@ function attachDrag(handle, item, id, callbacks = {}) {
     const startY = event.clientY;
     const startLeft = todo.position?.x ?? 0;
     const startTop = todo.position?.y ?? 0;
+    const startTime = performance.now();
 
     handle.setPointerCapture(event.pointerId);
 
     let isDragging = false;
     const dragThreshold = 3;
+    const dragDelayMs = 500;
+    let allowDrag = false;
+
+    const dragDelay = setTimeout(() => {
+      allowDrag = true;
+    }, dragDelayMs);
 
     const onMove = (moveEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
       if (!isDragging) {
+        if (!allowDrag) {
+          return;
+        }
         const hasMoved =
           Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold;
         if (!hasMoved) {
@@ -433,6 +446,7 @@ function attachDrag(handle, item, id, callbacks = {}) {
     };
 
     const onUp = () => {
+      clearTimeout(dragDelay);
       handle.releasePointerCapture(event.pointerId);
       item.classList.remove("dragging");
 
@@ -453,6 +467,13 @@ function attachDrag(handle, item, id, callbacks = {}) {
         );
         saveTodos();
         updateCanvasHeight();
+      }
+
+      if (!isDragging) {
+        const elapsed = performance.now() - startTime;
+        if (elapsed < dragDelayMs) {
+          callbacks.onTap?.();
+        }
       }
 
       callbacks.onDragEnd?.(isDragging);
