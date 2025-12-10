@@ -15,8 +15,6 @@ const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_POSITION = { x: 12, y: 12 };
-let lastAddedId = null;
-let newHighlightTimeout;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -76,6 +74,7 @@ function ensureLayoutDefaults() {
     const comments = todo.comments ?? "";
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
+    const needsPositioning = todo.needsPositioning ?? false;
     if (!todo.position || !todo.size) {
       mutated = true;
     }
@@ -83,11 +82,21 @@ function ensureLayoutDefaults() {
       !todo.createdAt ||
       todo.comments === undefined ||
       todo.showActions === undefined ||
-      todo.deleted === undefined
+      todo.deleted === undefined ||
+      todo.needsPositioning === undefined
     ) {
       mutated = true;
     }
-    return { ...todo, position, size, createdAt, comments, showActions, deleted };
+    return {
+      ...todo,
+      position,
+      size,
+      createdAt,
+      comments,
+      showActions,
+      deleted,
+      needsPositioning,
+    };
   });
 
   if (mutated) {
@@ -149,7 +158,7 @@ function renderTodos() {
       "todo-item" +
       (todo.completed && !todo.deleted ? " completed" : "") +
       (todo.deleted ? " deleted" : "");
-    if (todo.id === lastAddedId) {
+    if (todo.needsPositioning) {
       item.classList.add("is-new");
     }
     item.dataset.id = todo.id;
@@ -257,12 +266,6 @@ function addTodo(text, comments = "") {
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
   const id = crypto.randomUUID();
-  lastAddedId = id;
-  clearTimeout(newHighlightTimeout);
-  newHighlightTimeout = setTimeout(() => {
-    lastAddedId = null;
-    renderTodos();
-  }, 2400);
   todos.unshift({
     id,
     text: trimmed,
@@ -273,6 +276,7 @@ function addTodo(text, comments = "") {
     comments: cleanedComments,
     showActions: false,
     deleted: false,
+    needsPositioning: true,
   });
   saveTodos();
   renderTodos();
@@ -392,9 +396,16 @@ function attachDrag(handle, item, id, callbacks = {}) {
       if (isDragging) {
         const left = parseFloat(item.style.left) || 0;
         const top = parseFloat(item.style.top) || 0;
+        if (todo.needsPositioning) {
+          item.classList.remove("is-new");
+        }
         todos = todos.map((todoItem) =>
           todoItem.id === id
-            ? { ...todoItem, position: { x: left, y: top } }
+            ? {
+                ...todoItem,
+                position: { x: left, y: top },
+                needsPositioning: false,
+              }
             : todoItem
         );
         saveTodos();

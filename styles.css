@@ -245,7 +245,7 @@ button.secondary:hover {
 .todo-item.is-new {
   border-color: rgba(56, 189, 248, 0.7);
   box-shadow: 0 16px 32px rgba(56, 189, 248, 0.32);
-  animation: new-todo-pulse 1.15s ease-in-out 0s 2;
+  animation: new-todo-pulse 1.15s ease-in-out infinite;
 }
 
 @keyframes new-todo-pulse {
