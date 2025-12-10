@@ -15,10 +15,6 @@ const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
-const MIN_CARD_WIDTH = 120;
-const MAX_CARD_WIDTH = 320;
-const MIN_CARD_HEIGHT = 72;
-const MAX_CARD_HEIGHT = 460;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -65,10 +61,14 @@ function ensureLayoutDefaults() {
   todos = todos.map((todo, index) => {
     const position = todo.position ?? { x: 12, y: index * 90 };
     const size = {
-      width: clamp(todo.size?.width ?? DEFAULT_CARD_WIDTH, MIN_CARD_WIDTH, MAX_CARD_WIDTH),
-      height: todo.size?.height
-        ? clamp(todo.size.height, MIN_CARD_HEIGHT, MAX_CARD_HEIGHT)
-        : null,
+      width:
+        Number.isFinite(todo.size?.width) && todo.size.width > 0
+          ? todo.size.width
+          : DEFAULT_CARD_WIDTH,
+      height:
+        todo.size?.height === null || todo.size?.height === undefined
+          ? null
+          : Math.max(todo.size.height, 0),
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
@@ -401,16 +401,8 @@ function attachResize(handle, item, id) {
 
       if (!isResizing) return;
 
-      const nextWidth = clamp(
-        startWidth + deltaX,
-        Math.max(MIN_CARD_WIDTH, contentMinWidth),
-        MAX_CARD_WIDTH
-      );
-      const nextHeight = clamp(
-        startHeight + deltaY,
-        Math.max(MIN_CARD_HEIGHT, contentMinHeight),
-        MAX_CARD_HEIGHT
-      );
+      const nextWidth = Math.max(startWidth + deltaX, contentMinWidth);
+      const nextHeight = Math.max(startHeight + deltaY, contentMinHeight);
 
       item.style.width = `${nextWidth}px`;
       item.style.height = `${nextHeight}px`;
