@@ -535,6 +535,30 @@ function attachResize(handle, item, id) {
   };
 
   handle.addEventListener("pointerdown", startResize);
+
+  handle.addEventListener("dblclick", () => {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo || todo.deleted) return;
+
+    const { minWidth, minHeight } = getContentMinSize(item);
+    const containerRect = listEl.getBoundingClientRect();
+    const containerWidth = listEl.clientWidth || containerRect.width;
+    const left = parseFloat(item.style.left) || 0;
+    const availableWidth = Math.max(0, containerWidth - left - 8);
+    const nextWidth = Math.max(minWidth, availableWidth);
+
+    item.style.width = `${nextWidth}px`;
+    item.style.height = `${minHeight}px`;
+
+    todos = todos.map((todoItem) =>
+      todoItem.id === id
+        ? { ...todoItem, size: { width: nextWidth, height: minHeight } }
+        : todoItem
+    );
+
+    saveTodos();
+    updateCanvasHeight();
+  });
 }
 
 function updateCanvasHeight() {
