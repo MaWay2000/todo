@@ -14,6 +14,9 @@ const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
+const DEFAULT_POSITION = { x: 12, y: 12 };
+let lastAddedId = null;
+let newHighlightTimeout;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -146,6 +149,9 @@ function renderTodos() {
       "todo-item" +
       (todo.completed && !todo.deleted ? " completed" : "") +
       (todo.deleted ? " deleted" : "");
+    if (todo.id === lastAddedId) {
+      item.classList.add("is-new");
+    }
     item.dataset.id = todo.id;
     item.style.left = `${todo.position.x}px`;
     item.style.top = `${todo.position.y}px`;
@@ -249,13 +255,19 @@ function renderTodos() {
 function addTodo(text, comments = "") {
   const trimmed = text.trim();
   if (!trimmed) return false;
-  const defaultPosition = { x: 12, y: todos.length * 90 };
   const cleanedComments = comments.trim();
+  const id = crypto.randomUUID();
+  lastAddedId = id;
+  clearTimeout(newHighlightTimeout);
+  newHighlightTimeout = setTimeout(() => {
+    lastAddedId = null;
+    renderTodos();
+  }, 2400);
   todos.unshift({
-    id: crypto.randomUUID(),
+    id,
     text: trimmed,
     completed: false,
-    position: defaultPosition,
+    position: DEFAULT_POSITION,
     size: { width: DEFAULT_CARD_WIDTH, height: null },
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
