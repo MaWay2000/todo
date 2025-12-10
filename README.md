@@ -40,3 +40,28 @@ No build step is required. Serve the `index.html` file from any static server (o
 python -m http.server 8000
 # open http://localhost:8000
 ```
+
+## Deployment notes (static hosting + onit.lt PHP API)
+These guidelines cover deploying the static site on GitHub Pages (or similar hosts) while calling the onit.lt PHP API.
+
+### DNS and HTTPS
+- Point your custom domain or subdomain to GitHub Pages (e.g., `CNAME` to `<user>.github.io` or the Pages apex records) and add the same host name to your repository’s Pages settings.
+- Enable “Enforce HTTPS” in GitHub Pages so the static site is always served over TLS. Mixed content is blocked by browsers, so the PHP API must also be reachable over HTTPS with a valid certificate (e.g., `https://api.onit.lt/...`).
+- If you front the site with a CDN (Cloudflare/Fastly), ensure the origin pull uses HTTPS and the CDN respects `Authorization` headers so tokens reach the API unchanged.
+
+### Static site → API wiring
+- Publish a per-environment `js/runtime-config.js` that defines `apiBaseUrl`, `authToken`, and any `fetchMode`/`credentials` overrides. For GitHub Pages, bake this file during your build/publish step (e.g., with `envsubst`) so it contains the onit.lt PHP base URL.
+- The API host must allow the Pages domain in CORS. Typical headers returned by the PHP layer: `Access-Control-Allow-Origin: https://<your-pages-domain>`, `Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS`, `Access-Control-Allow-Headers: Content-Type, Authorization` plus any custom headers you add in `extraHeaders`.
+- If you need cookies, set `credentials: 'include'` in `runtime-config.js` and configure the API to send `Access-Control-Allow-Credentials: true` with a specific (non-`*`) origin.
+- Use absolute HTTPS URLs in `apiBaseUrl` to avoid mixed-content failures when the site is served over TLS.
+
+### Cache-control and CDN/proxy behavior
+- Serve `js/runtime-config.js` and `index.html` with short or no caching (e.g., `Cache-Control: no-store, must-revalidate`) so environment-specific API endpoints and tokens update quickly.
+- Static bundles (`js/app.js`, `js/apiClient.js`, CSS) can be cached longer with immutable fingerprints if your host supports it; avoid CDN edge caching of the PHP API responses unless you intentionally want read caching, and bypass caching on `POST/PUT/DELETE`.
+- When using a CDN, set a rule to **not** cache responses that include `Authorization` headers or non-idempotent methods, and forward all request headers to preserve auth and CORS preflight behavior.
+
+### Troubleshooting common integration issues
+- **CORS errors:** Verify the API sends `Access-Control-Allow-Origin` matching the Pages origin, includes `Access-Control-Allow-Headers: Content-Type, Authorization`, and answers OPTIONS preflight. Confirm `apiBaseUrl` uses HTTPS and matches what the browser reports in the console.
+- **Auth failures:** Ensure `authToken` is present in `runtime-config.js` (or cookies are allowed). Check that any CDN/proxy is configured to forward `Authorization` headers and that tokens are not cached or stripped.
+- **Network errors/mixed content:** Use the browser network tab to confirm requests go to the expected host over HTTPS. DNS changes may still be propagating—test with `dig` or `nslookup`. If using a custom domain, ensure the TLS certificate covers it and that HSTS or redirect rules are not forcing an unexpected host.
+- **Stale config:** If calls still target an old host, clear caches for `index.html`/`runtime-config.js` or bump their cache-control settings so the latest configuration is fetched.
