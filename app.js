@@ -17,6 +17,8 @@ const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const MIN_CARD_WIDTH = 220;
 const MAX_CARD_WIDTH = 320;
+const MIN_CARD_HEIGHT = 120;
+const MAX_CARD_HEIGHT = 460;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -31,7 +33,9 @@ function ensureLayoutDefaults() {
     const position = todo.position ?? { x: 12, y: index * 90 };
     const size = {
       width: clamp(todo.size?.width ?? DEFAULT_CARD_WIDTH, MIN_CARD_WIDTH, MAX_CARD_WIDTH),
-      height: todo.size?.height ?? null,
+      height: todo.size?.height
+        ? clamp(todo.size.height, MIN_CARD_HEIGHT, MAX_CARD_HEIGHT)
+        : null,
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
@@ -181,9 +185,14 @@ function renderTodos() {
     details.appendChild(created);
     details.appendChild(comments);
 
+    const resizeHandle = document.createElement("span");
+    resizeHandle.className = "resize-handle";
+    resizeHandle.setAttribute("aria-label", "Resize task");
+
     item.appendChild(shell);
     item.appendChild(actions);
     item.appendChild(details);
+    item.appendChild(resizeHandle);
     attachDrag(tabHeader, item, todo.id, {
       onDragStart: () => {
         preventClickToggle = true;
@@ -198,6 +207,7 @@ function renderTodos() {
         }
       },
     });
+    attachResize(resizeHandle, item, todo.id);
     listEl.appendChild(item);
   });
 
@@ -347,6 +357,75 @@ function attachDrag(handle, item, id, callbacks = {}) {
   };
 
   handle.addEventListener("pointerdown", startDrag);
+}
+
+function attachResize(handle, item, id) {
+  const startResize = (event) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = item.offsetWidth;
+    const startHeight = item.offsetHeight;
+
+    handle.setPointerCapture(event.pointerId);
+
+    let isResizing = false;
+    const onMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      if (!isResizing && (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1)) {
+        isResizing = true;
+        item.classList.add("resizing");
+      }
+
+      if (!isResizing) return;
+
+      const nextWidth = clamp(
+        startWidth + deltaX,
+        MIN_CARD_WIDTH,
+        MAX_CARD_WIDTH
+      );
+      const nextHeight = clamp(
+        startHeight + deltaY,
+        MIN_CARD_HEIGHT,
+        MAX_CARD_HEIGHT
+      );
+
+      item.style.width = `${nextWidth}px`;
+      item.style.height = `${nextHeight}px`;
+      updateCanvasHeight();
+    };
+
+    const onUp = () => {
+      handle.releasePointerCapture(event.pointerId);
+      if (isResizing) {
+        const width = parseFloat(item.style.width) || startWidth;
+        const height = parseFloat(item.style.height) || startHeight;
+        todos = todos.map((todoItem) =>
+          todoItem.id === id
+            ? { ...todoItem, size: { width, height } }
+            : todoItem
+        );
+        saveTodos();
+        updateCanvasHeight();
+      }
+      item.classList.remove("resizing");
+
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+      handle.removeEventListener("pointercancel", onUp);
+    };
+
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+    handle.addEventListener("pointercancel", onUp);
+  };
+
+  handle.addEventListener("pointerdown", startResize);
 }
 
 function updateCanvasHeight() {
