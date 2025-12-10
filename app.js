@@ -128,6 +128,7 @@ function updateCounts() {
 function renderTodos() {
   listEl.innerHTML = "";
   const includeDeleted = filter === "deleted";
+  listEl.classList.toggle("stacked-layout", includeDeleted);
   const filtered = todos
     .filter((todo) => (includeDeleted ? todo.deleted : !todo.deleted))
     .filter((todo) => {
@@ -147,7 +148,7 @@ function renderTodos() {
     };
     empty.textContent = emptyMessages[filter] ?? emptyMessages.all;
     listEl.appendChild(empty);
-    listEl.style.height = `${canvasMinHeight}px`;
+    listEl.style.height = includeDeleted ? "" : `${canvasMinHeight}px`;
     updateCounts();
     return;
   }
@@ -162,11 +163,18 @@ function renderTodos() {
       item.classList.add("is-new");
     }
     item.dataset.id = todo.id;
-    item.style.left = `${todo.position.x}px`;
-    item.style.top = `${todo.position.y}px`;
-    item.style.width = `${todo.size.width}px`;
-    if (todo.size.height) {
-      item.style.height = `${todo.size.height}px`;
+    if (includeDeleted) {
+      item.style.left = "";
+      item.style.top = "";
+      item.style.width = "";
+      item.style.height = "";
+    } else {
+      item.style.left = `${todo.position.x}px`;
+      item.style.top = `${todo.position.y}px`;
+      item.style.width = `${todo.size.width}px`;
+      if (todo.size.height) {
+        item.style.height = `${todo.size.height}px`;
+      }
     }
 
     const shell = document.createElement("div");
@@ -491,6 +499,10 @@ function attachResize(handle, item, id) {
 }
 
 function updateCanvasHeight() {
+  if (listEl.classList.contains("stacked-layout")) {
+    listEl.style.height = "";
+    return;
+  }
   const items = listEl.querySelectorAll(".todo-item");
   if (!items.length) {
     listEl.style.height = `${canvasMinHeight}px`;
