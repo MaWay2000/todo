@@ -5,6 +5,7 @@ let filter = "all";
 const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
+const commentEl = document.getElementById("todo-comment");
 const clearAllEl = document.getElementById("clear-all");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
@@ -15,16 +16,26 @@ const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const formatDateTime = (value) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 
 function ensureLayoutDefaults() {
   let mutated = false;
   todos = todos.map((todo, index) => {
     const position = todo.position ?? { x: 12, y: index * 90 };
     const size = todo.size ?? { width: 340, height: null };
+    const createdAt = todo.createdAt ?? new Date().toISOString();
+    const comments = todo.comments ?? "";
     if (!todo.position || !todo.size) {
       mutated = true;
     }
-    return { ...todo, position, size };
+    if (!todo.createdAt || todo.comments === undefined) {
+      mutated = true;
+    }
+    return { ...todo, position, size, createdAt, comments };
   });
 
   if (mutated) {
@@ -81,38 +92,99 @@ function renderTodos() {
       item.style.height = `${todo.size.height}px`;
     }
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = todo.completed;
-    checkbox.addEventListener("change", () => toggleTodo(todo.id));
+    const shell = document.createElement("div");
+    shell.className = "todo-shell";
 
-    const text = document.createElement("div");
-    text.className = "text";
-    text.textContent = todo.text;
-    text.title = "Click to edit";
-    text.addEventListener("click", () => editTodo(todo.id));
+    const dragHandle = document.createElement("button");
+    dragHandle.type = "button";
+    dragHandle.className = "drag-handle";
+    dragHandle.setAttribute("aria-label", "Drag task");
+    dragHandle.textContent = "⋮⋮";
+
+    const tabHeader = document.createElement("button");
+    tabHeader.type = "button";
+    tabHeader.className = "tab-header";
+    tabHeader.addEventListener("click", () => {
+      item.classList.toggle("open");
+      updateCanvasHeight();
+    });
+
+    const status = document.createElement("span");
+    status.className = "status-pill";
+    status.textContent = todo.completed ? "Done" : "Active";
+
+    const title = document.createElement("span");
+    title.className = "tab-title";
+    title.textContent = todo.text;
+
+    const indicator = document.createElement("span");
+    indicator.className = "tab-expand-indicator";
+    indicator.textContent = "›";
+
+    tabHeader.appendChild(status);
+    tabHeader.appendChild(title);
+    tabHeader.appendChild(indicator);
+
+    shell.appendChild(dragHandle);
+    shell.appendChild(tabHeader);
 
     const actions = document.createElement("div");
-    actions.className = "actions";
+    actions.className = "action-row";
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "icon-button";
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => deleteTodo(todo.id));
+    const makeActionButton = (label, handler, extraClass = "") => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `action-button ${extraClass}`.trim();
+      button.textContent = label;
+      button.addEventListener("click", handler);
+      return button;
+    };
 
+    const editBtn = makeActionButton("✏️ Edit", () => editTodo(todo.id));
+    const deleteBtn = makeActionButton("❌ Delete", () => deleteTodo(todo.id));
+    const toggleBtn = makeActionButton(
+      todo.completed ? "↩️ Mark active" : "✅ Mark done",
+      () => toggleTodo(todo.id)
+    );
+
+    const detailsBtn = makeActionButton("▢ Expand info", () => {
+      item.classList.add("open");
+      item.classList.toggle("details-open");
+      detailsBtn.textContent = item.classList.contains("details-open")
+        ? "▢ Hide info"
+        : "▢ Expand info";
+      updateCanvasHeight();
+    });
+
+    actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+    actions.appendChild(toggleBtn);
+    actions.appendChild(detailsBtn);
+
+    const details = document.createElement("div");
+    details.className = "todo-details";
+    const created = document.createElement("div");
+    created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
+      todo.createdAt
+    )}`;
+    const comments = document.createElement("div");
+    const hasComment = todo.comments && todo.comments.trim().length > 0;
+    comments.innerHTML = `<strong>Comments:</strong> ${
+      hasComment ? todo.comments : "No comments"
+    }`;
+    details.appendChild(created);
+    details.appendChild(comments);
 
     const resizeHandle = document.createElement("button");
     resizeHandle.className = "resize-handle";
     resizeHandle.type = "button";
     resizeHandle.setAttribute("aria-label", "Resize task");
 
-    item.appendChild(checkbox);
-    item.appendChild(text);
+    item.appendChild(shell);
     item.appendChild(actions);
+    item.appendChild(details);
     item.appendChild(resizeHandle);
-    attachDrag(item, todo.id);
+    attachDrag(dragHandle, item, todo.id);
     attachResize(item, resizeHandle, todo.id);
     listEl.appendChild(item);
   });
@@ -121,16 +193,19 @@ function renderTodos() {
   updateCanvasHeight();
 }
 
-function addTodo(text) {
+function addTodo(text, comments = "") {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const defaultPosition = { x: 12, y: todos.length * 90 };
+  const cleanedComments = comments.trim();
   todos.unshift({
     id: crypto.randomUUID(),
     text: trimmed,
     completed: false,
     position: defaultPosition,
     size: { width: 340, height: null },
+    createdAt: new Date().toISOString(),
+    comments: cleanedComments,
   });
   saveTodos();
   renderTodos();
@@ -180,18 +255,9 @@ function setFilter(nextFilter) {
   renderTodos();
 }
 
-function attachDrag(item, id) {
+function attachDrag(handle, item, id) {
   const startDrag = (event) => {
     if (event.button !== 0) return;
-
-    const target = event.target;
-    const isResizeHandle = target.closest(".resize-handle");
-    const isDeleteButton = target.closest(".icon-button");
-    const isCheckbox = target instanceof HTMLInputElement;
-
-    if (isResizeHandle || isDeleteButton || isCheckbox) {
-      return;
-    }
 
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
@@ -201,7 +267,7 @@ function attachDrag(item, id) {
     const startLeft = todo.position?.x ?? 0;
     const startTop = todo.position?.y ?? 0;
 
-    item.setPointerCapture(event.pointerId);
+    handle.setPointerCapture(event.pointerId);
 
     let isDragging = false;
     const dragThreshold = 3;
@@ -240,7 +306,7 @@ function attachDrag(item, id) {
     };
 
     const onUp = () => {
-      item.releasePointerCapture(event.pointerId);
+      handle.releasePointerCapture(event.pointerId);
       item.classList.remove("dragging");
 
       if (isDragging) {
@@ -255,17 +321,17 @@ function attachDrag(item, id) {
         updateCanvasHeight();
       }
 
-      item.removeEventListener("pointermove", onMove);
-      item.removeEventListener("pointerup", onUp);
-      item.removeEventListener("pointercancel", onUp);
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+      handle.removeEventListener("pointercancel", onUp);
     };
 
-    item.addEventListener("pointermove", onMove);
-    item.addEventListener("pointerup", onUp);
-    item.addEventListener("pointercancel", onUp);
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+    handle.addEventListener("pointercancel", onUp);
   };
 
-  item.addEventListener("pointerdown", startDrag);
+  handle.addEventListener("pointerdown", startDrag);
 }
 
 function attachResize(item, handle, id) {
@@ -333,9 +399,10 @@ function updateCanvasHeight() {
 
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
-  const added = addTodo(inputEl.value);
+  const added = addTodo(inputEl.value, commentEl.value);
   if (added) {
     inputEl.value = "";
+    commentEl.value = "";
     dialogEl.close();
   }
 });
@@ -344,6 +411,7 @@ clearAllEl.addEventListener("click", clearAll);
 
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
+  commentEl.value = "";
   dialogEl.showModal();
   inputEl.focus();
 });

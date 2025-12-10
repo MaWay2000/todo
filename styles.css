@@ -84,11 +84,13 @@ h1 {
 }
 
 input,
+textarea,
 button {
   font: inherit;
 }
 
-input {
+input,
+textarea {
   padding: 0.9rem 1rem;
   background: var(--card);
   border: 1px solid var(--border);
@@ -97,10 +99,17 @@ input {
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-input:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
 }
 
 button {
@@ -221,16 +230,16 @@ button.secondary:hover {
 .todo-item {
   position: absolute;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  flex-direction: column;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem 0.9rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
   width: 340px;
-  cursor: grab;
-  transition: box-shadow 120ms ease, transform 120ms ease;
+  cursor: default;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
 
 .todo-item.dragging,
@@ -238,31 +247,135 @@ button.secondary:hover {
   box-shadow: 0 18px 30px rgba(56, 189, 248, 0.25);
   border-color: rgba(56, 189, 248, 0.55);
   transform: translateY(-1px);
-  cursor: grabbing;
 }
 
-.todo-item .text {
-  flex: 1;
-  font-weight: 600;
-  color: var(--text);
-}
 
-.todo-item.completed .text {
-  text-decoration: line-through;
-  color: var(--muted);
-}
-
-.todo-item .actions {
+.todo-shell {
   display: flex;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .drag-handle {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: grab;
+  transition: border-color 120ms ease, color 120ms ease;
 }
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+.drag-handle:hover {
+  border-color: rgba(56, 189, 248, 0.7);
+  color: var(--accent);
+}
+
+.tab-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.tab-header:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.tab-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.todo-item.completed .tab-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.status-pill {
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.todo-item.completed .status-pill {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #b7f7c5;
+}
+
+.tab-expand-indicator {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+
+.todo-item.open .tab-expand-indicator {
+  transform: rotate(90deg);
+}
+
+.action-row {
+  display: none;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding-left: 34px;
+}
+
+.todo-item.open .action-row {
+  display: flex;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.action-button:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.todo-details {
+  display: none;
+  padding: 0.1rem 0 0 34px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.todo-item.details-open .todo-details {
+  display: block;
+}
+
+.todo-details strong {
+  color: var(--text);
 }
 
 .resize-handle {
