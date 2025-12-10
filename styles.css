@@ -239,6 +239,7 @@ button.secondary:hover {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
   width: 340px;
   cursor: default;
+  overflow: hidden;
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
 
