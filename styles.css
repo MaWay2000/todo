@@ -263,16 +263,11 @@ button.secondary:hover {
   gap: 0.55rem;
   background: transparent;
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 0.55rem 0.7rem;
+  border: none;
+  padding: 0;
   text-align: left;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  box-shadow: none;
   cursor: grab;
-}
-
-.tab-header:hover {
-  border-color: rgba(56, 189, 248, 0.5);
 }
 
 .tab-header:active {
@@ -311,15 +306,7 @@ button.secondary:hover {
 }
 
 .tab-expand-indicator {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 0.9rem;
-  transform: rotate(0deg);
-  transition: transform 120ms ease;
-}
-
-.todo-item.open .tab-expand-indicator {
-  transform: rotate(90deg);
+  display: none;
 }
 
 .action-row {
