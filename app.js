@@ -14,6 +14,9 @@ const filterButtons = document.querySelectorAll(".filter-button");
 const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
+const DEFAULT_CARD_WIDTH = 260;
+const MIN_CARD_WIDTH = 220;
+const MAX_CARD_WIDTH = 320;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -26,7 +29,10 @@ function ensureLayoutDefaults() {
   let mutated = false;
   todos = todos.map((todo, index) => {
     const position = todo.position ?? { x: 12, y: index * 90 };
-    const size = todo.size ?? { width: 340, height: null };
+    const size = {
+      width: clamp(todo.size?.width ?? DEFAULT_CARD_WIDTH, MIN_CARD_WIDTH, MAX_CARD_WIDTH),
+      height: todo.size?.height ?? null,
+    };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
     if (!todo.position || !todo.size) {
@@ -129,28 +135,30 @@ function renderTodos() {
     const actions = document.createElement("div");
     actions.className = "action-row";
 
-    const makeActionButton = (label, handler, extraClass = "") => {
+    const makeActionButton = (icon, label, handler, extraClass = "") => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `action-button ${extraClass}`.trim();
-      button.textContent = label;
+      button.textContent = icon;
+      button.setAttribute("aria-label", label);
       button.addEventListener("click", handler);
       return button;
     };
 
-    const editBtn = makeActionButton("✏️ Edit", () => editTodo(todo.id));
-    const deleteBtn = makeActionButton("❌ Delete", () => deleteTodo(todo.id));
+    const editBtn = makeActionButton("✏️", "Edit", () => editTodo(todo.id));
+    const deleteBtn = makeActionButton("❌", "Delete", () => deleteTodo(todo.id));
     const toggleBtn = makeActionButton(
-      todo.completed ? "↩️ Mark active" : "✅ Mark done",
+      todo.completed ? "↩️" : "✅",
+      todo.completed ? "Mark active" : "Mark done",
       () => toggleTodo(todo.id)
     );
 
-    const detailsBtn = makeActionButton("▢ Expand info", () => {
+    const detailsBtn = makeActionButton("▢", "Expand info", () => {
       item.classList.add("open");
       item.classList.toggle("details-open");
-      detailsBtn.textContent = item.classList.contains("details-open")
-        ? "▢ Hide info"
-        : "▢ Expand info";
+      const isOpen = item.classList.contains("details-open");
+      detailsBtn.textContent = isOpen ? "▣" : "▢";
+      detailsBtn.setAttribute("aria-label", isOpen ? "Hide info" : "Expand info");
       updateCanvasHeight();
     });
 
@@ -207,7 +215,7 @@ function addTodo(text, comments = "") {
     text: trimmed,
     completed: false,
     position: defaultPosition,
-    size: { width: 340, height: null },
+    size: { width: DEFAULT_CARD_WIDTH, height: null },
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
   });
