@@ -6,7 +6,6 @@ const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
-const clearAllEl = document.getElementById("clear-all");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
@@ -315,15 +314,6 @@ function editTodo(id) {
   renderTodos();
 }
 
-function clearAll() {
-  if (!todos.length) return;
-  const confirmClear = confirm("Clear all tasks?");
-  if (!confirmClear) return;
-  todos = [];
-  saveTodos();
-  renderTodos();
-}
-
 function setFilter(nextFilter) {
   filter = nextFilter;
   filterButtons.forEach((button) => {
@@ -501,8 +491,6 @@ formEl.addEventListener("submit", (event) => {
     dialogEl.close();
   }
 });
-
-clearAllEl.addEventListener("click", clearAll);
 
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
