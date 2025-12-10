@@ -74,6 +74,7 @@ function ensureLayoutDefaults() {
     const comments = todo.comments ?? "";
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
+    const deletedAt = todo.deletedAt ?? (deleted ? createdAt : null);
     const needsPositioning = todo.needsPositioning ?? false;
     if (!todo.position || !todo.size) {
       mutated = true;
@@ -83,6 +84,7 @@ function ensureLayoutDefaults() {
       todo.comments === undefined ||
       todo.showActions === undefined ||
       todo.deleted === undefined ||
+      todo.deletedAt === undefined ||
       todo.needsPositioning === undefined
     ) {
       mutated = true;
@@ -95,6 +97,7 @@ function ensureLayoutDefaults() {
       comments,
       showActions,
       deleted,
+      deletedAt,
       needsPositioning,
     };
   });
@@ -197,6 +200,22 @@ function renderTodos() {
     shell.appendChild(status);
     shell.appendChild(title);
 
+    if (todo.deleted) {
+      const metaRow = document.createElement("div");
+      metaRow.className = "deleted-meta";
+      const createdChip = document.createElement("span");
+      createdChip.className = "meta-chip";
+      createdChip.textContent = `Created ${formatDateTime(todo.createdAt)}`;
+      const deletedChip = document.createElement("span");
+      deletedChip.className = "meta-chip danger";
+      deletedChip.textContent = todo.deletedAt
+        ? `Deleted ${formatDateTime(todo.deletedAt)}`
+        : "Deleted time unknown";
+      metaRow.appendChild(createdChip);
+      metaRow.appendChild(deletedChip);
+      shell.appendChild(metaRow);
+    }
+
     const actions = document.createElement("div");
     actions.className = "action-row";
     item.classList.toggle("actions-visible", todo.showActions);
@@ -244,12 +263,21 @@ function renderTodos() {
     created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
       todo.createdAt
     )}`;
+    const deletedMeta = document.createElement("div");
+    if (todo.deleted) {
+      deletedMeta.innerHTML = `<strong>Deleted:</strong> ${
+        todo.deletedAt ? formatDateTime(todo.deletedAt) : "Unknown"
+      }`;
+    }
     const comments = document.createElement("div");
     const hasComment = todo.comments && todo.comments.trim().length > 0;
     comments.innerHTML = `<strong>Comments:</strong> ${
       hasComment ? todo.comments : "No comments"
     }`;
     details.appendChild(created);
+    if (todo.deleted) {
+      details.appendChild(deletedMeta);
+    }
     details.appendChild(comments);
 
     const resizeHandle = document.createElement("span");
@@ -319,7 +347,14 @@ function deleteTodo(id) {
     if (todo.deleted) {
       return [];
     }
-    return [{ ...todo, deleted: true, showActions: false }];
+    return [
+      {
+        ...todo,
+        deleted: true,
+        deletedAt: new Date().toISOString(),
+        showActions: false,
+      },
+    ];
   });
   if (!changed) return;
   saveTodos();
