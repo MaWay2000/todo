@@ -6,6 +6,9 @@ const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const clearAllEl = document.getElementById("clear-all");
+const openAddEl = document.getElementById("open-add");
+const cancelAddEl = document.getElementById("cancel-add");
+const dialogEl = document.getElementById("add-dialog");
 const filterButtons = document.querySelectorAll(".filter-button");
 const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
@@ -85,10 +88,11 @@ function renderTodos() {
 
 function addTodo(text) {
   const trimmed = text.trim();
-  if (!trimmed) return;
+  if (!trimmed) return false;
   todos.unshift({ id: crypto.randomUUID(), text: trimmed, completed: false });
   saveTodos();
   renderTodos();
+  return true;
 }
 
 function toggleTodo(id) {
@@ -136,12 +140,24 @@ function setFilter(nextFilter) {
 
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
-  addTodo(inputEl.value);
-  inputEl.value = "";
-  inputEl.focus();
+  const added = addTodo(inputEl.value);
+  if (added) {
+    inputEl.value = "";
+    dialogEl.close();
+  }
 });
 
 clearAllEl.addEventListener("click", clearAll);
+
+openAddEl.addEventListener("click", () => {
+  inputEl.value = "";
+  dialogEl.showModal();
+  inputEl.focus();
+});
+
+cancelAddEl.addEventListener("click", () => {
+  dialogEl.close();
+});
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
