@@ -15,9 +15,9 @@ const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
-const MIN_CARD_WIDTH = 220;
+const MIN_CARD_WIDTH = 180;
 const MAX_CARD_WIDTH = 320;
-const MIN_CARD_HEIGHT = 120;
+const MIN_CARD_HEIGHT = 96;
 const MAX_CARD_HEIGHT = 460;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
