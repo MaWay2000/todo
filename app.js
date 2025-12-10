@@ -395,31 +395,18 @@ function attachDrag(handle, item, id, callbacks = {}) {
     const startY = event.clientY;
     const startLeft = todo.position?.x ?? 0;
     const startTop = todo.position?.y ?? 0;
-    const startTime = performance.now();
-
     handle.setPointerCapture(event.pointerId);
 
     let isDragging = false;
     const dragThreshold = 3;
-    const dragDelayMs = 500;
-    let allowDrag = false;
-
-    const dragDelay = setTimeout(() => {
-      allowDrag = true;
-    }, dragDelayMs);
 
     const onMove = (moveEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
-      if (!isDragging) {
-        if (!allowDrag) {
-          return;
-        }
-        const hasMoved =
-          Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold;
-        if (!hasMoved) {
-          return;
-        }
+      if (
+        !isDragging &&
+        (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold)
+      ) {
         isDragging = true;
         callbacks.onDragStart?.();
         item.classList.add("dragging");
@@ -446,7 +433,6 @@ function attachDrag(handle, item, id, callbacks = {}) {
     };
 
     const onUp = () => {
-      clearTimeout(dragDelay);
       handle.releasePointerCapture(event.pointerId);
       item.classList.remove("dragging");
 
@@ -470,10 +456,7 @@ function attachDrag(handle, item, id, callbacks = {}) {
       }
 
       if (!isDragging) {
-        const elapsed = performance.now() - startTime;
-        if (elapsed < dragDelayMs) {
-          callbacks.onTap?.();
-        }
+        callbacks.onTap?.();
       }
 
       callbacks.onDragEnd?.(isDragging);
