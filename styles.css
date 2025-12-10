@@ -227,6 +227,13 @@ button.secondary:hover {
   overflow: hidden;
 }
 
+.todo-list.stacked-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 360px;
+}
+
 .todo-item {
   position: absolute;
   display: flex;
@@ -240,6 +247,14 @@ button.secondary:hover {
   min-width: fit-content;
   cursor: default;
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
+}
+
+.todo-list.stacked-layout .todo-item {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: auto;
 }
 
 .todo-item.is-new {
