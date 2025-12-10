@@ -9,10 +9,6 @@
 <body>
   <main class="app">
     <header class="header">
-      <div>
-        <p class="eyebrow">Stay organized</p>
-        <h1>Local Todo List</h1>
-      </div>
       <div class="header-actions">
         <div class="filters" role="group" aria-label="Filter tasks">
           <button class="filter-button active" data-filter="all" type="button">All</button>
@@ -20,14 +16,21 @@
           <button class="filter-button" data-filter="completed" type="button">Completed</button>
         </div>
         <button id="clear-all" class="secondary" type="button">Clear all</button>
+        <button id="open-add" type="button">Add</button>
       </div>
     </header>
 
-    <form id="todo-form" class="input-row" autocomplete="off">
-      <label class="sr-only" for="todo-input">Add a task</label>
-      <input id="todo-input" name="todo" placeholder="Add a new task" required />
-      <button type="submit">Add</button>
-    </form>
+    <dialog id="add-dialog" class="modal">
+      <form id="todo-form" class="modal-form" method="dialog" autocomplete="off">
+        <h2 class="modal-title">Add a task</h2>
+        <label class="sr-only" for="todo-input">Task description</label>
+        <input id="todo-input" name="todo" placeholder="Add a new task" required />
+        <div class="modal-actions">
+          <button id="cancel-add" class="secondary" type="button">Cancel</button>
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </dialog>
 
     <section class="controls">
       <div class="stats">
