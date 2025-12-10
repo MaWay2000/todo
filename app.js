@@ -95,23 +95,22 @@ function renderTodos() {
     const shell = document.createElement("div");
     shell.className = "todo-shell";
 
-    const dragHandle = document.createElement("button");
-    dragHandle.type = "button";
-    dragHandle.className = "drag-handle";
-    dragHandle.setAttribute("aria-label", "Drag task");
-    dragHandle.textContent = "⋮⋮";
-
     const tabHeader = document.createElement("button");
     tabHeader.type = "button";
     tabHeader.className = "tab-header";
+    let preventClickToggle = false;
     tabHeader.addEventListener("click", () => {
+      if (preventClickToggle) {
+        preventClickToggle = false;
+        return;
+      }
       item.classList.toggle("open");
       updateCanvasHeight();
     });
 
     const status = document.createElement("span");
     status.className = "status-pill";
-    status.textContent = todo.completed ? "Done" : "Active";
+    status.textContent = todo.completed ? "Done" : "";
 
     const title = document.createElement("span");
     title.className = "tab-title";
@@ -125,7 +124,6 @@ function renderTodos() {
     tabHeader.appendChild(title);
     tabHeader.appendChild(indicator);
 
-    shell.appendChild(dragHandle);
     shell.appendChild(tabHeader);
 
     const actions = document.createElement("div");
@@ -184,7 +182,20 @@ function renderTodos() {
     item.appendChild(actions);
     item.appendChild(details);
     item.appendChild(resizeHandle);
-    attachDrag(dragHandle, item, todo.id);
+    attachDrag(tabHeader, item, todo.id, {
+      onDragStart: () => {
+        preventClickToggle = true;
+      },
+      onDragEnd: (wasDragging) => {
+        if (wasDragging) {
+          setTimeout(() => {
+            preventClickToggle = false;
+          });
+        } else {
+          preventClickToggle = false;
+        }
+      },
+    });
     attachResize(item, resizeHandle, todo.id);
     listEl.appendChild(item);
   });
@@ -255,7 +266,7 @@ function setFilter(nextFilter) {
   renderTodos();
 }
 
-function attachDrag(handle, item, id) {
+function attachDrag(handle, item, id, callbacks = {}) {
   const startDrag = (event) => {
     if (event.button !== 0) return;
 
@@ -282,6 +293,7 @@ function attachDrag(handle, item, id) {
           return;
         }
         isDragging = true;
+        callbacks.onDragStart?.();
         item.classList.add("dragging");
       }
 
@@ -320,6 +332,8 @@ function attachDrag(handle, item, id) {
         saveTodos();
         updateCanvasHeight();
       }
+
+      callbacks.onDragEnd?.(isDragging);
 
       handle.removeEventListener("pointermove", onMove);
       handle.removeEventListener("pointerup", onUp);
