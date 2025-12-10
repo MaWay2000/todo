@@ -14,7 +14,14 @@
         <h1>Local Todo List</h1>
         <p class="subtitle">Tasks are stored on your device using local storage.</p>
       </div>
-      <button id="clear-all" class="secondary" type="button">Clear all</button>
+      <div class="header-actions">
+        <div class="filters" role="group" aria-label="Filter tasks">
+          <button class="filter-button active" data-filter="all" type="button">All</button>
+          <button class="filter-button" data-filter="active" type="button">Active</button>
+          <button class="filter-button" data-filter="completed" type="button">Completed</button>
+        </div>
+        <button id="clear-all" class="secondary" type="button">Clear all</button>
+      </div>
     </header>
 
     <form id="todo-form" class="input-row" autocomplete="off">
@@ -24,11 +31,6 @@
     </form>
 
     <section class="controls">
-      <div class="filters" role="group" aria-label="Filter tasks">
-        <button class="filter-button active" data-filter="all" type="button">All</button>
-        <button class="filter-button" data-filter="active" type="button">Active</button>
-        <button class="filter-button" data-filter="completed" type="button">Completed</button>
-      </div>
       <div class="stats">
         <span id="count-all">0 total</span>
         <span id="count-active">0 active</span>
