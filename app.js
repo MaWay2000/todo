@@ -15,9 +15,9 @@ const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
-const MIN_CARD_WIDTH = 180;
+const MIN_CARD_WIDTH = 120;
 const MAX_CARD_WIDTH = 320;
-const MIN_CARD_HEIGHT = 96;
+const MIN_CARD_HEIGHT = 72;
 const MAX_CARD_HEIGHT = 460;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -26,6 +26,39 @@ const formatDateTime = (value) =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+
+function getContentMinSize(item) {
+  const style = window.getComputedStyle(item);
+  const paddingX =
+    parseFloat(style.paddingLeft || 0) + parseFloat(style.paddingRight || 0);
+  const paddingY =
+    parseFloat(style.paddingTop || 0) + parseFloat(style.paddingBottom || 0);
+
+  const shell = item.querySelector(".todo-shell");
+  const actions = item.querySelector(".action-row");
+  const details = item.querySelector(".todo-details");
+
+  const shellWidth = shell?.scrollWidth ?? 0;
+  const actionsWidth = actions?.scrollWidth ?? 0;
+  const detailsWidth = item.classList.contains("details-open")
+    ? details?.scrollWidth ?? 0
+    : 0;
+
+  const shellHeight = shell?.offsetHeight ?? 0;
+  const actionsHeight =
+    item.classList.contains("actions-visible") && actions
+      ? actions.offsetHeight
+      : 0;
+  const detailsHeight =
+    item.classList.contains("details-open") && details ? details.offsetHeight : 0;
+
+  const minWidth = Math.ceil(
+    Math.max(shellWidth, actionsWidth, detailsWidth) + paddingX
+  );
+  const minHeight = Math.ceil(shellHeight + actionsHeight + detailsHeight + paddingY);
+
+  return { minWidth, minHeight };
+}
 
 function ensureLayoutDefaults() {
   let mutated = false;
@@ -352,6 +385,8 @@ function attachResize(handle, item, id) {
     const startY = event.clientY;
     const startWidth = item.offsetWidth;
     const startHeight = item.offsetHeight;
+    const { minWidth: contentMinWidth, minHeight: contentMinHeight } =
+      getContentMinSize(item);
 
     handle.setPointerCapture(event.pointerId);
 
@@ -368,12 +403,12 @@ function attachResize(handle, item, id) {
 
       const nextWidth = clamp(
         startWidth + deltaX,
-        MIN_CARD_WIDTH,
+        Math.max(MIN_CARD_WIDTH, contentMinWidth),
         MAX_CARD_WIDTH
       );
       const nextHeight = clamp(
         startHeight + deltaY,
-        MIN_CARD_HEIGHT,
+        Math.max(MIN_CARD_HEIGHT, contentMinHeight),
         MAX_CARD_HEIGHT
       );
 
