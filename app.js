@@ -39,13 +39,14 @@ function ensureLayoutDefaults() {
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
+    const showActions = todo.showActions ?? false;
     if (!todo.position || !todo.size) {
       mutated = true;
     }
-    if (!todo.createdAt || todo.comments === undefined) {
+    if (!todo.createdAt || todo.comments === undefined || todo.showActions === undefined) {
       mutated = true;
     }
-    return { ...todo, position, size, createdAt, comments };
+    return { ...todo, position, size, createdAt, comments, showActions };
   });
 
   if (mutated) {
@@ -112,12 +113,18 @@ function renderTodos() {
     const title = document.createElement("span");
     title.className = "todo-title";
     title.textContent = todo.text;
+    title.addEventListener("pointerdown", (event) => event.stopPropagation());
+    title.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleActionsVisibility(todo.id);
+    });
 
     shell.appendChild(status);
     shell.appendChild(title);
 
     const actions = document.createElement("div");
     actions.className = "action-row";
+    item.classList.toggle("actions-visible", todo.showActions);
 
     const makeActionButton = (icon, label, handler, extraClass = "") => {
       const button = document.createElement("button");
@@ -194,10 +201,19 @@ function addTodo(text, comments = "") {
     size: { width: DEFAULT_CARD_WIDTH, height: null },
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
+    showActions: false,
   });
   saveTodos();
   renderTodos();
   return true;
+}
+
+function toggleActionsVisibility(id) {
+  todos = todos.map((todo) =>
+    todo.id === id ? { ...todo, showActions: !todo.showActions } : todo
+  );
+  saveTodos();
+  renderTodos();
 }
 
 function toggleTodo(id) {

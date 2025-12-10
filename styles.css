@@ -307,6 +307,7 @@ button.secondary:hover {
 .todo-title {
   font-weight: 700;
   font-size: 1rem;
+  cursor: pointer;
 }
 
 .todo-item.completed .todo-title {
@@ -336,10 +337,14 @@ button.secondary:hover {
 }
 
 .action-row {
-  display: flex;
+  display: none;
   gap: 0.3rem;
   flex-wrap: wrap;
   padding-left: 0;
+}
+
+.todo-item.actions-visible .action-row {
+  display: flex;
 }
 
 .action-button {
