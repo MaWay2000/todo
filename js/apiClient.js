@@ -1,9 +1,12 @@
-const BASE_URL = 'https://onit.lt/php/todos';
-const AUTH_TOKEN = typeof API_AUTH_TOKEN !== 'undefined' ? API_AUTH_TOKEN : '';
+import { CONFIG } from './config.js';
+
+const BASE_URL = CONFIG.apiBaseUrl;
+const AUTH_TOKEN = CONFIG.authToken;
 
 const defaultHeaders = () => {
   const headers = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    ...CONFIG.extraHeaders
   };
   if (AUTH_TOKEN) {
     headers['Authorization'] = `Bearer ${AUTH_TOKEN}`;
@@ -44,7 +47,8 @@ export class TodoApiClient {
   async listTodos() {
     const response = await fetch(`${this.baseUrl}/list.php`, {
       method: 'GET',
-      mode: 'cors',
+      mode: CONFIG.fetchMode,
+      credentials: CONFIG.credentials,
       headers: defaultHeaders()
     });
     return handleResponse(response);
@@ -53,7 +57,8 @@ export class TodoApiClient {
   async createTodo(todo) {
     const response = await fetch(`${this.baseUrl}/create.php`, {
       method: 'POST',
-      mode: 'cors',
+      mode: CONFIG.fetchMode,
+      credentials: CONFIG.credentials,
       headers: defaultHeaders(),
       body: JSON.stringify(todo)
     });
@@ -63,7 +68,8 @@ export class TodoApiClient {
   async updateTodo(id, updates) {
     const response = await fetch(`${this.baseUrl}/update.php?id=${encodeURIComponent(id)}`, {
       method: 'PUT',
-      mode: 'cors',
+      mode: CONFIG.fetchMode,
+      credentials: CONFIG.credentials,
       headers: { ...defaultHeaders(), ...methodOverride('PUT') },
       body: JSON.stringify(updates)
     });
@@ -73,7 +79,8 @@ export class TodoApiClient {
   async deleteTodo(id) {
     const response = await fetch(`${this.baseUrl}/delete.php?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
-      mode: 'cors',
+      mode: CONFIG.fetchMode,
+      credentials: CONFIG.credentials,
       headers: { ...defaultHeaders(), ...methodOverride('DELETE') }
     });
     return handleResponse(response);
