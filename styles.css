@@ -198,9 +198,28 @@ button.secondary:hover {
   gap: 0.6rem;
 }
 
+.duration-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(17, 24, 39, 0.65);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.55rem;
+  width: 100%;
+}
+
+.duration-input-label {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .duration-inputs input {
   width: 100%;
   text-align: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-title {

@@ -41,35 +41,41 @@
             <span class="duration-hint">Days / Hours / Minutes</span>
           </div>
           <div class="duration-inputs">
-            <label class="sr-only" for="todo-end-days">Days</label>
-            <input
-              id="todo-end-days"
-              name="end-days"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              placeholder="0"
-            />
-            <label class="sr-only" for="todo-end-hours">Hours</label>
-            <input
-              id="todo-end-hours"
-              name="end-hours"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              max="23"
-              placeholder="00"
-            />
-            <label class="sr-only" for="todo-end-mins">Minutes</label>
-            <input
-              id="todo-end-mins"
-              name="end-mins"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              max="59"
-              placeholder="00"
-            />
+            <label class="duration-input" for="todo-end-days">
+              <span class="duration-input-label">Days</span>
+              <input
+                id="todo-end-days"
+                name="end-days"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                placeholder="0"
+              />
+            </label>
+            <label class="duration-input" for="todo-end-hours">
+              <span class="duration-input-label">Hours</span>
+              <input
+                id="todo-end-hours"
+                name="end-hours"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="23"
+                placeholder="00"
+              />
+            </label>
+            <label class="duration-input" for="todo-end-mins">
+              <span class="duration-input-label">Minutes</span>
+              <input
+                id="todo-end-mins"
+                name="end-mins"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="59"
+                placeholder="00"
+              />
+            </label>
           </div>
         </div>
         <label class="sr-only" for="todo-type">Task type</label>
