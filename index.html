@@ -33,6 +33,11 @@
           rows="3"
           placeholder="Comments (optional)"
         ></textarea>
+        <label class="sr-only" for="todo-type">Task type</label>
+        <select id="todo-type" name="type">
+          <option value="one-time" selected>One-time task</option>
+          <option value="daily">Daily task</option>
+        </select>
         <div class="modal-actions">
           <button id="cancel-add" class="secondary" type="button">Cancel</button>
           <button type="submit">Add</button>
