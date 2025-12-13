@@ -274,8 +274,8 @@ button.secondary:hover {
 
 .resize-handle {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
+  right: 0px;
+  bottom: 0px;
   width: 24px;
   height: 24px;
   border-radius: 9px;
