@@ -56,6 +56,37 @@ function getContentMinSize(item) {
   return { minWidth, minHeight };
 }
 
+function adjustItemSizeToContent(item, todo) {
+  const { minWidth, minHeight } = getContentMinSize(item);
+  item.style.minWidth = `${minWidth}px`;
+  item.style.minHeight = `${minHeight}px`;
+
+  const hasFixedHeight = todo.size?.height !== null && todo.size?.height !== undefined;
+  const currentWidth = parseFloat(item.style.width) || item.offsetWidth || minWidth;
+  const currentHeight = hasFixedHeight
+    ? parseFloat(item.style.height) || item.offsetHeight || minHeight
+    : item.offsetHeight || minHeight;
+
+  const width = Math.max(currentWidth, minWidth);
+  const height = hasFixedHeight ? Math.max(currentHeight, minHeight) : null;
+
+  item.style.width = `${width}px`;
+  if (hasFixedHeight) {
+    item.style.height = `${height}px`;
+  } else {
+    item.style.height = "";
+  }
+
+  const nextSize = { width, height };
+  if (todo.size.width !== nextSize.width || todo.size.height !== nextSize.height) {
+    todos = todos.map((entry) =>
+      entry.id === todo.id ? { ...entry, size: nextSize } : entry
+    );
+    return true;
+  }
+  return false;
+}
+
 function ensureLayoutDefaults() {
   let mutated = false;
   todos = todos.map((todo, index) => {
@@ -155,6 +186,8 @@ function renderTodos() {
     updateCounts();
     return;
   }
+
+  let sizeAdjusted = false;
 
   filtered.forEach((todo) => {
     const item = document.createElement("li");
@@ -282,6 +315,10 @@ function renderTodos() {
     item.appendChild(actions);
     item.appendChild(details);
     item.appendChild(resizeHandle);
+
+    if (!includeDeleted) {
+      sizeAdjusted = adjustItemSizeToContent(item, todo) || sizeAdjusted;
+    }
     attachDrag(item, item, todo.id, {
       onTap: () => {
         if (todo.deleted) return;
@@ -291,6 +328,10 @@ function renderTodos() {
     attachResize(resizeHandle, item, todo.id);
     listEl.appendChild(item);
   });
+
+  if (sizeAdjusted) {
+    saveTodos();
+  }
 
   updateCounts();
   updateCanvasHeight();
