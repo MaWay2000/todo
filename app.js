@@ -59,6 +59,18 @@ const formatDuration = (start, end) => {
   return parts.length ? parts.join(" ") : "0s";
 };
 
+const isToday = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return false;
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+};
+
 function getContentMinSize(item) {
   const style = window.getComputedStyle(item);
   const paddingX =
@@ -220,6 +232,7 @@ function renderTodos() {
     .filter((todo) => {
       if (filter === "active") return !todo.completed;
       if (filter === "completed") return todo.completed;
+      if (filter === "daily") return isToday(todo.createdAt);
       return true;
     });
 
@@ -229,6 +242,7 @@ function renderTodos() {
     const emptyMessages = {
       active: "No active tasks. Add something above!",
       completed: "No completed tasks yet.",
+      daily: "No tasks added today.",
       deleted: "No deleted tasks.",
       all: "No tasks yet. Add something above!",
     };
