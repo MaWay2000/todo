@@ -203,6 +203,9 @@ button.secondary:hover {
   border-radius: 10px;
   border: none;
   box-shadow: none;
+  flex: 0 0 auto;
+  min-width: max-content;
+  white-space: nowrap;
 }
 
 .filter-button.active {
