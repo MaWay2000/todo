@@ -325,7 +325,7 @@ function renderTodos() {
 
     const actions = document.createElement("div");
     actions.className = "action-row";
-    item.classList.toggle("actions-visible", showingDeleted || todo.showActions);
+    item.classList.toggle("actions-visible", todo.showActions);
 
     const makeActionButton = (icon, label, handler, extraClass = "") => {
       const button = document.createElement("button");
