@@ -333,6 +333,13 @@ button.secondary:hover {
   cursor: pointer;
 }
 
+.completion-duration {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
 .todo-item.completed .todo-title {
   color: var(--muted);
   text-decoration: line-through;

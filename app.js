@@ -29,6 +29,36 @@ const formatDateTime = (value) =>
     timeStyle: "short",
   }).format(new Date(value));
 
+const formatDuration = (start, end) => {
+  if (!start || !end) return null;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const diffMs = endDate - startDate;
+
+  if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+
+  const units = [
+    { label: "d", seconds: 86400 },
+    { label: "h", seconds: 3600 },
+    { label: "m", seconds: 60 },
+    { label: "s", seconds: 1 },
+  ];
+
+  let remaining = Math.floor(diffMs / 1000);
+  const parts = [];
+
+  for (const unit of units) {
+    const value = Math.floor(remaining / unit.seconds);
+    if (value > 0 || parts.length > 0) {
+      parts.push(`${value}${unit.label}`);
+    }
+    remaining -= value * unit.seconds;
+    if (parts.length === 2) break;
+  }
+
+  return parts.length ? parts.join(" ") : "0s";
+};
+
 function getContentMinSize(item) {
   const style = window.getComputedStyle(item);
   const paddingX =
@@ -183,6 +213,7 @@ function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
   const stackedLayout = showingDeleted || filter === "completed";
+  const isCompletedView = filter === "completed";
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const filtered = todos
     .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
@@ -246,6 +277,16 @@ function renderTodos() {
 
     shell.appendChild(status);
     shell.appendChild(title);
+
+    if (todo.completed && !todo.deleted && isCompletedView) {
+      const duration = document.createElement("span");
+      const durationText = formatDuration(todo.createdAt, todo.completedAt);
+      duration.className = "completion-duration";
+      duration.textContent = durationText
+        ? `· ${durationText}`
+        : "· Duration unknown";
+      shell.appendChild(duration);
+    }
 
     if (todo.completed && !todo.deleted) {
       const metaRow = document.createElement("div");
