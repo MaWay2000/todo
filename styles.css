@@ -85,12 +85,14 @@ h1 {
 
 input,
 textarea,
+select,
 button {
   font: inherit;
 }
 
 input,
-textarea {
+textarea,
+select {
   padding: 0.9rem 1rem;
   background: var(--card);
   border: 1px solid var(--border);
@@ -100,7 +102,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);

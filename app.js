@@ -1,11 +1,14 @@
 const STORAGE_KEY = "local-todo-items";
+const DAILY_STORAGE_KEY = "local-daily-templates";
 let todos = [];
+let dailyTasks = [];
 let filter = "active";
 
 const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
+const typeSelectEl = document.getElementById("todo-type");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
@@ -58,6 +61,16 @@ const formatDuration = (start, end) => {
 
   return parts.length ? parts.join(" ") : "0s";
 };
+
+function makeActionButton(icon, label, handler, extraClass = "") {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `action-button ${extraClass}`.trim();
+  button.textContent = icon;
+  button.setAttribute("aria-label", label);
+  button.addEventListener("click", handler);
+  return button;
+}
 
 const isToday = (value) => {
   if (!value) return false;
@@ -221,6 +234,20 @@ function saveTodos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
 }
 
+function loadDailyTasks() {
+  try {
+    const stored = localStorage.getItem(DAILY_STORAGE_KEY);
+    dailyTasks = stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Failed to load daily tasks", error);
+    dailyTasks = [];
+  }
+}
+
+function saveDailyTasks() {
+  localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyTasks));
+}
+
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
@@ -341,16 +368,6 @@ function renderTodos() {
     actions.className = "action-row";
     item.classList.toggle("actions-visible", todo.showActions);
 
-    const makeActionButton = (icon, label, handler, extraClass = "") => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `action-button ${extraClass}`.trim();
-      button.textContent = icon;
-      button.setAttribute("aria-label", label);
-      button.addEventListener("click", handler);
-      return button;
-    };
-
     const editBtn = makeActionButton("✏️", "Edit", () => editTodo(todo.id));
     const deleteBtn = makeActionButton(
       todo.deleted ? "🗑️" : "❌",
@@ -463,6 +480,91 @@ function renderTodos() {
   updateCanvasHeight();
 }
 
+function renderDailyTasks() {
+  listEl.innerHTML = "";
+  listEl.classList.add("stacked-layout");
+  const sortedTasks = [...dailyTasks].sort((a, b) =>
+    (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+  );
+
+  if (sortedTasks.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty-state";
+    empty.textContent = "No daily tasks. Add one above!";
+    listEl.appendChild(empty);
+    listEl.style.height = `${canvasMinHeight}px`;
+    return;
+  }
+
+  sortedTasks.forEach((task) => {
+    const item = document.createElement("li");
+    item.className = "todo-item daily-template";
+
+    const shell = document.createElement("div");
+    shell.className = "todo-shell";
+
+    const status = document.createElement("span");
+    status.className = "status-pill";
+    status.textContent = "Daily";
+
+    const title = document.createElement("span");
+    title.className = "todo-title";
+    title.textContent = task.text;
+
+    shell.appendChild(status);
+    shell.appendChild(title);
+
+    const meta = document.createElement("div");
+    meta.className = "todo-details";
+    const lastTrigger = task.lastTriggeredAt
+      ? `Last triggered ${formatDateTime(task.lastTriggeredAt)}`
+      : "Not triggered yet";
+    const created = task.createdAt
+      ? `Created ${formatDateTime(task.createdAt)}`
+      : "Creation time unknown";
+    const comments = task.comments?.trim()
+      ? task.comments
+      : "No comments";
+    meta.innerHTML = `<div><strong>${lastTrigger}</strong></div><div>${created}</div><div><strong>Comments:</strong> ${comments}</div>`;
+
+    const actions = document.createElement("div");
+    actions.className = "action-row";
+    const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
+    const triggerBtn = makeActionButton(
+      "✨",
+      alreadyTriggered ? "Already created today" : "Create today's task",
+      () => triggerDailyTask(task.id)
+    );
+    triggerBtn.disabled = alreadyTriggered;
+
+    const deleteBtn = makeActionButton(
+      "🗑️",
+      "Delete daily task",
+      () => deleteDailyTask(task.id),
+      "danger"
+    );
+
+    actions.appendChild(triggerBtn);
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(shell);
+    item.appendChild(actions);
+    item.appendChild(meta);
+
+    listEl.appendChild(item);
+  });
+
+  listEl.style.height = "";
+}
+
+function renderCurrentView() {
+  if (filter === "daily") {
+    renderDailyTasks();
+    return;
+  }
+  renderTodos();
+}
+
 function addTodo(text, comments = "") {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -483,8 +585,47 @@ function addTodo(text, comments = "") {
     needsPositioning: true,
   });
   saveTodos();
-  renderTodos();
+  renderCurrentView();
   return true;
+}
+
+function addDailyTask(text, comments = "") {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const cleanedComments = comments.trim();
+  dailyTasks.unshift({
+    id: crypto.randomUUID(),
+    text: trimmed,
+    comments: cleanedComments,
+    createdAt: new Date().toISOString(),
+    lastTriggeredAt: null,
+  });
+  saveDailyTasks();
+  renderCurrentView();
+  return true;
+}
+
+function deleteDailyTask(id) {
+  const originalLength = dailyTasks.length;
+  dailyTasks = dailyTasks.filter((task) => task.id !== id);
+  if (dailyTasks.length === originalLength) return;
+  saveDailyTasks();
+  renderCurrentView();
+}
+
+function triggerDailyTask(id) {
+  const template = dailyTasks.find((task) => task.id === id);
+  if (!template) return;
+  if (template.lastTriggeredAt && isToday(template.lastTriggeredAt)) return;
+
+  const created = addTodo(template.text, template.comments ?? "");
+  if (!created) return;
+
+  dailyTasks = dailyTasks.map((task) =>
+    task.id === id ? { ...task, lastTriggeredAt: new Date().toISOString() } : task
+  );
+  saveDailyTasks();
+  renderCurrentView();
 }
 
 function toggleActionsVisibility(id) {
@@ -515,7 +656,7 @@ function toggleActionsVisibility(id) {
     };
   });
   saveTodos();
-  renderTodos();
+  renderCurrentView();
 }
 
 function toggleTodo(id) {
@@ -530,7 +671,7 @@ function toggleTodo(id) {
       : todo
   );
   saveTodos();
-  renderTodos();
+  renderCurrentView();
 }
 
 function deleteTodo(id) {
@@ -552,7 +693,7 @@ function deleteTodo(id) {
   });
   if (!changed) return;
   saveTodos();
-  renderTodos();
+  renderCurrentView();
 }
 
 function purgeTodo(id) {
@@ -560,7 +701,7 @@ function purgeTodo(id) {
   todos = todos.filter((todo) => todo.id !== id);
   if (todos.length === originalLength) return;
   saveTodos();
-  renderTodos();
+  renderCurrentView();
 }
 
 function editTodo(id) {
@@ -591,7 +732,7 @@ function setFilter(nextFilter) {
   filterButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.filter === filter);
   });
-  renderTodos();
+  renderCurrentView();
 }
 
 function attachDrag(handle, item, id, callbacks = {}) {
@@ -808,10 +949,15 @@ function updateCanvasHeight() {
 
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
-  const added = addTodo(inputEl.value, commentEl.value);
+  const taskType = typeSelectEl.value;
+  const added =
+    taskType === "daily"
+      ? addDailyTask(inputEl.value, commentEl.value)
+      : addTodo(inputEl.value, commentEl.value);
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
+    typeSelectEl.value = "one-time";
     dialogEl.close();
   }
 });
@@ -819,6 +965,7 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
+  typeSelectEl.value = "one-time";
   dialogEl.showModal();
   inputEl.focus();
 });
@@ -849,7 +996,7 @@ editFormEl.addEventListener("submit", (event) => {
 
   if (changed) {
     saveTodos();
-    renderTodos();
+    renderCurrentView();
   }
 });
 
@@ -866,6 +1013,7 @@ filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
 });
 
+loadDailyTasks();
 loadTodos();
 ensureLayoutDefaults();
 setFilter(filter);
