@@ -270,6 +270,24 @@ function renderTodos() {
       const isOpen = item.classList.contains("details-open");
       detailsBtn.textContent = isOpen ? "▣" : "▢";
       detailsBtn.setAttribute("aria-label", isOpen ? "Hide info" : "Expand info");
+
+      let updatedTodo = todo;
+      todos = todos.map((entry) => {
+        if (entry.id !== todo.id) return entry;
+        updatedTodo = {
+          ...entry,
+          size: {
+            ...entry.size,
+            height: isOpen ? null : entry.size.height,
+          },
+        };
+        return updatedTodo;
+      });
+
+      const sizeChanged = adjustItemSizeToContent(item, updatedTodo);
+      if (sizeChanged) {
+        saveTodos();
+      }
       updateCanvasHeight();
     });
 
