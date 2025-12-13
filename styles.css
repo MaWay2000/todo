@@ -230,7 +230,6 @@ button.secondary:hover {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 0.5rem 0.65rem 0.65rem;
-  padding-right: 2.6rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
   min-width: fit-content;
   cursor: default;
@@ -313,36 +312,6 @@ button.secondary:hover {
 .todo-item.resizing .resize-handle {
   box-shadow: none;
   opacity: 1;
-}
-
-.resize-button {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  line-height: 1;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text);
-  cursor: se-resize;
-  box-shadow: none;
-  transition: border-color 140ms ease, background 140ms ease, transform 100ms ease;
-}
-
-.resize-button:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  background: rgba(56, 189, 248, 0.12);
-}
-
-.resize-button:active {
-  transform: translateY(0);
 }
 
 

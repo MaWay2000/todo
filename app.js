@@ -339,18 +339,9 @@ function renderTodos() {
     resizeHandle.className = "resize-handle";
     resizeHandle.setAttribute("aria-label", "Resize task");
 
-    const resizeButton = document.createElement("button");
-    resizeButton.type = "button";
-    resizeButton.className = "resize-button";
-    resizeButton.textContent = "⤢";
-    resizeButton.setAttribute("aria-label", "Resize task");
-    resizeButton.addEventListener("pointerdown", (event) => event.stopPropagation());
-    resizeButton.addEventListener("click", (event) => event.stopPropagation());
-
     item.appendChild(shell);
     item.appendChild(actions);
     item.appendChild(details);
-    item.appendChild(resizeButton);
     item.appendChild(resizeHandle);
 
     listEl.appendChild(item);
@@ -365,7 +356,6 @@ function renderTodos() {
       },
     });
     attachResize(resizeHandle, item, todo.id);
-    attachResize(resizeButton, item, todo.id);
   });
 
   if (sizeAdjusted) {
@@ -486,7 +476,7 @@ function attachDrag(handle, item, id, callbacks = {}) {
     if (event.button !== 0) return;
 
     const interactiveSelector =
-      "button, .resize-handle, .resize-button, input, textarea, select, option, a";
+      "button, .resize-handle, input, textarea, select, option, a";
     if (event.target.closest(interactiveSelector)) return;
 
     const todo = todos.find((t) => t.id === id);
@@ -578,9 +568,6 @@ function attachDrag(handle, item, id, callbacks = {}) {
 function attachResize(handle, item, id) {
   const startResize = (event) => {
     if (event.button !== 0 && event.pointerType === "mouse") return;
-
-    event.preventDefault();
-    event.stopPropagation();
 
     const todo = todos.find((t) => t.id === id);
     if (!todo || todo.deleted) return;
