@@ -414,6 +414,11 @@ button.secondary:hover {
   display: flex;
 }
 
+.todo-item.deleted:hover .action-row,
+.todo-item.deleted:focus-within .action-row {
+  display: flex;
+}
+
 .action-button {
   display: inline-flex;
   align-items: center;
