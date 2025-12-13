@@ -10,8 +10,6 @@ const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
 const filterButtons = document.querySelectorAll(".filter-button");
-const countAllEl = document.getElementById("count-all");
-const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
@@ -172,13 +170,6 @@ function saveTodos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
 }
 
-function updateCounts() {
-  const visibleTodos = todos.filter((todo) => !todo.deleted);
-  countAllEl.textContent = `${visibleTodos.length} total`;
-  const active = visibleTodos.filter((todo) => !todo.completed).length;
-  countActiveEl.textContent = `${active} active`;
-}
-
 function renderTodos() {
   listEl.innerHTML = "";
   const includeDeleted = filter === "deleted";
@@ -203,7 +194,6 @@ function renderTodos() {
     empty.textContent = emptyMessages[filter] ?? emptyMessages.all;
     listEl.appendChild(empty);
     listEl.style.height = includeDeleted ? "" : `${canvasMinHeight}px`;
-    updateCounts();
     return;
   }
 
@@ -372,7 +362,6 @@ function renderTodos() {
     saveTodos();
   }
 
-  updateCounts();
   updateCanvasHeight();
 }
 
