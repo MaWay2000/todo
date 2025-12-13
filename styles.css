@@ -429,6 +429,15 @@ button.secondary:hover {
   border-color: rgba(56, 189, 248, 0.55);
 }
 
+.action-button.danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.action-button.danger:hover {
+  border-color: rgba(248, 113, 113, 0.8);
+}
+
 .todo-details {
   display: none;
   padding: 0.1rem 0 0;

@@ -261,7 +261,7 @@ function renderTodos() {
 
     const actions = document.createElement("div");
     actions.className = "action-row";
-    item.classList.toggle("actions-visible", todo.showActions);
+    item.classList.toggle("actions-visible", includeDeleted || todo.showActions);
 
     const makeActionButton = (icon, label, handler, extraClass = "") => {
       const button = document.createElement("button");
@@ -274,7 +274,12 @@ function renderTodos() {
     };
 
     const editBtn = makeActionButton("✏️", "Edit", () => editTodo(todo.id));
-    const deleteBtn = makeActionButton("❌", "Delete", () => deleteTodo(todo.id));
+    const deleteBtn = makeActionButton(
+      todo.deleted ? "🗑️" : "❌",
+      todo.deleted ? "Delete permanently" : "Delete",
+      () => (todo.deleted ? purgeTodo(todo.id) : deleteTodo(todo.id)),
+      todo.deleted ? "danger" : ""
+    );
     const toggleBtn = makeActionButton(
       todo.completed ? "↩️" : "✅",
       todo.completed ? "Mark active" : "Mark done",
@@ -453,6 +458,14 @@ function deleteTodo(id) {
     ];
   });
   if (!changed) return;
+  saveTodos();
+  renderTodos();
+}
+
+function purgeTodo(id) {
+  const originalLength = todos.length;
+  todos = todos.filter((todo) => todo.id !== id);
+  if (todos.length === originalLength) return;
   saveTodos();
   renderTodos();
 }
