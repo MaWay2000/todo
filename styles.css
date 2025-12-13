@@ -332,10 +332,12 @@ button.secondary:hover {
 
 
 .todo-shell {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+  width: max-content;
+  max-width: 100%;
   cursor: grab;
 }
 
