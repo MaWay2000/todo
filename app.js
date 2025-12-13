@@ -519,6 +519,8 @@ function renderTodos() {
       endMeta.innerHTML = `<strong>End:</strong> ${formatDateTime(
         todo.endTime
       )}`;
+    } else {
+      endMeta.innerHTML = `<strong>Finish time:</strong> 00 days 00 hours 00 mins`;
     }
     const completedMeta = document.createElement("div");
     if (todo.completed && !todo.deleted) {
@@ -546,9 +548,7 @@ function renderTodos() {
     if (todo.startTime) {
       details.appendChild(startMeta);
     }
-    if (todo.endTime) {
-      details.appendChild(endMeta);
-    }
+    details.appendChild(endMeta);
     if (timeLeft) {
       details.appendChild(timeLeftMeta);
     }
@@ -1064,7 +1064,7 @@ function updateCanvasHeight() {
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
-  const startTime = parseDateInput(startEl.value);
+  const startTime = parseDateInput(startEl.value) ?? new Date().toISOString();
   const endTime = parseDateInput(endEl.value);
   const added =
     taskType === "daily"
@@ -1073,7 +1073,7 @@ formEl.addEventListener("submit", (event) => {
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
-    startEl.value = "";
+    startEl.value = formatDateForInput(new Date().toISOString());
     endEl.value = "";
     typeSelectEl.value = "one-time";
     dialogEl.close();
@@ -1083,7 +1083,7 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
-  startEl.value = "";
+  startEl.value = formatDateForInput(new Date().toISOString());
   endEl.value = "";
   typeSelectEl.value = "one-time";
   dialogEl.showModal();
