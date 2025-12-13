@@ -342,6 +342,8 @@ function renderTodos() {
     item.appendChild(details);
     item.appendChild(resizeHandle);
 
+    listEl.appendChild(item);
+
     if (!includeDeleted) {
       sizeAdjusted = adjustItemSizeToContent(item, todo) || sizeAdjusted;
     }
@@ -352,7 +354,6 @@ function renderTodos() {
       },
     });
     attachResize(resizeHandle, item, todo.id);
-    listEl.appendChild(item);
   });
 
   if (sizeAdjusted) {
