@@ -9,12 +9,18 @@ const commentEl = document.getElementById("todo-comment");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
+const editDialogEl = document.getElementById("edit-dialog");
+const editFormEl = document.getElementById("edit-form");
+const editInputEl = document.getElementById("edit-input");
+const editCommentEl = document.getElementById("edit-comment");
+const cancelEditEl = document.getElementById("cancel-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
+let activeEditId = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -454,13 +460,11 @@ function deleteTodo(id) {
 function editTodo(id) {
   const todo = todos.find((t) => t.id === id);
   if (!todo || todo.deleted) return;
-  const nextText = prompt("Edit task", todo.text);
-  if (nextText === null) return;
-  const trimmed = nextText.trim();
-  if (!trimmed) return;
-  todos = todos.map((t) => (t.id === id ? { ...t, text: trimmed } : t));
-  saveTodos();
-  renderTodos();
+  activeEditId = id;
+  editInputEl.value = todo.text;
+  editCommentEl.value = todo.comments ?? "";
+  editDialogEl.showModal();
+  editInputEl.focus();
 }
 
 function setFilter(nextFilter) {
@@ -702,6 +706,41 @@ openAddEl.addEventListener("click", () => {
 
 cancelAddEl.addEventListener("click", () => {
   dialogEl.close();
+});
+
+editFormEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = editInputEl.value.trim();
+  const comments = editCommentEl.value.trim();
+
+  if (!activeEditId || !text) return;
+
+  let changed = false;
+  todos = todos.map((todo) => {
+    if (todo.id !== activeEditId || todo.deleted) return todo;
+    if (todo.text !== text || (todo.comments ?? "") !== comments) {
+      changed = true;
+      return { ...todo, text, comments };
+    }
+    return todo;
+  });
+
+  activeEditId = null;
+  editDialogEl.close();
+
+  if (changed) {
+    saveTodos();
+    renderTodos();
+  }
+});
+
+cancelEditEl.addEventListener("click", () => {
+  activeEditId = null;
+  editDialogEl.close();
+});
+
+editDialogEl.addEventListener("close", () => {
+  activeEditId = null;
 });
 
 filterButtons.forEach((button) => {
