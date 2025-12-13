@@ -634,7 +634,7 @@ function renderDailyTasks() {
 
   sortedTasks.forEach((task) => {
     const item = document.createElement("li");
-    item.className = "todo-item daily-template";
+    item.className = "todo-item daily-template actions-visible";
 
     const shell = document.createElement("div");
     shell.className = "todo-shell";
