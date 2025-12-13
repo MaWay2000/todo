@@ -16,6 +16,7 @@ const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
+const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -86,7 +87,16 @@ function adjustItemSizeToContent(item, todo) {
     todo.size.autoWidth !== nextSize.autoWidth
   ) {
     todos = todos.map((entry) =>
-      entry.id === todo.id ? { ...entry, size: nextSize } : entry
+      entry.id === todo.id
+        ? {
+            ...entry,
+            size: nextSize,
+            sizeStates: {
+              ...(entry.sizeStates ?? EMPTY_SIZE_STATES),
+              [entry.showActions ? "expanded" : "compact"]: nextSize,
+            },
+          }
+        : entry
     );
     return true;
   }
@@ -114,7 +124,8 @@ function ensureLayoutDefaults() {
     const deleted = todo.deleted ?? false;
     const deletedAt = todo.deletedAt ?? (deleted ? createdAt : null);
     const needsPositioning = todo.needsPositioning ?? false;
-    if (!todo.position || !todo.size) {
+    const sizeStates = todo.sizeStates ?? EMPTY_SIZE_STATES;
+    if (!todo.position || !todo.size || !todo.sizeStates) {
       mutated = true;
     }
     if (
@@ -138,6 +149,7 @@ function ensureLayoutDefaults() {
       deleted,
       deletedAt,
       needsPositioning,
+      sizeStates,
     };
   });
 
@@ -375,6 +387,7 @@ function addTodo(text, comments = "") {
     completed: false,
     position: DEFAULT_POSITION,
     size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
+    sizeStates: EMPTY_SIZE_STATES,
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
     showActions: false,
@@ -387,11 +400,32 @@ function addTodo(text, comments = "") {
 }
 
 function toggleActionsVisibility(id) {
-  todos = todos.map((todo) =>
-    todo.id === id && !todo.deleted
-      ? { ...todo, showActions: !todo.showActions }
-      : todo
-  );
+  todos = todos.map((todo) => {
+    if (todo.id !== id || todo.deleted) return todo;
+    const sizeStates = todo.sizeStates ?? EMPTY_SIZE_STATES;
+    const nextShowActions = !todo.showActions;
+
+    if (nextShowActions) {
+      return {
+        ...todo,
+        showActions: true,
+        sizeStates: {
+          ...sizeStates,
+          compact: sizeStates.compact ?? todo.size,
+          expanded: sizeStates.expanded ?? todo.size,
+        },
+        size: sizeStates.expanded ?? todo.size,
+      };
+    }
+
+    const compactSize = sizeStates.compact ?? todo.size;
+    return {
+      ...todo,
+      showActions: false,
+      sizeStates: { ...sizeStates, expanded: todo.size },
+      size: compactSize,
+    };
+  });
   saveTodos();
   renderTodos();
 }
@@ -582,11 +616,17 @@ function attachResize(handle, item, id) {
       if (isResizing) {
         const width = parseFloat(item.style.width) || startWidth;
         const height = parseFloat(item.style.height) || startHeight;
-        todos = todos.map((todoItem) =>
-          todoItem.id === id
-            ? { ...todoItem, size: { width, height, autoWidth: false } }
-            : todoItem
-        );
+        todos = todos.map((todoItem) => {
+          if (todoItem.id !== id) return todoItem;
+          const size = { width, height, autoWidth: false };
+          const sizeStates = todoItem.sizeStates ?? EMPTY_SIZE_STATES;
+          const stateKey = todo.showActions ? "expanded" : "compact";
+          return {
+            ...todoItem,
+            size,
+            sizeStates: { ...sizeStates, [stateKey]: size },
+          };
+        });
         saveTodos();
         updateCanvasHeight();
       }
@@ -618,14 +658,17 @@ function attachResize(handle, item, id) {
     item.style.width = `${nextWidth}px`;
     item.style.height = `${minHeight}px`;
 
-    todos = todos.map((todoItem) =>
-      todoItem.id === id
-        ? {
-            ...todoItem,
-            size: { width: nextWidth, height: minHeight, autoWidth: true },
-          }
-        : todoItem
-    );
+    todos = todos.map((todoItem) => {
+      if (todoItem.id !== id) return todoItem;
+      const size = { width: nextWidth, height: minHeight, autoWidth: true };
+      const sizeStates = todoItem.sizeStates ?? EMPTY_SIZE_STATES;
+      const stateKey = todo.showActions ? "expanded" : "compact";
+      return {
+        ...todoItem,
+        size,
+        sizeStates: { ...sizeStates, [stateKey]: size },
+      };
+    });
 
     saveTodos();
     updateCanvasHeight();
