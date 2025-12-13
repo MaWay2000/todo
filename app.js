@@ -178,10 +178,11 @@ function saveTodos() {
 
 function renderTodos() {
   listEl.innerHTML = "";
-  const includeDeleted = filter === "deleted";
-  listEl.classList.toggle("stacked-layout", includeDeleted);
+  const showingDeleted = filter === "deleted";
+  const stackedLayout = showingDeleted || filter === "completed";
+  listEl.classList.toggle("stacked-layout", stackedLayout);
   const filtered = todos
-    .filter((todo) => (includeDeleted ? todo.deleted : !todo.deleted))
+    .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
     .filter((todo) => {
       if (filter === "active") return !todo.completed;
       if (filter === "completed") return todo.completed;
@@ -199,7 +200,7 @@ function renderTodos() {
     };
     empty.textContent = emptyMessages[filter] ?? emptyMessages.all;
     listEl.appendChild(empty);
-    listEl.style.height = includeDeleted ? "" : `${canvasMinHeight}px`;
+    listEl.style.height = stackedLayout ? "" : `${canvasMinHeight}px`;
     return;
   }
 
@@ -215,7 +216,7 @@ function renderTodos() {
       item.classList.add("is-new");
     }
     item.dataset.id = todo.id;
-    if (includeDeleted) {
+    if (stackedLayout) {
       item.style.left = "";
       item.style.top = "";
       item.style.width = "";
@@ -261,7 +262,7 @@ function renderTodos() {
 
     const actions = document.createElement("div");
     actions.className = "action-row";
-    item.classList.toggle("actions-visible", includeDeleted || todo.showActions);
+    item.classList.toggle("actions-visible", showingDeleted || todo.showActions);
 
     const makeActionButton = (icon, label, handler, extraClass = "") => {
       const button = document.createElement("button");
@@ -357,7 +358,7 @@ function renderTodos() {
 
     listEl.appendChild(item);
 
-    if (!includeDeleted) {
+    if (!stackedLayout) {
       sizeAdjusted = adjustItemSizeToContent(item, todo) || sizeAdjusted;
     }
     attachDrag(item, item, todo.id, {
