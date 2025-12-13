@@ -14,6 +14,7 @@ const countAllEl = document.getElementById("count-all");
 const countActiveEl = document.getElementById("count-active");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
+const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -67,7 +68,8 @@ function adjustItemSizeToContent(item, todo) {
     ? parseFloat(item.style.height) || item.offsetHeight || minHeight
     : item.offsetHeight || minHeight;
 
-  const width = Math.max(currentWidth, minWidth);
+  const prefersAutoWidth = todo.size?.autoWidth ?? DEFAULT_AUTO_WIDTH;
+  const width = prefersAutoWidth ? minWidth : Math.max(currentWidth, minWidth);
   const height = hasFixedHeight ? Math.max(currentHeight, minHeight) : null;
 
   item.style.width = `${width}px`;
@@ -77,8 +79,12 @@ function adjustItemSizeToContent(item, todo) {
     item.style.height = "";
   }
 
-  const nextSize = { width, height };
-  if (todo.size.width !== nextSize.width || todo.size.height !== nextSize.height) {
+  const nextSize = { width, height, autoWidth: prefersAutoWidth };
+  if (
+    todo.size.width !== nextSize.width ||
+    todo.size.height !== nextSize.height ||
+    todo.size.autoWidth !== nextSize.autoWidth
+  ) {
     todos = todos.map((entry) =>
       entry.id === todo.id ? { ...entry, size: nextSize } : entry
     );
@@ -100,6 +106,7 @@ function ensureLayoutDefaults() {
         todo.size?.height === null || todo.size?.height === undefined
           ? null
           : Math.max(todo.size.height, 0),
+      autoWidth: todo.size?.autoWidth ?? DEFAULT_AUTO_WIDTH,
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const comments = todo.comments ?? "";
@@ -116,7 +123,8 @@ function ensureLayoutDefaults() {
       todo.showActions === undefined ||
       todo.deleted === undefined ||
       todo.deletedAt === undefined ||
-      todo.needsPositioning === undefined
+      todo.needsPositioning === undefined ||
+      todo.size.autoWidth === undefined
     ) {
       mutated = true;
     }
@@ -365,7 +373,7 @@ function addTodo(text, comments = "") {
     text: trimmed,
     completed: false,
     position: DEFAULT_POSITION,
-    size: { width: DEFAULT_CARD_WIDTH, height: null },
+    size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
     createdAt: new Date().toISOString(),
     comments: cleanedComments,
     showActions: false,
@@ -575,7 +583,7 @@ function attachResize(handle, item, id) {
         const height = parseFloat(item.style.height) || startHeight;
         todos = todos.map((todoItem) =>
           todoItem.id === id
-            ? { ...todoItem, size: { width, height } }
+            ? { ...todoItem, size: { width, height, autoWidth: false } }
             : todoItem
         );
         saveTodos();
@@ -611,7 +619,10 @@ function attachResize(handle, item, id) {
 
     todos = todos.map((todoItem) =>
       todoItem.id === id
-        ? { ...todoItem, size: { width: nextWidth, height: minHeight } }
+        ? {
+            ...todoItem,
+            size: { width: nextWidth, height: minHeight, autoWidth: true },
+          }
         : todoItem
     );
 
