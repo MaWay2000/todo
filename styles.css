@@ -429,6 +429,10 @@ button.secondary:hover {
   color: #fecaca;
 }
 
+.overdue-text {
+  color: #fecaca;
+}
+
 .time-meta {
   display: flex;
   gap: 0.35rem;
