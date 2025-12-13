@@ -9,7 +9,9 @@ const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
 const startEl = document.getElementById("todo-start");
-const endEl = document.getElementById("todo-end");
+const endDaysEl = document.getElementById("todo-end-days");
+const endHoursEl = document.getElementById("todo-end-hours");
+const endMinsEl = document.getElementById("todo-end-mins");
 const typeSelectEl = document.getElementById("todo-type");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
@@ -108,6 +110,33 @@ function formatDateForInput(value) {
   if (!Number.isFinite(date.getTime())) return "";
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 16);
+}
+
+function parseDurationParts(daysValue, hoursValue, minsValue) {
+  const days = Number.parseInt(daysValue, 10) || 0;
+  const hours = Number.parseInt(hoursValue, 10) || 0;
+  const mins = Number.parseInt(minsValue, 10) || 0;
+
+  if (days < 0 || hours < 0 || mins < 0) return null;
+  if (hours > 23 || mins > 59) return null;
+
+  if (days === 0 && hours === 0 && mins === 0) return null;
+
+  return { days, hours, mins };
+}
+
+function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
+  if (!start) return null;
+  const duration = parseDurationParts(daysValue, hoursValue, minsValue);
+  if (!duration) return null;
+
+  const startDate = new Date(start);
+  if (!Number.isFinite(startDate.getTime())) return null;
+
+  const totalMs =
+    duration.days * 86400000 + duration.hours * 3600000 + duration.mins * 60000;
+
+  return new Date(startDate.getTime() + totalMs).toISOString();
 }
 
 function makeActionButton(icon, label, handler, extraClass = "") {
@@ -1065,7 +1094,12 @@ formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
   const startTime = parseDateInput(startEl.value) ?? new Date().toISOString();
-  const endTime = parseDateInput(endEl.value);
+  const endTime = computeEndFromDuration(
+    startTime,
+    endDaysEl.value,
+    endHoursEl.value,
+    endMinsEl.value
+  );
   const added =
     taskType === "daily"
       ? addDailyTask(inputEl.value, commentEl.value)
@@ -1074,7 +1108,9 @@ formEl.addEventListener("submit", (event) => {
     inputEl.value = "";
     commentEl.value = "";
     startEl.value = formatDateForInput(new Date().toISOString());
-    endEl.value = "";
+    endDaysEl.value = "";
+    endHoursEl.value = "";
+    endMinsEl.value = "";
     typeSelectEl.value = "one-time";
     dialogEl.close();
   }
@@ -1084,7 +1120,9 @@ openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
   startEl.value = formatDateForInput(new Date().toISOString());
-  endEl.value = "";
+  endDaysEl.value = "";
+  endHoursEl.value = "";
+  endMinsEl.value = "";
   typeSelectEl.value = "one-time";
   dialogEl.showModal();
   inputEl.focus();
