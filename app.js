@@ -68,7 +68,7 @@ const formatDuration = (start, end) => {
   return parts.length ? parts.join(" ") : "0s";
 };
 
-const formatTimeLeft = (end) => {
+const getTimeLeftInfo = (end) => {
   if (!end) return null;
   const endDate = new Date(end);
   if (!Number.isFinite(endDate.getTime())) return null;
@@ -93,8 +93,11 @@ const formatTimeLeft = (end) => {
     if (parts.length === 2) break;
   }
 
-  if (!parts.length) return isPast ? "Overdue" : "Due soon";
-  return isPast ? `${parts.join(" ")} overdue` : `${parts.join(" ")} left`;
+  if (!parts.length) return { text: isPast ? "Overdue" : "Due soon", isPast };
+  return {
+    text: isPast ? `${parts.join(" ")} overdue` : `${parts.join(" ")} left`,
+    isPast,
+  };
 };
 
 function parseDateInput(value) {
@@ -407,29 +410,27 @@ function renderTodos() {
       const schedule = document.createElement("div");
       schedule.className = "time-meta";
 
-      if (todo.startTime) {
+      if (todo.endTime) {
+        const timeLeftInfo = getTimeLeftInfo(todo.endTime);
+        if (timeLeftInfo) {
+          const timeLeftChip = document.createElement("span");
+          timeLeftChip.className = "meta-chip accent";
+          timeLeftChip.textContent = timeLeftInfo.text;
+          if (timeLeftInfo.isPast) {
+            timeLeftChip.classList.add("danger");
+          }
+          schedule.appendChild(timeLeftChip);
+        }
+      } else if (todo.startTime) {
         const startChip = document.createElement("span");
         startChip.className = "meta-chip";
         startChip.textContent = `Start ${formatDateTime(todo.startTime)}`;
         schedule.appendChild(startChip);
       }
 
-      if (todo.endTime) {
-        const endChip = document.createElement("span");
-        endChip.className = "meta-chip";
-        endChip.textContent = `End ${formatDateTime(todo.endTime)}`;
-        schedule.appendChild(endChip);
+      if (schedule.childElementCount > 0) {
+        shell.appendChild(schedule);
       }
-
-      const timeLeft = formatTimeLeft(todo.endTime);
-      if (timeLeft) {
-        const timeLeftChip = document.createElement("span");
-        timeLeftChip.className = "meta-chip accent";
-        timeLeftChip.textContent = timeLeft;
-        schedule.appendChild(timeLeftChip);
-      }
-
-      shell.appendChild(schedule);
     }
 
     if (todo.completed && !todo.deleted && isCompletedView) {
@@ -543,24 +544,21 @@ function renderTodos() {
         todo.startTime
       )}`;
     }
-    const endMeta = document.createElement("div");
-    if (todo.endTime) {
-      endMeta.innerHTML = `<strong>End:</strong> ${formatDateTime(
-        todo.endTime
-      )}`;
+    const timeLeftMeta = document.createElement("div");
+    const timeLeftInfo = getTimeLeftInfo(todo.endTime);
+    if (timeLeftInfo) {
+      timeLeftMeta.innerHTML = `<strong>Time left:</strong> ${timeLeftInfo.text}`;
+      if (timeLeftInfo.isPast) {
+        timeLeftMeta.classList.add("overdue-text");
+      }
     } else {
-      endMeta.innerHTML = `<strong>Finish time:</strong> 00 days 00 hours 00 mins`;
+      timeLeftMeta.innerHTML = `<strong>Finish time:</strong> 00 days 00 hours 00 mins`;
     }
     const completedMeta = document.createElement("div");
     if (todo.completed && !todo.deleted) {
       completedMeta.innerHTML = `<strong>Completed:</strong> ${
         todo.completedAt ? formatDateTime(todo.completedAt) : "Unknown"
       }`;
-    }
-    const timeLeftMeta = document.createElement("div");
-    const timeLeft = formatTimeLeft(todo.endTime);
-    if (timeLeft) {
-      timeLeftMeta.innerHTML = `<strong>Time left:</strong> ${timeLeft}`;
     }
     const deletedMeta = document.createElement("div");
     if (todo.deleted) {
@@ -577,8 +575,7 @@ function renderTodos() {
     if (todo.startTime) {
       details.appendChild(startMeta);
     }
-    details.appendChild(endMeta);
-    if (timeLeft) {
+    if (timeLeftInfo || !todo.endTime) {
       details.appendChild(timeLeftMeta);
     }
     if (todo.completed && !todo.deleted) {
