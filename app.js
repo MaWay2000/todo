@@ -8,6 +8,8 @@ const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
+const startEl = document.getElementById("todo-start");
+const endEl = document.getElementById("todo-end");
 const typeSelectEl = document.getElementById("todo-type");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
@@ -16,6 +18,8 @@ const editDialogEl = document.getElementById("edit-dialog");
 const editFormEl = document.getElementById("edit-form");
 const editInputEl = document.getElementById("edit-input");
 const editCommentEl = document.getElementById("edit-comment");
+const editStartEl = document.getElementById("edit-start");
+const editEndEl = document.getElementById("edit-end");
 const cancelEditEl = document.getElementById("cancel-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
@@ -61,6 +65,50 @@ const formatDuration = (start, end) => {
 
   return parts.length ? parts.join(" ") : "0s";
 };
+
+const formatTimeLeft = (end) => {
+  if (!end) return null;
+  const endDate = new Date(end);
+  if (!Number.isFinite(endDate.getTime())) return null;
+
+  const diffMs = endDate - new Date();
+  const isPast = diffMs < 0;
+  const remainingSeconds = Math.abs(Math.floor(diffMs / 1000));
+  const units = [
+    { label: "d", seconds: 86400 },
+    { label: "h", seconds: 3600 },
+    { label: "m", seconds: 60 },
+  ];
+
+  let remaining = remainingSeconds;
+  const parts = [];
+  for (const unit of units) {
+    const value = Math.floor(remaining / unit.seconds);
+    if (value > 0 || parts.length > 0) {
+      parts.push(`${value}${unit.label}`);
+    }
+    remaining -= value * unit.seconds;
+    if (parts.length === 2) break;
+  }
+
+  if (!parts.length) return isPast ? "Overdue" : "Due soon";
+  return isPast ? `${parts.join(" ")} overdue` : `${parts.join(" ")} left`;
+};
+
+function parseDateInput(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.toISOString();
+}
+
+function formatDateForInput(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
 
 function makeActionButton(icon, label, handler, extraClass = "") {
   const button = document.createElement("button");
@@ -179,6 +227,8 @@ function ensureLayoutDefaults() {
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
     const completedAt = todo.completedAt ?? (todo.completed ? createdAt : null);
+    const startTime = todo.startTime ?? null;
+    const endTime = todo.endTime ?? null;
     const comments = todo.comments ?? "";
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
@@ -191,6 +241,8 @@ function ensureLayoutDefaults() {
     if (
       !todo.createdAt ||
       todo.completedAt === undefined ||
+      todo.startTime === undefined ||
+      todo.endTime === undefined ||
       todo.comments === undefined ||
       todo.showActions === undefined ||
       todo.deleted === undefined ||
@@ -206,6 +258,8 @@ function ensureLayoutDefaults() {
       size,
       createdAt,
       completedAt,
+      startTime,
+      endTime,
       comments,
       showActions,
       deleted,
@@ -319,6 +373,36 @@ function renderTodos() {
     shell.appendChild(status);
     shell.appendChild(title);
 
+    const hasSchedule = todo.startTime || todo.endTime;
+    if (hasSchedule) {
+      const schedule = document.createElement("div");
+      schedule.className = "time-meta";
+
+      if (todo.startTime) {
+        const startChip = document.createElement("span");
+        startChip.className = "meta-chip";
+        startChip.textContent = `Start ${formatDateTime(todo.startTime)}`;
+        schedule.appendChild(startChip);
+      }
+
+      if (todo.endTime) {
+        const endChip = document.createElement("span");
+        endChip.className = "meta-chip";
+        endChip.textContent = `End ${formatDateTime(todo.endTime)}`;
+        schedule.appendChild(endChip);
+      }
+
+      const timeLeft = formatTimeLeft(todo.endTime);
+      if (timeLeft) {
+        const timeLeftChip = document.createElement("span");
+        timeLeftChip.className = "meta-chip accent";
+        timeLeftChip.textContent = timeLeft;
+        schedule.appendChild(timeLeftChip);
+      }
+
+      shell.appendChild(schedule);
+    }
+
     if (todo.completed && !todo.deleted && isCompletedView) {
       const duration = document.createElement("span");
       const durationText = formatDuration(todo.createdAt, todo.completedAt);
@@ -424,11 +508,28 @@ function renderTodos() {
     created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
       todo.createdAt
     )}`;
+    const startMeta = document.createElement("div");
+    if (todo.startTime) {
+      startMeta.innerHTML = `<strong>Start:</strong> ${formatDateTime(
+        todo.startTime
+      )}`;
+    }
+    const endMeta = document.createElement("div");
+    if (todo.endTime) {
+      endMeta.innerHTML = `<strong>End:</strong> ${formatDateTime(
+        todo.endTime
+      )}`;
+    }
     const completedMeta = document.createElement("div");
     if (todo.completed && !todo.deleted) {
       completedMeta.innerHTML = `<strong>Completed:</strong> ${
         todo.completedAt ? formatDateTime(todo.completedAt) : "Unknown"
       }`;
+    }
+    const timeLeftMeta = document.createElement("div");
+    const timeLeft = formatTimeLeft(todo.endTime);
+    if (timeLeft) {
+      timeLeftMeta.innerHTML = `<strong>Time left:</strong> ${timeLeft}`;
     }
     const deletedMeta = document.createElement("div");
     if (todo.deleted) {
@@ -442,6 +543,15 @@ function renderTodos() {
       hasComment ? todo.comments : "No comments"
     }`;
     details.appendChild(created);
+    if (todo.startTime) {
+      details.appendChild(startMeta);
+    }
+    if (todo.endTime) {
+      details.appendChild(endMeta);
+    }
+    if (timeLeft) {
+      details.appendChild(timeLeftMeta);
+    }
     if (todo.completed && !todo.deleted) {
       details.appendChild(completedMeta);
     }
@@ -565,7 +675,7 @@ function renderCurrentView() {
   renderTodos();
 }
 
-function addTodo(text, comments = "") {
+function addTodo(text, comments = "", startTime = null, endTime = null) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
@@ -579,6 +689,8 @@ function addTodo(text, comments = "") {
     size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
     sizeStates: EMPTY_SIZE_STATES,
     createdAt: new Date().toISOString(),
+    startTime,
+    endTime,
     comments: cleanedComments,
     showActions: false,
     deleted: false,
@@ -710,6 +822,8 @@ function editTodo(id) {
   activeEditId = id;
   editInputEl.value = todo.text;
   editCommentEl.value = todo.comments ?? "";
+  editStartEl.value = formatDateForInput(todo.startTime);
+  editEndEl.value = formatDateForInput(todo.endTime);
   editDialogEl.showModal();
   editInputEl.focus();
 }
@@ -950,13 +1064,17 @@ function updateCanvasHeight() {
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
+  const startTime = parseDateInput(startEl.value);
+  const endTime = parseDateInput(endEl.value);
   const added =
     taskType === "daily"
       ? addDailyTask(inputEl.value, commentEl.value)
-      : addTodo(inputEl.value, commentEl.value);
+      : addTodo(inputEl.value, commentEl.value, startTime, endTime);
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
+    startEl.value = "";
+    endEl.value = "";
     typeSelectEl.value = "one-time";
     dialogEl.close();
   }
@@ -965,6 +1083,8 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
+  startEl.value = "";
+  endEl.value = "";
   typeSelectEl.value = "one-time";
   dialogEl.showModal();
   inputEl.focus();
@@ -978,15 +1098,22 @@ editFormEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = editInputEl.value.trim();
   const comments = editCommentEl.value.trim();
+  const startTime = parseDateInput(editStartEl.value);
+  const endTime = parseDateInput(editEndEl.value);
 
   if (!activeEditId || !text) return;
 
   let changed = false;
   todos = todos.map((todo) => {
     if (todo.id !== activeEditId || todo.deleted) return todo;
-    if (todo.text !== text || (todo.comments ?? "") !== comments) {
+    if (
+      todo.text !== text ||
+      (todo.comments ?? "") !== comments ||
+      todo.startTime !== startTime ||
+      todo.endTime !== endTime
+    ) {
       changed = true;
-      return { ...todo, text, comments };
+      return { ...todo, text, comments, startTime, endTime };
     }
     return todo;
   });
