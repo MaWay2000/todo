@@ -383,10 +383,23 @@ button.secondary:hover {
   border-radius: 999px;
 }
 
+.meta-chip.accent {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #c9f1ff;
+}
+
 .meta-chip.danger {
   background: rgba(248, 113, 113, 0.12);
   border-color: rgba(248, 113, 113, 0.5);
   color: #fecaca;
+}
+
+.time-meta {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
 }
 
 .status-pill:empty {
