@@ -35,8 +35,43 @@
         ></textarea>
         <label class="sr-only" for="todo-start">Start time</label>
         <input id="todo-start" name="start" type="datetime-local" />
-        <label class="sr-only" for="todo-end">End time</label>
-        <input id="todo-end" name="end" type="datetime-local" />
+        <div class="duration-group" role="group" aria-labelledby="duration-label">
+          <div class="duration-label-row">
+            <span id="duration-label">Time to finish</span>
+            <span class="duration-hint">Days / Hours / Minutes</span>
+          </div>
+          <div class="duration-inputs">
+            <label class="sr-only" for="todo-end-days">Days</label>
+            <input
+              id="todo-end-days"
+              name="end-days"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              placeholder="0"
+            />
+            <label class="sr-only" for="todo-end-hours">Hours</label>
+            <input
+              id="todo-end-hours"
+              name="end-hours"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="23"
+              placeholder="00"
+            />
+            <label class="sr-only" for="todo-end-mins">Minutes</label>
+            <input
+              id="todo-end-mins"
+              name="end-mins"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="59"
+              placeholder="00"
+            />
+          </div>
+        </div>
         <label class="sr-only" for="todo-type">Task type</label>
         <select id="todo-type" name="type">
           <option value="one-time" selected>One-time task</option>

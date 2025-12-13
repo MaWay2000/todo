@@ -169,6 +169,40 @@ button.secondary:hover {
   margin: 0;
 }
 
+.duration-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.75rem 0.85rem;
+}
+
+.duration-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.duration-hint {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.duration-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.duration-inputs input {
+  width: 100%;
+  text-align: center;
+}
+
 .modal-title {
   margin: 0;
   font-size: 1.1rem;
