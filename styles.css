@@ -416,7 +416,8 @@ button.secondary:hover {
 .action-row {
   display: none;
   gap: 0.3rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   padding-left: 0;
 }
 
@@ -433,11 +434,13 @@ button.secondary:hover {
   height: 1.25rem;
   padding: 0;
   font-size: 0.9rem;
+  line-height: 1;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   color: var(--text);
   box-shadow: none;
   border-radius: 999px;
+  flex: 0 0 auto;
 }
 
 .action-button:hover {
