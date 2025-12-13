@@ -123,6 +123,7 @@ function ensureLayoutDefaults() {
       autoWidth: todo.size?.autoWidth ?? DEFAULT_AUTO_WIDTH,
     };
     const createdAt = todo.createdAt ?? new Date().toISOString();
+    const completedAt = todo.completedAt ?? (todo.completed ? createdAt : null);
     const comments = todo.comments ?? "";
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
@@ -134,6 +135,7 @@ function ensureLayoutDefaults() {
     }
     if (
       !todo.createdAt ||
+      todo.completedAt === undefined ||
       todo.comments === undefined ||
       todo.showActions === undefined ||
       todo.deleted === undefined ||
@@ -148,6 +150,7 @@ function ensureLayoutDefaults() {
       position,
       size,
       createdAt,
+      completedAt,
       comments,
       showActions,
       deleted,
@@ -244,6 +247,25 @@ function renderTodos() {
     shell.appendChild(status);
     shell.appendChild(title);
 
+    if (todo.completed && !todo.deleted) {
+      const metaRow = document.createElement("div");
+      metaRow.className = "deleted-meta";
+
+      const createdChip = document.createElement("span");
+      createdChip.className = "meta-chip";
+      createdChip.textContent = `Created ${formatDateTime(todo.createdAt)}`;
+
+      const completedChip = document.createElement("span");
+      completedChip.className = "meta-chip";
+      completedChip.textContent = todo.completedAt
+        ? `Ended ${formatDateTime(todo.completedAt)}`
+        : "Ended time unknown";
+
+      metaRow.appendChild(createdChip);
+      metaRow.appendChild(completedChip);
+      shell.appendChild(metaRow);
+    }
+
     if (todo.deleted) {
       const metaRow = document.createElement("div");
       metaRow.className = "deleted-meta";
@@ -330,6 +352,12 @@ function renderTodos() {
     created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
       todo.createdAt
     )}`;
+    const completedMeta = document.createElement("div");
+    if (todo.completed && !todo.deleted) {
+      completedMeta.innerHTML = `<strong>Completed:</strong> ${
+        todo.completedAt ? formatDateTime(todo.completedAt) : "Unknown"
+      }`;
+    }
     const deletedMeta = document.createElement("div");
     if (todo.deleted) {
       deletedMeta.innerHTML = `<strong>Deleted:</strong> ${
@@ -342,6 +370,9 @@ function renderTodos() {
       hasComment ? todo.comments : "No comments"
     }`;
     details.appendChild(created);
+    if (todo.completed && !todo.deleted) {
+      details.appendChild(completedMeta);
+    }
     if (todo.deleted) {
       details.appendChild(deletedMeta);
     }
@@ -386,6 +417,7 @@ function addTodo(text, comments = "") {
     id,
     text: trimmed,
     completed: false,
+    completedAt: null,
     position: DEFAULT_POSITION,
     size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
     sizeStates: EMPTY_SIZE_STATES,
@@ -434,7 +466,12 @@ function toggleActionsVisibility(id) {
 function toggleTodo(id) {
   todos = todos.map((todo) =>
     todo.id === id && !todo.deleted
-      ? { ...todo, completed: !todo.completed }
+      ? {
+          ...todo,
+          completed: !todo.completed,
+          completedAt: todo.completed ? null : new Date().toISOString(),
+          showActions: false,
+        }
       : todo
   );
   saveTodos();
@@ -483,6 +520,19 @@ function editTodo(id) {
 
 function setFilter(nextFilter) {
   filter = nextFilter;
+
+  if (nextFilter === "completed") {
+    let collapsed = false;
+    todos = todos.map((todo) => {
+      if (!todo.completed || todo.showActions === false) return todo;
+      collapsed = true;
+      return { ...todo, showActions: false };
+    });
+    if (collapsed) {
+      saveTodos();
+    }
+  }
+
   filterButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.filter === filter);
   });
