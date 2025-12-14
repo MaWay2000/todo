@@ -113,6 +113,30 @@
       </form>
     </dialog>
 
+    <dialog id="daily-edit-dialog" class="modal">
+      <form id="daily-edit-form" class="modal-form" method="dialog" autocomplete="off">
+        <h2 class="modal-title">Edit daily task</h2>
+        <label class="sr-only" for="daily-edit-input">Task description</label>
+        <input
+          id="daily-edit-input"
+          name="daily-edit-todo"
+          placeholder="Update the daily task title"
+          required
+        />
+        <label class="sr-only" for="daily-edit-comment">Task comments</label>
+        <textarea
+          id="daily-edit-comment"
+          name="daily-edit-comment"
+          rows="3"
+          placeholder="Comments (optional)"
+        ></textarea>
+        <div class="modal-actions">
+          <button id="cancel-daily-edit" class="secondary" type="button">Cancel</button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+
     <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
   </main>
   <script src="app.js"></script>

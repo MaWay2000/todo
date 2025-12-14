@@ -23,6 +23,11 @@ const editCommentEl = document.getElementById("edit-comment");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
 const cancelEditEl = document.getElementById("cancel-edit");
+const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
+const dailyEditFormEl = document.getElementById("daily-edit-form");
+const dailyEditInputEl = document.getElementById("daily-edit-input");
+const dailyEditCommentEl = document.getElementById("daily-edit-comment");
+const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
@@ -30,6 +35,7 @@ const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 let activeEditId = null;
+let activeDailyEditId = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -638,26 +644,11 @@ function editDailyTask(id) {
   const task = dailyTasks.find((entry) => entry.id === id);
   if (!task) return;
 
-  const nextText = prompt("Update daily task", task.text ?? "");
-  if (nextText === null) return;
-
-  const trimmed = nextText.trim();
-  if (!trimmed) return;
-
-  const nextComments = prompt(
-    "Update comments (optional)",
-    task.comments ?? ""
-  );
-  if (nextComments === null) return;
-
-  dailyTasks = dailyTasks.map((entry) =>
-    entry.id === id
-      ? { ...entry, text: trimmed, comments: (nextComments ?? "").trim() }
-      : entry
-  );
-
-  saveDailyTasks();
-  renderCurrentView();
+  activeDailyEditId = id;
+  dailyEditInputEl.value = task.text ?? "";
+  dailyEditCommentEl.value = task.comments ?? "";
+  dailyEditDialogEl.showModal();
+  dailyEditInputEl.focus();
 }
 
 function renderDailyTasks() {
@@ -911,6 +902,11 @@ function editTodo(id) {
   editEndEl.value = formatDateForInput(todo.endTime);
   editDialogEl.showModal();
   editInputEl.focus();
+}
+
+function closeDailyEditDialog() {
+  activeDailyEditId = null;
+  dailyEditDialogEl.close();
 }
 
 function setFilter(nextFilter) {
@@ -1228,6 +1224,40 @@ cancelEditEl.addEventListener("click", () => {
 
 editDialogEl.addEventListener("close", () => {
   activeEditId = null;
+});
+
+dailyEditFormEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = dailyEditInputEl.value.trim();
+  const comments = dailyEditCommentEl.value.trim();
+
+  if (!activeDailyEditId || !text) return;
+
+  let changed = false;
+  dailyTasks = dailyTasks.map((task) => {
+    if (task.id !== activeDailyEditId) return task;
+    if (task.text !== text || (task.comments ?? "") !== comments) {
+      changed = true;
+      return { ...task, text, comments };
+    }
+    return task;
+  });
+
+  closeDailyEditDialog();
+
+  if (changed) {
+    saveDailyTasks();
+    renderCurrentView();
+  }
+});
+
+cancelDailyEditEl.addEventListener("click", () => {
+  closeDailyEditDialog();
+});
+
+dailyEditDialogEl.addEventListener("close", () => {
+  activeDailyEditId = null;
+  dailyEditFormEl.reset();
 });
 
 filterButtons.forEach((button) => {
