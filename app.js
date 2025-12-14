@@ -616,6 +616,50 @@ function renderTodos() {
   updateCanvasHeight();
 }
 
+function toggleDailyDetails(id, item, button) {
+  dailyTasks = dailyTasks.map((task) => {
+    if (task.id !== id) return task;
+    const nextShowDetails = !task.showDetails;
+    if (nextShowDetails) {
+      item.classList.add("details-open");
+      button.textContent = "▣";
+      button.setAttribute("aria-label", "Hide info");
+    } else {
+      item.classList.remove("details-open");
+      button.textContent = "▢";
+      button.setAttribute("aria-label", "Expand info");
+    }
+    return { ...task, showDetails: nextShowDetails };
+  });
+  saveDailyTasks();
+}
+
+function editDailyTask(id) {
+  const task = dailyTasks.find((entry) => entry.id === id);
+  if (!task) return;
+
+  const nextText = prompt("Update daily task", task.text ?? "");
+  if (nextText === null) return;
+
+  const trimmed = nextText.trim();
+  if (!trimmed) return;
+
+  const nextComments = prompt(
+    "Update comments (optional)",
+    task.comments ?? ""
+  );
+  if (nextComments === null) return;
+
+  dailyTasks = dailyTasks.map((entry) =>
+    entry.id === id
+      ? { ...entry, text: trimmed, comments: (nextComments ?? "").trim() }
+      : entry
+  );
+
+  saveDailyTasks();
+  renderCurrentView();
+}
+
 function renderDailyTasks() {
   listEl.innerHTML = "";
   listEl.classList.add("stacked-layout");
@@ -667,11 +711,19 @@ function renderDailyTasks() {
     actions.className = "action-row";
     const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
     const triggerBtn = makeActionButton(
-      "✨",
+      "➕",
       alreadyTriggered ? "Already created today" : "Create today's task",
       () => triggerDailyTask(task.id)
     );
     triggerBtn.disabled = alreadyTriggered;
+
+    const infoBtn = makeActionButton(
+      task.showDetails ? "▣" : "▢",
+      task.showDetails ? "Hide info" : "Expand info",
+      () => toggleDailyDetails(task.id, item, infoBtn)
+    );
+
+    const editBtn = makeActionButton("✏️", "Edit daily task", () => editDailyTask(task.id));
 
     const deleteBtn = makeActionButton(
       "🗑️",
@@ -680,7 +732,13 @@ function renderDailyTasks() {
       "danger"
     );
 
+    if (task.showDetails) {
+      item.classList.add("details-open");
+    }
+
     actions.appendChild(triggerBtn);
+    actions.appendChild(infoBtn);
+    actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
 
     item.appendChild(shell);
@@ -737,6 +795,7 @@ function addDailyTask(text, comments = "") {
     comments: cleanedComments,
     createdAt: new Date().toISOString(),
     lastTriggeredAt: null,
+    showDetails: false,
   });
   saveDailyTasks();
   renderCurrentView();
