@@ -29,6 +29,8 @@ const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
 const dailyEditFormEl = document.getElementById("daily-edit-form");
 const dailyEditInputEl = document.getElementById("daily-edit-input");
 const dailyEditCommentEl = document.getElementById("daily-edit-comment");
+const dailyEditStartEl = document.getElementById("daily-edit-start");
+const dailyEditEndEl = document.getElementById("daily-edit-end");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
@@ -706,6 +708,8 @@ function editDailyTask(id) {
   activeDailyEditId = id;
   dailyEditInputEl.value = task.text ?? "";
   dailyEditCommentEl.value = task.comments ?? "";
+  dailyEditStartEl.value = formatDateForInput(task.startTime);
+  dailyEditEndEl.value = formatDateForInput(task.endTime);
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
 }
@@ -752,10 +756,28 @@ function renderDailyTasks() {
     const created = task.createdAt
       ? `Created ${formatDateTime(task.createdAt)}`
       : "Creation time unknown";
+    const scheduleParts = [];
+    if (task.startTime) {
+      scheduleParts.push(`<div><strong>Start:</strong> ${formatDateTime(task.startTime)}</div>`);
+    }
+    if (task.endTime) {
+      const duration = task.startTime
+        ? formatDuration(task.startTime, task.endTime)
+        : null;
+      const endMeta = duration
+        ? `${formatDateTime(task.endTime)} (${duration})`
+        : formatDateTime(task.endTime);
+      scheduleParts.push(`<div><strong>End:</strong> ${endMeta}</div>`);
+    }
     const comments = task.comments?.trim()
       ? task.comments
       : "No comments";
-    meta.innerHTML = `<div><strong>${lastTrigger}</strong></div><div>${created}</div><div><strong>Comments:</strong> ${comments}</div>`;
+    meta.innerHTML = [
+      `<div><strong>${lastTrigger}</strong></div>`,
+      `<div>${created}</div>`,
+      ...scheduleParts,
+      `<div><strong>Comments:</strong> ${comments}</div>`,
+    ].join("");
 
     const actions = document.createElement("div");
     actions.className = "action-row";
@@ -842,7 +864,7 @@ function addTodo(
   return true;
 }
 
-function addDailyTask(text, comments = "") {
+function addDailyTask(text, comments = "", startTime = null, endTime = null) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
@@ -850,6 +872,8 @@ function addDailyTask(text, comments = "") {
     id: crypto.randomUUID(),
     text: trimmed,
     comments: cleanedComments,
+    startTime,
+    endTime,
     createdAt: new Date().toISOString(),
     lastTriggeredAt: null,
     showDetails: false,
@@ -867,12 +891,60 @@ function deleteDailyTask(id) {
   renderCurrentView();
 }
 
+function rebaseDateTimeToReference(sourceIso, referenceDate = new Date()) {
+  if (!sourceIso) return null;
+  const source = new Date(sourceIso);
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(source.getTime()) || !Number.isFinite(reference.getTime()))
+    return null;
+
+  const rebased = new Date(reference);
+  rebased.setHours(
+    source.getHours(),
+    source.getMinutes(),
+    source.getSeconds(),
+    source.getMilliseconds()
+  );
+  return rebased.toISOString();
+}
+
+function computeRebasedEnd(startIso, endIso, rebasedStartIso) {
+  if (!endIso) return null;
+  const originalStart = startIso ? new Date(startIso) : null;
+  const originalEnd = new Date(endIso);
+  if (!Number.isFinite(originalEnd.getTime())) return null;
+
+  if (originalStart && Number.isFinite(originalStart.getTime())) {
+    const rebasedStart = new Date(rebasedStartIso);
+    if (!Number.isFinite(rebasedStart.getTime())) return null;
+    const durationMs = originalEnd - originalStart;
+    if (!Number.isFinite(durationMs) || durationMs <= 0) return null;
+    return new Date(rebasedStart.getTime() + durationMs).toISOString();
+  }
+
+  const fallbackReference = rebasedStartIso
+    ? new Date(rebasedStartIso)
+    : new Date();
+  return rebaseDateTimeToReference(endIso, fallbackReference);
+}
+
 function triggerDailyTask(id) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
   if (template.lastTriggeredAt && isToday(template.lastTriggeredAt)) return;
 
-  const created = addTodo(template.text, template.comments ?? "");
+  const now = new Date();
+  const startTime =
+    rebaseDateTimeToReference(template.startTime, now) ?? now.toISOString();
+  const endTime = computeRebasedEnd(template.startTime, template.endTime, startTime);
+
+  const created = addTodo(
+    template.text,
+    template.comments ?? "",
+    startTime,
+    endTime,
+    template.color ?? null
+  );
   if (!created) return;
 
   dailyTasks = dailyTasks.map((task) =>
@@ -1248,7 +1320,7 @@ formEl.addEventListener("submit", (event) => {
   const color = colorEl.value?.trim() || null;
   const added =
     taskType === "daily"
-      ? addDailyTask(inputEl.value, commentEl.value)
+      ? addDailyTask(inputEl.value, commentEl.value, startTime, endTime)
       : addTodo(inputEl.value, commentEl.value, startTime, endTime, color);
   if (added) {
     inputEl.value = "";
@@ -1338,15 +1410,22 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = dailyEditInputEl.value.trim();
   const comments = dailyEditCommentEl.value.trim();
+  const startTime = parseDateInput(dailyEditStartEl.value);
+  const endTime = parseDateInput(dailyEditEndEl.value);
 
   if (!activeDailyEditId || !text) return;
 
   let changed = false;
   dailyTasks = dailyTasks.map((task) => {
     if (task.id !== activeDailyEditId) return task;
-    if (task.text !== text || (task.comments ?? "") !== comments) {
+    if (
+      task.text !== text ||
+      (task.comments ?? "") !== comments ||
+      task.startTime !== startTime ||
+      task.endTime !== endTime
+    ) {
       changed = true;
-      return { ...task, text, comments };
+      return { ...task, text, comments, startTime, endTime };
     }
     return task;
   });
