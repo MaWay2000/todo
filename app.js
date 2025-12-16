@@ -31,6 +31,7 @@ const dailyEditInputEl = document.getElementById("daily-edit-input");
 const dailyEditCommentEl = document.getElementById("daily-edit-comment");
 const dailyEditStartEl = document.getElementById("daily-edit-start");
 const dailyEditEndEl = document.getElementById("daily-edit-end");
+const dailyEditColorEl = document.getElementById("daily-edit-color");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
@@ -710,6 +711,8 @@ function editDailyTask(id) {
   dailyEditCommentEl.value = task.comments ?? "";
   dailyEditStartEl.value = formatDateForInput(task.startTime);
   dailyEditEndEl.value = formatDateForInput(task.endTime);
+  dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
+  dailyEditColorEl.dataset.touched = "false";
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
 }
@@ -733,6 +736,10 @@ function renderDailyTasks() {
   sortedTasks.forEach((task) => {
     const item = document.createElement("li");
     item.className = "todo-item daily-template actions-visible";
+    if (task.color) {
+      item.classList.add("has-color");
+      item.style.setProperty("--task-color", task.color);
+    }
 
     const shell = document.createElement("div");
     shell.className = "todo-shell";
@@ -744,6 +751,14 @@ function renderDailyTasks() {
     const title = document.createElement("span");
     title.className = "todo-title";
     title.textContent = task.text;
+
+    if (task.color) {
+      const colorDot = document.createElement("span");
+      colorDot.className = "color-dot";
+      colorDot.style.backgroundColor = task.color;
+      colorDot.title = `Task color ${task.color}`;
+      shell.appendChild(colorDot);
+    }
 
     shell.appendChild(status);
     shell.appendChild(title);
@@ -772,10 +787,18 @@ function renderDailyTasks() {
     const comments = task.comments?.trim()
       ? task.comments
       : "No comments";
+    const colorMeta = task.color
+      ? [
+          '<div><strong>Color:</strong> <span style="display: inline-flex; align-items: center; gap: 0.35rem;">',
+          `<span class="color-dot" aria-hidden="true" style="background-color: ${task.color}; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);"></span> ${task.color}`,
+          "</span></div>",
+        ].join("")
+      : `<div><strong>Color:</strong> None</div>`;
     meta.innerHTML = [
       `<div><strong>${lastTrigger}</strong></div>`,
       `<div>${created}</div>`,
       ...scheduleParts,
+      colorMeta,
       `<div><strong>Comments:</strong> ${comments}</div>`,
     ].join("");
 
@@ -864,7 +887,13 @@ function addTodo(
   return true;
 }
 
-function addDailyTask(text, comments = "", startTime = null, endTime = null) {
+function addDailyTask(
+  text,
+  comments = "",
+  startTime = null,
+  endTime = null,
+  color = null
+) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
@@ -874,6 +903,7 @@ function addDailyTask(text, comments = "", startTime = null, endTime = null) {
     comments: cleanedComments,
     startTime,
     endTime,
+    color,
     createdAt: new Date().toISOString(),
     lastTriggeredAt: null,
     showDetails: false,
@@ -1046,6 +1076,7 @@ function editTodo(id) {
 
 function closeDailyEditDialog() {
   activeDailyEditId = null;
+  dailyEditColorEl.dataset.touched = "false";
   dailyEditDialogEl.close();
 }
 
@@ -1320,7 +1351,7 @@ formEl.addEventListener("submit", (event) => {
   const color = colorEl.value?.trim() || null;
   const added =
     taskType === "daily"
-      ? addDailyTask(inputEl.value, commentEl.value, startTime, endTime)
+      ? addDailyTask(inputEl.value, commentEl.value, startTime, endTime, color)
       : addTodo(inputEl.value, commentEl.value, startTime, endTime, color);
   if (added) {
     inputEl.value = "";
@@ -1354,6 +1385,10 @@ cancelAddEl.addEventListener("click", () => {
 
 editColorEl.addEventListener("input", () => {
   editColorEl.dataset.touched = "true";
+});
+
+dailyEditColorEl.addEventListener("input", () => {
+  dailyEditColorEl.dataset.touched = "true";
 });
 
 editFormEl.addEventListener("submit", (event) => {
@@ -1412,6 +1447,11 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const comments = dailyEditCommentEl.value.trim();
   const startTime = parseDateInput(dailyEditStartEl.value);
   const endTime = parseDateInput(dailyEditEndEl.value);
+  const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
+  const color =
+    dailyEditColorEl.dataset.touched === "true"
+      ? dailyEditColorEl.value?.trim() || null
+      : currentTask?.color ?? null;
 
   if (!activeDailyEditId || !text) return;
 
@@ -1422,10 +1462,11 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       task.text !== text ||
       (task.comments ?? "") !== comments ||
       task.startTime !== startTime ||
-      task.endTime !== endTime
+      task.endTime !== endTime ||
+      (task.color ?? null) !== color
     ) {
       changed = true;
-      return { ...task, text, comments, startTime, endTime };
+      return { ...task, text, comments, startTime, endTime, color };
     }
     return task;
   });
@@ -1445,6 +1486,7 @@ cancelDailyEditEl.addEventListener("click", () => {
 dailyEditDialogEl.addEventListener("close", () => {
   activeDailyEditId = null;
   dailyEditFormEl.reset();
+  dailyEditColorEl.dataset.touched = "false";
 });
 
 filterButtons.forEach((button) => {
