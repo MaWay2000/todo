@@ -30,7 +30,9 @@ const dailyEditFormEl = document.getElementById("daily-edit-form");
 const dailyEditInputEl = document.getElementById("daily-edit-input");
 const dailyEditCommentEl = document.getElementById("daily-edit-comment");
 const dailyEditStartEl = document.getElementById("daily-edit-start");
-const dailyEditEndEl = document.getElementById("daily-edit-end");
+const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
+const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
+const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
@@ -160,6 +162,29 @@ function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
     duration.days * 86400000 + duration.hours * 3600000 + duration.mins * 60000;
 
   return new Date(startDate.getTime() + totalMs).toISOString();
+}
+
+function deriveDurationFromRange(start, end) {
+  if (!start || !end) return null;
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime())) {
+    return null;
+  }
+
+  const diffMs = endDate - startDate;
+  if (diffMs <= 0) return null;
+
+  let remainingSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(remainingSeconds / 86400);
+  remainingSeconds -= days * 86400;
+  const hours = Math.floor(remainingSeconds / 3600);
+  remainingSeconds -= hours * 3600;
+  const mins = Math.floor(remainingSeconds / 60);
+
+  return { days, hours, mins };
 }
 
 function makeActionButton(icon, label, handler, extraClass = "") {
@@ -710,7 +735,10 @@ function editDailyTask(id) {
   dailyEditInputEl.value = task.text ?? "";
   dailyEditCommentEl.value = task.comments ?? "";
   dailyEditStartEl.value = formatDateForInput(task.startTime);
-  dailyEditEndEl.value = formatDateForInput(task.endTime);
+  const duration = deriveDurationFromRange(task.startTime, task.endTime);
+  dailyEditEndDaysEl.value = duration?.days ?? "";
+  dailyEditEndHoursEl.value = duration?.hours ?? "";
+  dailyEditEndMinsEl.value = duration?.mins ?? "";
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
   dailyEditColorEl.dataset.touched = "false";
   dailyEditDialogEl.showModal();
@@ -1446,8 +1474,14 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const text = dailyEditInputEl.value.trim();
   const comments = dailyEditCommentEl.value.trim();
   const startTime = parseDateInput(dailyEditStartEl.value);
-  const endTime = parseDateInput(dailyEditEndEl.value);
   const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
+  const endTime =
+    computeEndFromDuration(
+      startTime,
+      dailyEditEndDaysEl.value,
+      dailyEditEndHoursEl.value,
+      dailyEditEndMinsEl.value
+    ) ?? currentTask?.endTime ?? null;
   const color =
     dailyEditColorEl.dataset.touched === "true"
       ? dailyEditColorEl.value?.trim() || null
