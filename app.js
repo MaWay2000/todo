@@ -76,12 +76,17 @@ const formatDuration = (start, end) => {
   return parts.length ? parts.join(" ") : "0s";
 };
 
-const getTimeLeftInfo = (end) => {
+const getTimeLeftInfo = (end, referenceDate = null) => {
   if (!end) return null;
   const endDate = new Date(end);
   if (!Number.isFinite(endDate.getTime())) return null;
 
-  const diffMs = endDate - new Date();
+  const reference = referenceDate ? new Date(referenceDate) : new Date();
+  const effectiveReference = Number.isFinite(reference.getTime())
+    ? reference
+    : new Date();
+
+  const diffMs = endDate - effectiveReference;
   const isPast = diffMs < 0;
   const remainingSeconds = Math.abs(Math.floor(diffMs / 1000));
   const units = [
@@ -419,7 +424,9 @@ function renderTodos() {
       schedule.className = "time-meta";
 
       if (todo.endTime) {
-        const timeLeftInfo = getTimeLeftInfo(todo.endTime);
+        const timeLeftReference =
+          todo.completed && todo.completedAt ? todo.completedAt : null;
+        const timeLeftInfo = getTimeLeftInfo(todo.endTime, timeLeftReference);
         if (timeLeftInfo) {
           const timeLeftChip = document.createElement("span");
           timeLeftChip.className = "meta-chip accent";
@@ -553,7 +560,9 @@ function renderTodos() {
       )}`;
     }
     const timeLeftMeta = document.createElement("div");
-    const timeLeftInfo = getTimeLeftInfo(todo.endTime);
+    const timeLeftReference =
+      todo.completed && todo.completedAt ? todo.completedAt : null;
+    const timeLeftInfo = getTimeLeftInfo(todo.endTime, timeLeftReference);
     if (timeLeftInfo) {
       timeLeftMeta.innerHTML = `<strong>Time left:</strong> ${timeLeftInfo.text}`;
       if (timeLeftInfo.isPast) {
