@@ -350,7 +350,8 @@ function saveDailyTasks() {
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
-  const stackedLayout = showingDeleted || filter === "completed";
+  const stackedLayout =
+    showingDeleted || filter === "completed" || filter === "all";
   const isCompletedView = filter === "completed";
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const filtered = todos
@@ -379,6 +380,12 @@ function renderTodos() {
 
       return firstTime - secondTime;
     });
+  }
+
+  if (filter === "all") {
+    filtered.sort((first, second) =>
+      (second.createdAt ?? "").localeCompare(first.createdAt ?? "")
+    );
   }
 
   if (filtered.length === 0) {
