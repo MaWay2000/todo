@@ -115,6 +115,25 @@ textarea {
   min-height: 96px;
 }
 
+.color-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+#todo-color,
+#edit-color {
+  padding: 0.35rem;
+  width: 3.25rem;
+  height: 3rem;
+  cursor: pointer;
+}
+
+.color-hint {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 button {
   border: none;
   border-radius: 14px;
@@ -298,6 +317,12 @@ button.secondary:hover {
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
 
+.todo-item.has-color {
+  border-color: var(--task-color, var(--accent));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
 .todo-list.stacked-layout .todo-item {
   position: relative;
   left: auto;
@@ -387,6 +412,16 @@ button.secondary:hover {
 
 .todo-shell:active {
   cursor: grabbing;
+}
+
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
 }
 
 .todo-title {
