@@ -362,6 +362,25 @@ function renderTodos() {
       return true;
     });
 
+  if (isCompletedView) {
+    filtered.sort((first, second) => {
+      const firstEnd = first.completedAt ?? first.endTime;
+      const secondEnd = second.completedAt ?? second.endTime;
+
+      const firstTime = (() => {
+        const value = firstEnd ? new Date(firstEnd).getTime() : NaN;
+        return Number.isFinite(value) ? value : Infinity;
+      })();
+
+      const secondTime = (() => {
+        const value = secondEnd ? new Date(secondEnd).getTime() : NaN;
+        return Number.isFinite(value) ? value : Infinity;
+      })();
+
+      return firstTime - secondTime;
+    });
+  }
+
   if (filtered.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty-state";
