@@ -153,8 +153,48 @@
         </div>
         <label class="sr-only" for="daily-edit-start">Start time</label>
         <input id="daily-edit-start" name="daily-edit-start" type="datetime-local" />
-        <label class="sr-only" for="daily-edit-end">End time</label>
-        <input id="daily-edit-end" name="daily-edit-end" type="datetime-local" />
+        <div class="duration-group" role="group" aria-labelledby="daily-duration-label">
+          <div class="duration-label-row">
+            <span id="daily-duration-label">Time to finish</span>
+          </div>
+          <div class="duration-inputs">
+            <label class="duration-input" for="daily-edit-end-days">
+              <span class="duration-input-label">D</span>
+              <input
+                id="daily-edit-end-days"
+                name="daily-edit-end-days"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                placeholder="0"
+              />
+            </label>
+            <label class="duration-input" for="daily-edit-end-hours">
+              <span class="duration-input-label">H</span>
+              <input
+                id="daily-edit-end-hours"
+                name="daily-edit-end-hours"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="23"
+                placeholder="00"
+              />
+            </label>
+            <label class="duration-input" for="daily-edit-end-mins">
+              <span class="duration-input-label">Min</span>
+              <input
+                id="daily-edit-end-mins"
+                name="daily-edit-end-mins"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="59"
+                placeholder="00"
+              />
+            </label>
+          </div>
+        </div>
         <div class="modal-actions">
           <button id="cancel-daily-edit" class="secondary" type="button">Cancel</button>
           <button type="submit">Save</button>
