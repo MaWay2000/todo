@@ -438,13 +438,6 @@ function renderTodos() {
         }
       }
 
-      if (todo.startTime && todo.endTime) {
-        const startChip = document.createElement("span");
-        startChip.className = "meta-chip";
-        startChip.textContent = `Start ${formatDateTime(todo.startTime)}`;
-        schedule.appendChild(startChip);
-      }
-
       if (schedule.childElementCount > 0) {
         shell.appendChild(schedule);
       }
