@@ -418,7 +418,7 @@ function renderTodos() {
     shell.appendChild(status);
     shell.appendChild(title);
 
-    const hasSchedule = todo.startTime || todo.endTime;
+    const hasSchedule = Boolean(todo.endTime);
     if (hasSchedule) {
       const schedule = document.createElement("div");
       schedule.className = "time-meta";
@@ -436,7 +436,9 @@ function renderTodos() {
           }
           schedule.appendChild(timeLeftChip);
         }
-      } else if (todo.startTime) {
+      }
+
+      if (todo.startTime && todo.endTime) {
         const startChip = document.createElement("span");
         startChip.className = "meta-chip";
         startChip.textContent = `Start ${formatDateTime(todo.startTime)}`;
@@ -554,7 +556,7 @@ function renderTodos() {
       todo.createdAt
     )}`;
     const startMeta = document.createElement("div");
-    if (todo.startTime) {
+    if (todo.startTime && todo.endTime) {
       startMeta.innerHTML = `<strong>Start:</strong> ${formatDateTime(
         todo.startTime
       )}`;
