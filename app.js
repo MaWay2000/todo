@@ -35,6 +35,7 @@ const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
+const DRAG_PERSIST_INTERVAL = 200;
 let activeEditId = null;
 let activeDailyEditId = null;
 let timeRefreshHandle = null;
@@ -981,6 +982,32 @@ function attachDrag(handle, item, id, callbacks = {}) {
 
     let isDragging = false;
     const dragThreshold = 3;
+    let lastPersist = 0;
+
+    const persistPosition = (x, y, finalize = false) => {
+      let changed = false;
+      todos = todos.map((todoItem) => {
+        if (todoItem.id !== id) return todoItem;
+        const nextNeedsPositioning = finalize ? false : todoItem.needsPositioning;
+        if (
+          todoItem.position?.x === x &&
+          todoItem.position?.y === y &&
+          todoItem.needsPositioning === nextNeedsPositioning
+        ) {
+          return todoItem;
+        }
+        changed = true;
+        return {
+          ...todoItem,
+          position: { x, y },
+          needsPositioning: nextNeedsPositioning,
+        };
+      });
+
+      if (changed) {
+        saveTodos();
+      }
+    };
 
     const onMove = (moveEvent) => {
       const deltaX = moveEvent.clientX - startX;
@@ -1012,6 +1039,14 @@ function attachDrag(handle, item, id, callbacks = {}) {
       item.style.left = `${nextX}px`;
       item.style.top = `${nextY}px`;
       updateCanvasHeight();
+
+      if (isDragging) {
+        const now = Date.now();
+        if (now - lastPersist > DRAG_PERSIST_INTERVAL) {
+          persistPosition(nextX, nextY);
+          lastPersist = now;
+        }
+      }
     };
 
     const onUp = () => {
@@ -1024,16 +1059,7 @@ function attachDrag(handle, item, id, callbacks = {}) {
         if (todo.needsPositioning) {
           item.classList.remove("is-new");
         }
-        todos = todos.map((todoItem) =>
-          todoItem.id === id
-            ? {
-                ...todoItem,
-                position: { x: left, y: top },
-                needsPositioning: false,
-              }
-            : todoItem
-        );
-        saveTodos();
+        persistPosition(left, top, true);
         updateCanvasHeight();
       }
 
