@@ -12,6 +12,7 @@ const startEl = document.getElementById("todo-start");
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
+const colorEl = document.getElementById("todo-color");
 const typeSelectEl = document.getElementById("todo-type");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
@@ -22,6 +23,7 @@ const editInputEl = document.getElementById("edit-input");
 const editCommentEl = document.getElementById("edit-comment");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
+const editColorEl = document.getElementById("edit-color");
 const cancelEditEl = document.getElementById("cancel-edit");
 const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
 const dailyEditFormEl = document.getElementById("daily-edit-form");
@@ -33,6 +35,7 @@ const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
+const DEFAULT_COLOR = "#38bdf8";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
 const DRAG_PERSIST_INTERVAL = 200;
@@ -276,6 +279,7 @@ function ensureLayoutDefaults() {
     const startTime = todo.startTime ?? null;
     const endTime = todo.endTime ?? null;
     const comments = todo.comments ?? "";
+    const color = todo.color ?? null;
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
     const deletedAt = todo.deletedAt ?? (deleted ? createdAt : null);
@@ -307,6 +311,7 @@ function ensureLayoutDefaults() {
       startTime,
       endTime,
       comments,
+      color,
       showActions,
       deleted,
       deletedAt,
@@ -413,6 +418,12 @@ function renderTodos() {
       "todo-item" +
       (todo.completed && !todo.deleted ? " completed" : "") +
       (todo.deleted ? " deleted" : "");
+    item.classList.toggle("has-color", Boolean(todo.color));
+    if (todo.color) {
+      item.style.setProperty("--task-color", todo.color);
+    } else {
+      item.style.removeProperty("--task-color");
+    }
     if (todo.needsPositioning) {
       item.classList.add("is-new");
     }
@@ -433,6 +444,14 @@ function renderTodos() {
 
     const shell = document.createElement("div");
     shell.className = "todo-shell";
+
+    if (todo.color) {
+      const colorDot = document.createElement("span");
+      colorDot.className = "color-dot";
+      colorDot.style.backgroundColor = todo.color;
+      colorDot.title = `Task color ${todo.color}`;
+      shell.appendChild(colorDot);
+    }
 
     const status = document.createElement("span");
     status.className = "status-pill";
@@ -575,6 +594,12 @@ function renderTodos() {
     created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
       todo.createdAt
     )}`;
+    const colorMeta = document.createElement("div");
+    if (todo.color) {
+      colorMeta.innerHTML = `<strong>Color:</strong> <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span class="color-dot" aria-hidden="true" style="background-color: ${todo.color}; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);"></span> ${todo.color}</span>`;
+    } else {
+      colorMeta.innerHTML = `<strong>Color:</strong> None`;
+    }
     const startMeta = document.createElement("div");
     if (todo.startTime && todo.endTime) {
       startMeta.innerHTML = `<strong>Start:</strong> ${formatDateTime(
@@ -611,6 +636,7 @@ function renderTodos() {
       hasComment ? todo.comments : "No comments"
     }`;
     details.appendChild(created);
+    details.appendChild(colorMeta);
     if (todo.startTime) {
       details.appendChild(startMeta);
     }
@@ -783,7 +809,13 @@ function renderCurrentView() {
   renderTodos();
 }
 
-function addTodo(text, comments = "", startTime = null, endTime = null) {
+function addTodo(
+  text,
+  comments = "",
+  startTime = null,
+  endTime = null,
+  color = null
+) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
@@ -800,6 +832,7 @@ function addTodo(text, comments = "", startTime = null, endTime = null) {
     startTime,
     endTime,
     comments: cleanedComments,
+    color,
     showActions: false,
     deleted: false,
     needsPositioning: true,
@@ -933,6 +966,8 @@ function editTodo(id) {
   editCommentEl.value = todo.comments ?? "";
   editStartEl.value = formatDateForInput(todo.startTime);
   editEndEl.value = formatDateForInput(todo.endTime);
+  editColorEl.value = todo.color ?? DEFAULT_COLOR;
+  editColorEl.dataset.touched = "false";
   editDialogEl.showModal();
   editInputEl.focus();
 }
@@ -1210,10 +1245,11 @@ formEl.addEventListener("submit", (event) => {
     endHoursEl.value,
     endMinsEl.value
   );
+  const color = colorEl.value?.trim() || null;
   const added =
     taskType === "daily"
       ? addDailyTask(inputEl.value, commentEl.value)
-      : addTodo(inputEl.value, commentEl.value, startTime, endTime);
+      : addTodo(inputEl.value, commentEl.value, startTime, endTime, color);
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
@@ -1221,6 +1257,7 @@ formEl.addEventListener("submit", (event) => {
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
+    colorEl.value = DEFAULT_COLOR;
     typeSelectEl.value = "one-time";
     dialogEl.close();
   }
@@ -1233,6 +1270,7 @@ openAddEl.addEventListener("click", () => {
   endDaysEl.value = "";
   endHoursEl.value = "";
   endMinsEl.value = "";
+  colorEl.value = DEFAULT_COLOR;
   typeSelectEl.value = "one-time";
   dialogEl.showModal();
   inputEl.focus();
@@ -1242,12 +1280,21 @@ cancelAddEl.addEventListener("click", () => {
   dialogEl.close();
 });
 
+editColorEl.addEventListener("input", () => {
+  editColorEl.dataset.touched = "true";
+});
+
 editFormEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = editInputEl.value.trim();
   const comments = editCommentEl.value.trim();
   const startTime = parseDateInput(editStartEl.value);
   const endTime = parseDateInput(editEndEl.value);
+  const currentTodo = todos.find((todo) => todo.id === activeEditId);
+  const color =
+    editColorEl.dataset.touched === "true"
+      ? editColorEl.value?.trim() || null
+      : currentTodo?.color ?? null;
 
   if (!activeEditId || !text) return;
 
@@ -1258,10 +1305,11 @@ editFormEl.addEventListener("submit", (event) => {
       todo.text !== text ||
       (todo.comments ?? "") !== comments ||
       todo.startTime !== startTime ||
-      todo.endTime !== endTime
+      todo.endTime !== endTime ||
+      (todo.color ?? null) !== color
     ) {
       changed = true;
-      return { ...todo, text, comments, startTime, endTime };
+      return { ...todo, text, comments, startTime, endTime, color };
     }
     return todo;
   });
@@ -1277,11 +1325,13 @@ editFormEl.addEventListener("submit", (event) => {
 
 cancelEditEl.addEventListener("click", () => {
   activeEditId = null;
+  editColorEl.dataset.touched = "false";
   editDialogEl.close();
 });
 
 editDialogEl.addEventListener("close", () => {
   activeEditId = null;
+  editColorEl.dataset.touched = "false";
 });
 
 dailyEditFormEl.addEventListener("submit", (event) => {
