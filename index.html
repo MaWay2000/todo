@@ -140,6 +140,17 @@
           rows="3"
           placeholder="Comments (optional)"
         ></textarea>
+        <label class="field-label" for="daily-edit-color">Color</label>
+        <div class="color-input-row">
+          <input
+            id="daily-edit-color"
+            name="daily-edit-color"
+            type="color"
+            value="#38bdf8"
+            aria-label="Daily task color"
+          />
+          <span class="color-hint">Pick a color to use when this template creates a task.</span>
+        </div>
         <label class="sr-only" for="daily-edit-start">Start time</label>
         <input id="daily-edit-start" name="daily-edit-start" type="datetime-local" />
         <label class="sr-only" for="daily-edit-end">End time</label>
