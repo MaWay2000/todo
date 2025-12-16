@@ -34,8 +34,10 @@ const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
+const TIME_REFRESH_INTERVAL = 30000;
 let activeEditId = null;
 let activeDailyEditId = null;
+let timeRefreshHandle = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -1268,3 +1270,8 @@ loadDailyTasks();
 loadTodos();
 ensureLayoutDefaults();
 setFilter(filter);
+
+if (timeRefreshHandle) {
+  clearInterval(timeRefreshHandle);
+}
+timeRefreshHandle = setInterval(renderCurrentView, TIME_REFRESH_INTERVAL);
