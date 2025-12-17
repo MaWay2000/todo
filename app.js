@@ -1076,6 +1076,24 @@ function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
   );
 }
 
+function maybeAutoTriggerDailyTasks(referenceDate = new Date()) {
+  const now = new Date(referenceDate);
+  if (!Number.isFinite(now.getTime())) return;
+
+  const pendingTriggers = dailyTasks.filter((task) => {
+    if (task.lastTriggeredAt && isToday(task.lastTriggeredAt)) return false;
+    if (!canTriggerDailyTaskToday(task, now)) return false;
+
+    if (!task.startTime) return true;
+    const scheduledStartIso = rebaseDateTimeToReference(task.startTime, now);
+    const scheduledStart = scheduledStartIso ? new Date(scheduledStartIso) : null;
+    if (!scheduledStart || !Number.isFinite(scheduledStart.getTime())) return true;
+    return now >= scheduledStart;
+  });
+
+  pendingTriggers.forEach((task) => triggerDailyTask(task.id));
+}
+
 function describeDailySchedule(task) {
   const parts = [];
   if (task.triggerDays?.length) {
@@ -1672,9 +1690,13 @@ filterButtons.forEach((button) => {
 loadDailyTasks();
 loadTodos();
 ensureLayoutDefaults();
+maybeAutoTriggerDailyTasks();
 setFilter(filter);
 
 if (timeRefreshHandle) {
   clearInterval(timeRefreshHandle);
 }
-timeRefreshHandle = setInterval(renderCurrentView, TIME_REFRESH_INTERVAL);
+timeRefreshHandle = setInterval(() => {
+  maybeAutoTriggerDailyTasks();
+  renderCurrentView();
+}, TIME_REFRESH_INTERVAL);
