@@ -1125,6 +1125,9 @@ function removeCategory(id) {
 
 function renderCategories() {
   if (!categoryPanelEl) return;
+  const isCategoryView = filter === "categories";
+  if (!isCategoryView) return;
+
   categoryPanelEl.hidden = false;
   listEl.hidden = true;
   categoryListEl.innerHTML = "";
