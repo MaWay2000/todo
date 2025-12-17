@@ -43,6 +43,7 @@ const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
+const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
   "input[name='daily-edit-weekday']"
 );
@@ -488,7 +489,7 @@ function syncCategoriesFromTodos() {
 }
 
 function renderCategoryOptions() {
-  const selects = [categoryEl, editCategoryEl];
+  const selects = [categoryEl, editCategoryEl, dailyEditCategoryEl];
   const sorted = sortCategories(categories);
 
   selects.forEach((select) => {
@@ -911,6 +912,9 @@ function editDailyTask(id) {
   dailyEditEndHoursEl.value = duration?.hours ?? "";
   dailyEditEndMinsEl.value = duration?.mins ?? "";
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
+  if (dailyEditCategoryEl) {
+    dailyEditCategoryEl.value = task.category ?? "";
+  }
   setSelectedWeekdays(dailyEditWeekdayInputs, task.triggerDays ?? []);
   dailyEditIntervalDaysEl.value = task.intervalDays ?? "";
   dailyEditColorEl.dataset.touched = "false";
@@ -972,6 +976,7 @@ function renderDailyTasks() {
     const created = task.createdAt
       ? `Created ${formatDateTime(task.createdAt)}`
       : "Creation time unknown";
+    const categoryName = task.category?.trim() || UNCATEGORIZED_LABEL;
     const scheduleParts = [];
     if (task.startTime) {
       scheduleParts.push(`<div><strong>Start:</strong> ${formatDateTime(task.startTime)}</div>`);
@@ -999,6 +1004,7 @@ function renderDailyTasks() {
     meta.innerHTML = [
       `<div><strong>${lastTrigger}</strong></div>`,
       `<div>${created}</div>`,
+      `<div><strong>Category:</strong> ${categoryName}</div>`,
       ...scheduleParts,
       colorMeta,
       `<div><strong>Comments:</strong> ${comments}</div>`,
@@ -1281,7 +1287,7 @@ function addTodo(
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
-  const cleanedCategory = category.trim();
+  const cleanedCategory = (category ?? "").trim();
   const id = crypto.randomUUID();
   todos.unshift({
     id,
@@ -1312,12 +1318,14 @@ function addDailyTask(
   startTime = null,
   endTime = null,
   color = null,
+  category = "",
   triggerDays = [],
   intervalDays = null
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
+  const cleanedCategory = (category ?? "").trim();
   dailyTasks.unshift({
     id: crypto.randomUUID(),
     text: trimmed,
@@ -1325,6 +1333,7 @@ function addDailyTask(
     startTime,
     endTime,
     color,
+    category: cleanedCategory,
     triggerDays: triggerDays ?? [],
     intervalDays: intervalDays ?? null,
     createdAt: new Date().toISOString(),
@@ -1865,6 +1874,7 @@ formEl.addEventListener("submit", (event) => {
           startTime,
           endTime,
           color,
+          category,
           triggerDays,
           intervalDays
         )
@@ -1990,6 +2000,7 @@ dailyEditFormEl.addEventListener("submit", (event) => {
     ) ?? currentTask?.endTime ?? null;
   const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
   const intervalDays = parseIntervalValue(dailyEditIntervalDaysEl);
+  const category = dailyEditCategoryEl?.value?.trim() ?? "";
   const color =
     dailyEditColorEl.dataset.touched === "true"
       ? dailyEditColorEl.value?.trim() || null
@@ -2006,6 +2017,7 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       task.startTime !== startTime ||
       task.endTime !== endTime ||
       (task.color ?? null) !== color ||
+      (task.category ?? "") !== category ||
       JSON.stringify(task.triggerDays ?? []) !== JSON.stringify(triggerDays) ||
       (task.intervalDays ?? null) !== (intervalDays ?? null)
     ) {
@@ -2017,6 +2029,7 @@ dailyEditFormEl.addEventListener("submit", (event) => {
         startTime,
         endTime,
         color,
+        category,
         triggerDays,
         intervalDays,
       };
