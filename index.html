@@ -90,13 +90,9 @@
           <option value="daily">Daily task</option>
         </select>
         <label class="field-label" for="todo-category">Category</label>
-        <input
-          id="todo-category"
-          name="category"
-          list="category-options"
-          placeholder="e.g. Work, Personal"
-          aria-label="Task category"
-        />
+        <select id="todo-category" name="category" aria-label="Task category">
+          <option value="">No category</option>
+        </select>
         <div id="daily-options" class="daily-options" hidden>
           <p class="field-label">Daily schedule</p>
           <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
@@ -151,13 +147,9 @@
         <label class="sr-only" for="edit-end">End time</label>
         <input id="edit-end" name="edit-end" type="datetime-local" />
         <label class="field-label" for="edit-category">Category</label>
-        <input
-          id="edit-category"
-          name="edit-category"
-          list="category-options"
-          placeholder="e.g. Work, Personal"
-          aria-label="Task category"
-        />
+        <select id="edit-category" name="edit-category" aria-label="Task category">
+          <option value="">No category</option>
+        </select>
         <div class="modal-actions">
           <button id="cancel-edit" class="secondary" type="button">Cancel</button>
           <button type="submit">Save</button>
@@ -291,7 +283,6 @@
       <ul id="category-list" class="category-list" aria-live="polite"></ul>
     </section>
 
-    <datalist id="category-options"></datalist>
 
     <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
   </main>
