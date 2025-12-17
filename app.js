@@ -13,6 +13,7 @@ const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
 const colorEl = document.getElementById("todo-color");
+const categoryEl = document.getElementById("todo-category");
 const typeSelectEl = document.getElementById("todo-type");
 const dailyOptionsEl = document.getElementById("daily-options");
 const dailyWeekdayInputs = document.querySelectorAll(
@@ -29,6 +30,7 @@ const editCommentEl = document.getElementById("edit-comment");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
 const editColorEl = document.getElementById("edit-color");
+const editCategoryEl = document.getElementById("edit-category");
 const cancelEditEl = document.getElementById("cancel-edit");
 const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
 const dailyEditFormEl = document.getElementById("daily-edit-form");
@@ -54,6 +56,7 @@ const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
 const DRAG_PERSIST_INTERVAL = 200;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const UNCATEGORIZED_LABEL = "Uncategorized";
 let activeEditId = null;
 let activeDailyEditId = null;
 let timeRefreshHandle = null;
@@ -342,6 +345,7 @@ function ensureLayoutDefaults() {
     const startTime = todo.startTime ?? null;
     const endTime = todo.endTime ?? null;
     const comments = todo.comments ?? "";
+    const category = todo.category ?? "";
     const color = todo.color ?? null;
     const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
@@ -375,6 +379,7 @@ function ensureLayoutDefaults() {
       endTime,
       comments,
       color,
+      category,
       showActions,
       deleted,
       deletedAt,
@@ -419,8 +424,9 @@ function saveDailyTasks() {
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
+  const isCategoryView = filter === "categories";
   const stackedLayout =
-    showingDeleted || filter === "completed" || filter === "all";
+    showingDeleted || filter === "completed" || filter === "all" || isCategoryView;
   const isCompletedView = filter === "completed";
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const filtered = todos
@@ -429,6 +435,7 @@ function renderTodos() {
       if (filter === "active") return !todo.completed;
       if (filter === "completed") return todo.completed;
       if (filter === "daily") return isToday(todo.createdAt);
+      if (filter === "categories") return true;
       return true;
     });
 
@@ -457,6 +464,17 @@ function renderTodos() {
     );
   }
 
+  if (isCategoryView) {
+    filtered.sort((first, second) => {
+      const firstCategory = (first.category?.trim() || UNCATEGORIZED_LABEL).toLowerCase();
+      const secondCategory = (second.category?.trim() || UNCATEGORIZED_LABEL).toLowerCase();
+      if (firstCategory === secondCategory) {
+        return (second.createdAt ?? "").localeCompare(first.createdAt ?? "");
+      }
+      return firstCategory.localeCompare(secondCategory);
+    });
+  }
+
   if (filtered.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty-state";
@@ -464,6 +482,7 @@ function renderTodos() {
       active: "No active tasks. Add something above!",
       completed: "No completed tasks yet.",
       daily: "No tasks added today.",
+      categories: "No categorized tasks yet.",
       deleted: "No deleted tasks.",
       all: "No tasks yet. Add something above!",
     };
@@ -520,12 +539,21 @@ function renderTodos() {
     status.className = "status-pill";
     status.textContent = todo.deleted ? "Deleted" : todo.completed ? "Done" : "";
 
+    const categoryName = todo.category?.trim() || "";
+    const categoryBadge = document.createElement("span");
+    categoryBadge.className = "category-pill";
+    categoryBadge.textContent = categoryName || UNCATEGORIZED_LABEL;
+    categoryBadge.dataset.empty = categoryName ? "false" : "true";
+
     const title = document.createElement("span");
     title.className = "todo-title";
     title.textContent = todo.text;
 
     shell.appendChild(status);
     shell.appendChild(title);
+    if (categoryName || isCategoryView) {
+      shell.appendChild(categoryBadge);
+    }
 
     const hasSchedule = Boolean(todo.endTime);
     if (hasSchedule) {
@@ -669,6 +697,10 @@ function renderTodos() {
         todo.startTime
       )}`;
     }
+    const categoryMeta = document.createElement("div");
+    categoryMeta.innerHTML = `<strong>Category:</strong> ${
+      categoryName || UNCATEGORIZED_LABEL
+    }`;
     const timeLeftMeta = document.createElement("div");
     const timeLeftReference =
       todo.completed && todo.completedAt ? todo.completedAt : null;
@@ -700,6 +732,7 @@ function renderTodos() {
     }`;
     details.appendChild(created);
     details.appendChild(colorMeta);
+    details.appendChild(categoryMeta);
     if (todo.startTime) {
       details.appendChild(startMeta);
     }
@@ -930,11 +963,13 @@ function addTodo(
   comments = "",
   startTime = null,
   endTime = null,
-  color = null
+  color = null,
+  category = ""
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
+  const cleanedCategory = category.trim();
   const id = crypto.randomUUID();
   todos.unshift({
     id,
@@ -949,6 +984,7 @@ function addTodo(
     endTime,
     comments: cleanedComments,
     color,
+    category: cleanedCategory,
     showActions: false,
     deleted: false,
     needsPositioning: true,
@@ -1128,7 +1164,8 @@ function triggerDailyTask(id) {
     template.comments ?? "",
     startTime,
     endTime,
-    template.color ?? null
+    template.color ?? null,
+    template.category ?? ""
   );
   if (!created) return;
 
@@ -1224,6 +1261,7 @@ function editTodo(id) {
   editStartEl.value = formatDateForInput(todo.startTime);
   editEndEl.value = formatDateForInput(todo.endTime);
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
+  editCategoryEl.value = todo.category ?? "";
   editColorEl.dataset.touched = "false";
   editDialogEl.showModal();
   editInputEl.focus();
@@ -1504,6 +1542,7 @@ formEl.addEventListener("submit", (event) => {
     endMinsEl.value
   );
   const color = colorEl.value?.trim() || null;
+  const category = categoryEl.value?.trim() ?? "";
   const triggerDays = taskType === "daily" ? parseSelectedWeekdays(dailyWeekdayInputs) : [];
   const intervalDays = taskType === "daily" ? parseIntervalValue(dailyIntervalDaysEl) : null;
   const added =
@@ -1517,7 +1556,7 @@ formEl.addEventListener("submit", (event) => {
           triggerDays,
           intervalDays
         )
-      : addTodo(inputEl.value, commentEl.value, startTime, endTime, color);
+      : addTodo(inputEl.value, commentEl.value, startTime, endTime, color, category);
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
@@ -1526,6 +1565,7 @@ formEl.addEventListener("submit", (event) => {
     endHoursEl.value = "";
     endMinsEl.value = "";
     colorEl.value = DEFAULT_COLOR;
+    categoryEl.value = "";
     typeSelectEl.value = "one-time";
     dailyWeekdayInputs.forEach((input) => {
       input.checked = false;
@@ -1544,6 +1584,7 @@ openAddEl.addEventListener("click", () => {
   endHoursEl.value = "";
   endMinsEl.value = "";
   colorEl.value = DEFAULT_COLOR;
+  categoryEl.value = "";
   typeSelectEl.value = "one-time";
   dailyWeekdayInputs.forEach((input) => {
     input.checked = false;
@@ -1577,6 +1618,7 @@ editFormEl.addEventListener("submit", (event) => {
   const startTime = parseDateInput(editStartEl.value);
   const endTime = parseDateInput(editEndEl.value);
   const currentTodo = todos.find((todo) => todo.id === activeEditId);
+  const category = editCategoryEl.value.trim();
   const color =
     editColorEl.dataset.touched === "true"
       ? editColorEl.value?.trim() || null
@@ -1592,10 +1634,11 @@ editFormEl.addEventListener("submit", (event) => {
       (todo.comments ?? "") !== comments ||
       todo.startTime !== startTime ||
       todo.endTime !== endTime ||
-      (todo.color ?? null) !== color
+      (todo.color ?? null) !== color ||
+      (todo.category ?? "") !== category
     ) {
       changed = true;
-      return { ...todo, text, comments, startTime, endTime, color };
+      return { ...todo, text, comments, startTime, endTime, color, category };
     }
     return todo;
   });

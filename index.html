@@ -15,6 +15,7 @@
           <button class="filter-button" data-filter="completed" type="button">Completed</button>
           <button class="filter-button" data-filter="all" type="button">All</button>
           <button class="filter-button" data-filter="daily" type="button">Daily tasks</button>
+          <button class="filter-button" data-filter="categories" type="button">Categories</button>
           <button class="filter-button" data-filter="deleted" type="button">Deleted</button>
         </div>
         <button id="open-add" type="button">New</button>
@@ -88,6 +89,13 @@
           <option value="one-time" selected>One-time task</option>
           <option value="daily">Daily task</option>
         </select>
+        <label class="field-label" for="todo-category">Category</label>
+        <input
+          id="todo-category"
+          name="category"
+          placeholder="e.g. Work, Personal"
+          aria-label="Task category"
+        />
         <div id="daily-options" class="daily-options" hidden>
           <p class="field-label">Daily schedule</p>
           <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
@@ -141,6 +149,13 @@
         <input id="edit-start" name="edit-start" type="datetime-local" />
         <label class="sr-only" for="edit-end">End time</label>
         <input id="edit-end" name="edit-end" type="datetime-local" />
+        <label class="field-label" for="edit-category">Category</label>
+        <input
+          id="edit-category"
+          name="edit-category"
+          placeholder="e.g. Work, Personal"
+          aria-label="Task category"
+        />
         <div class="modal-actions">
           <button id="cancel-edit" class="secondary" type="button">Cancel</button>
           <button type="submit">Save</button>
