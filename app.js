@@ -239,6 +239,11 @@ const isToday = (value) => {
   );
 };
 
+function updateDailyOptionsVisibility() {
+  const isDailyTask = typeSelectEl.value === "daily";
+  dailyOptionsEl.hidden = !isDailyTask;
+}
+
 function getContentMinSize(item) {
   const style = window.getComputedStyle(item);
   const paddingX =
@@ -1490,7 +1495,7 @@ formEl.addEventListener("submit", (event) => {
       input.checked = false;
     });
     dailyIntervalDaysEl.value = "";
-    dailyOptionsEl.hidden = true;
+    updateDailyOptionsVisibility();
     dialogEl.close();
   }
 });
@@ -1508,7 +1513,7 @@ openAddEl.addEventListener("click", () => {
     input.checked = false;
   });
   dailyIntervalDaysEl.value = "";
-  dailyOptionsEl.hidden = true;
+  updateDailyOptionsVisibility();
   dialogEl.showModal();
   inputEl.focus();
 });
@@ -1517,9 +1522,9 @@ cancelAddEl.addEventListener("click", () => {
   dialogEl.close();
 });
 
-typeSelectEl.addEventListener("change", () => {
-  dailyOptionsEl.hidden = typeSelectEl.value !== "daily";
-});
+typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
+
+updateDailyOptionsVisibility();
 
 editColorEl.addEventListener("input", () => {
   editColorEl.dataset.touched = "true";

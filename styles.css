@@ -257,6 +257,10 @@ button.secondary:hover {
   padding: 0.9rem 1rem;
 }
 
+.daily-options[hidden] {
+  display: none;
+}
+
 .weekday-selector {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
