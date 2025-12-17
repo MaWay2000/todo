@@ -1,7 +1,9 @@
 const STORAGE_KEY = "local-todo-items";
 const DAILY_STORAGE_KEY = "local-daily-templates";
+const CATEGORY_STORAGE_KEY = "local-categories";
 let todos = [];
 let dailyTasks = [];
+let categories = [];
 let filter = "active";
 
 const listEl = document.getElementById("todo-list");
@@ -47,6 +49,11 @@ const dailyEditWeekdayInputs = document.querySelectorAll(
 const dailyEditIntervalDaysEl = document.getElementById("daily-edit-interval-days");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
+const categoryPanelEl = document.getElementById("category-panel");
+const categoryFormEl = document.getElementById("category-form");
+const categoryNameEl = document.getElementById("category-name");
+const categoryListEl = document.getElementById("category-list");
+const categoryOptionsEl = document.getElementById("category-options");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
@@ -59,6 +66,7 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
 let activeEditId = null;
 let activeDailyEditId = null;
+let activeCategoryEditId = null;
 let timeRefreshHandle = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -419,6 +427,86 @@ function loadDailyTasks() {
 
 function saveDailyTasks() {
   localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyTasks));
+}
+
+function loadCategories() {
+  try {
+    const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
+    categories = stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Failed to load categories", error);
+    categories = [];
+  }
+}
+
+function saveCategories() {
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+}
+
+function sortCategories(list) {
+  return [...list].sort((first, second) =>
+    first.name.localeCompare(second.name, undefined, { sensitivity: "base" })
+  );
+}
+
+function isDuplicateCategoryName(name, ignoreId = null) {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return false;
+  return categories.some(
+    (category) =>
+      category.id !== ignoreId && category.name.trim().toLowerCase() === normalized
+  );
+}
+
+function createCategory(name) {
+  return {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function registerCategory(name) {
+  const trimmed = name?.trim();
+  if (!trimmed || isDuplicateCategoryName(trimmed)) return;
+  categories = [...categories, createCategory(trimmed)];
+  saveCategories();
+  renderCategoryOptions();
+  if (filter === "categories") {
+    renderCategories();
+  }
+}
+
+function syncCategoriesFromTodos() {
+  const known = new Set(
+    categories.map((category) => category.name.trim().toLowerCase()).filter(Boolean)
+  );
+  const discovered = [];
+  [...todos, ...dailyTasks].forEach((entry) => {
+    const category = entry.category?.trim();
+    if (!category) return;
+    const normalized = category.toLowerCase();
+    if (!known.has(normalized)) {
+      known.add(normalized);
+      discovered.push(createCategory(category));
+    }
+  });
+
+  if (discovered.length > 0) {
+    categories = [...categories, ...sortCategories(discovered)];
+    saveCategories();
+    renderCategoryOptions();
+  }
+}
+
+function renderCategoryOptions() {
+  if (!categoryOptionsEl) return;
+  categoryOptionsEl.innerHTML = "";
+  sortCategories(categories).forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.name;
+    categoryOptionsEl.appendChild(option);
+  });
 }
 
 function renderTodos() {
@@ -950,7 +1038,213 @@ function renderDailyTasks() {
   listEl.style.height = "";
 }
 
+function getCategoryUsageCount(name) {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return 0;
+  return todos.filter((todo) => {
+    if (todo.deleted) return false;
+    const todoCategory = todo.category?.trim().toLowerCase();
+    return todoCategory === normalized;
+  }).length;
+}
+
+function startCategoryEdit(id) {
+  activeCategoryEditId = id;
+  renderCategories();
+}
+
+function cancelCategoryEdit() {
+  activeCategoryEditId = null;
+  renderCategories();
+}
+
+function updateCategoryName(id, nextName) {
+  const trimmed = nextName.trim();
+  const target = categories.find((category) => category.id === id);
+  if (!target || !trimmed || isDuplicateCategoryName(trimmed, id)) return;
+
+  const previousName = target.name.trim();
+  const previousNormalized = previousName.toLowerCase();
+  const nextNormalized = trimmed.toLowerCase();
+
+  categories = categories.map((category) =>
+    category.id === id ? { ...category, name: trimmed } : category
+  );
+
+  if (previousNormalized !== nextNormalized) {
+    const rename = (value) => {
+      const normalized = value?.trim().toLowerCase();
+      return normalized === previousNormalized ? trimmed : value;
+    };
+
+    todos = todos.map((todo) => ({ ...todo, category: rename(todo.category ?? "") }));
+    dailyTasks = dailyTasks.map((task) => ({
+      ...task,
+      category: rename(task.category ?? ""),
+    }));
+    saveTodos();
+    saveDailyTasks();
+  }
+
+  saveCategories();
+  renderCategoryOptions();
+  activeCategoryEditId = null;
+  renderCurrentView();
+}
+
+function removeCategory(id) {
+  const target = categories.find((category) => category.id === id);
+  if (!target) return;
+
+  const normalized = target.name.trim().toLowerCase();
+  categories = categories.filter((category) => category.id !== id);
+
+  todos = todos.map((todo) => {
+    const todoNormalized = todo.category?.trim().toLowerCase();
+    if (todoNormalized === normalized) {
+      return { ...todo, category: "" };
+    }
+    return todo;
+  });
+
+  dailyTasks = dailyTasks.map((task) => {
+    const taskNormalized = task.category?.trim().toLowerCase();
+    if (taskNormalized === normalized) {
+      return { ...task, category: "" };
+    }
+    return task;
+  });
+
+  saveCategories();
+  saveTodos();
+  saveDailyTasks();
+  renderCategoryOptions();
+  activeCategoryEditId = null;
+  renderCurrentView();
+}
+
+function renderCategories() {
+  if (!categoryPanelEl) return;
+  categoryPanelEl.hidden = false;
+  listEl.hidden = true;
+  categoryListEl.innerHTML = "";
+  const sorted = sortCategories(categories);
+
+  if (sorted.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty-state";
+    empty.textContent = "No categories yet. Add one above!";
+    categoryListEl.appendChild(empty);
+    return;
+  }
+
+  sorted.forEach((category) => {
+    const item = document.createElement("li");
+    item.className = "category-item";
+
+    if (category.id === activeCategoryEditId) {
+      const form = document.createElement("form");
+      form.className = "category-inline-form";
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const nextNameInput = form.elements.namedItem("next-name");
+        const nextName = nextNameInput.value.trim();
+        if (!nextName) {
+          nextNameInput.reportValidity();
+          return;
+        }
+        if (isDuplicateCategoryName(nextName, category.id)) {
+          nextNameInput.setCustomValidity("Category already exists.");
+          nextNameInput.reportValidity();
+          return;
+        }
+        nextNameInput.setCustomValidity("");
+        updateCategoryName(category.id, nextName);
+      });
+
+      const label = document.createElement("label");
+      label.className = "sr-only";
+      label.setAttribute("for", `category-edit-${category.id}`);
+      label.textContent = "Category name";
+
+      const input = document.createElement("input");
+      input.id = `category-edit-${category.id}`;
+      input.name = "next-name";
+      input.value = category.name;
+      input.required = true;
+      input.addEventListener("input", () => input.setCustomValidity(""));
+
+      const actions = document.createElement("div");
+      actions.className = "category-inline-actions";
+
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "submit";
+      saveBtn.textContent = "Save";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "secondary";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.addEventListener("click", cancelCategoryEdit);
+
+      actions.appendChild(saveBtn);
+      actions.appendChild(cancelBtn);
+      form.appendChild(label);
+      form.appendChild(input);
+      form.appendChild(actions);
+
+      item.appendChild(form);
+    } else {
+      const info = document.createElement("div");
+      info.className = "category-info";
+      const name = document.createElement("span");
+      name.className = "category-name";
+      name.textContent = category.name;
+      const usage = document.createElement("span");
+      usage.className = "category-usage";
+      const usageCount = getCategoryUsageCount(category.name);
+      usage.textContent =
+        usageCount === 1 ? "Used by 1 task" : `Used by ${usageCount} tasks`;
+      info.appendChild(name);
+      info.appendChild(usage);
+
+      const actions = document.createElement("div");
+      actions.className = "category-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "secondary";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => startCategoryEdit(category.id));
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => removeCategory(category.id));
+
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+
+      item.appendChild(info);
+      item.appendChild(actions);
+    }
+
+    categoryListEl.appendChild(item);
+  });
+}
+
 function renderCurrentView() {
+  const isCategoryView = filter === "categories";
+  if (categoryPanelEl) {
+    categoryPanelEl.hidden = !isCategoryView;
+  }
+  listEl.hidden = isCategoryView;
+  if (isCategoryView) {
+    renderCategories();
+    return;
+  }
+
   if (filter === "daily") {
     renderDailyTasks();
     return;
@@ -970,6 +1264,7 @@ function addTodo(
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
   const cleanedCategory = category.trim();
+  registerCategory(cleanedCategory);
   const id = crypto.randomUUID();
   todos.unshift({
     id,
@@ -1647,6 +1942,7 @@ editFormEl.addEventListener("submit", (event) => {
   editDialogEl.close();
 
   if (changed) {
+    registerCategory(category);
     saveTodos();
     renderCurrentView();
   }
@@ -1734,9 +2030,38 @@ filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
 });
 
+if (categoryFormEl) {
+  categoryFormEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = categoryNameEl.value.trim();
+    if (!name) {
+      categoryNameEl.reportValidity();
+      return;
+    }
+    if (isDuplicateCategoryName(name)) {
+      categoryNameEl.setCustomValidity("Category already exists.");
+      categoryNameEl.reportValidity();
+      return;
+    }
+    categoryNameEl.setCustomValidity("");
+    categories = [...categories, createCategory(name)];
+    saveCategories();
+    renderCategoryOptions();
+    categoryNameEl.value = "";
+    renderCategories();
+  });
+
+  categoryNameEl.addEventListener("input", () => {
+    categoryNameEl.setCustomValidity("");
+  });
+}
+
 loadDailyTasks();
 loadTodos();
+loadCategories();
 ensureLayoutDefaults();
+syncCategoriesFromTodos();
+renderCategoryOptions();
 maybeAutoTriggerDailyTasks();
 setFilter(filter);
 
