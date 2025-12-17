@@ -550,15 +550,15 @@ function renderTodos() {
 
       const firstTime = (() => {
         const value = firstEnd ? new Date(firstEnd).getTime() : NaN;
-        return Number.isFinite(value) ? value : Infinity;
+        return Number.isFinite(value) ? value : -Infinity;
       })();
 
       const secondTime = (() => {
         const value = secondEnd ? new Date(secondEnd).getTime() : NaN;
-        return Number.isFinite(value) ? value : Infinity;
+        return Number.isFinite(value) ? value : -Infinity;
       })();
 
-      return firstTime - secondTime;
+      return secondTime - firstTime;
     });
   }
 
