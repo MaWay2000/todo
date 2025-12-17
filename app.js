@@ -14,6 +14,11 @@ const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
 const colorEl = document.getElementById("todo-color");
 const typeSelectEl = document.getElementById("todo-type");
+const dailyOptionsEl = document.getElementById("daily-options");
+const dailyWeekdayInputs = document.querySelectorAll(
+  "input[name='daily-weekday']"
+);
+const dailyIntervalDaysEl = document.getElementById("daily-interval-days");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
@@ -34,6 +39,10 @@ const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
+const dailyEditWeekdayInputs = document.querySelectorAll(
+  "input[name='daily-edit-weekday']"
+);
+const dailyEditIntervalDaysEl = document.getElementById("daily-edit-interval-days");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const canvasMinHeight = 360;
@@ -44,6 +53,7 @@ const DEFAULT_COLOR = "#38bdf8";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
 const DRAG_PERSIST_INTERVAL = 200;
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 let activeEditId = null;
 let activeDailyEditId = null;
 let timeRefreshHandle = null;
@@ -185,6 +195,26 @@ function deriveDurationFromRange(start, end) {
   const mins = Math.floor(remainingSeconds / 60);
 
   return { days, hours, mins };
+}
+
+function parseSelectedWeekdays(inputs) {
+  return Array.from(inputs)
+    .filter((input) => input.checked)
+    .map((input) => Number.parseInt(input.value, 10))
+    .filter((value) => Number.isInteger(value) && value >= 0 && value <= 6);
+}
+
+function setSelectedWeekdays(inputs, values = []) {
+  const set = new Set(values ?? []);
+  inputs.forEach((input) => {
+    input.checked = set.has(Number.parseInt(input.value, 10));
+  });
+}
+
+function parseIntervalValue(input) {
+  const parsed = Number.parseInt(input?.value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
 }
 
 function makeActionButton(icon, label, handler, extraClass = "") {
@@ -740,6 +770,8 @@ function editDailyTask(id) {
   dailyEditEndHoursEl.value = duration?.hours ?? "";
   dailyEditEndMinsEl.value = duration?.mins ?? "";
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
+  setSelectedWeekdays(dailyEditWeekdayInputs, task.triggerDays ?? []);
+  dailyEditIntervalDaysEl.value = task.intervalDays ?? "";
   dailyEditColorEl.dataset.touched = "false";
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
@@ -812,6 +844,7 @@ function renderDailyTasks() {
         : formatDateTime(task.endTime);
       scheduleParts.push(`<div><strong>End:</strong> ${endMeta}</div>`);
     }
+    scheduleParts.push(`<div><strong>Schedule:</strong> ${describeDailySchedule(task)}</div>`);
     const comments = task.comments?.trim()
       ? task.comments
       : "No comments";
@@ -833,12 +866,17 @@ function renderDailyTasks() {
     const actions = document.createElement("div");
     actions.className = "action-row";
     const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
+    const canTrigger = canTriggerDailyTaskToday(task);
     const triggerBtn = makeActionButton(
       "➕",
-      alreadyTriggered ? "Already created today" : "Create today's task",
+      alreadyTriggered
+        ? "Already created today"
+        : canTrigger
+          ? "Create today's task"
+          : "Not scheduled today",
       () => triggerDailyTask(task.id)
     );
-    triggerBtn.disabled = alreadyTriggered;
+    triggerBtn.disabled = alreadyTriggered || !canTrigger;
 
     const infoBtn = makeActionButton(
       task.showDetails ? "▣" : "▢",
@@ -920,7 +958,9 @@ function addDailyTask(
   comments = "",
   startTime = null,
   endTime = null,
-  color = null
+  color = null,
+  triggerDays = [],
+  intervalDays = null
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -932,6 +972,8 @@ function addDailyTask(
     startTime,
     endTime,
     color,
+    triggerDays: triggerDays ?? [],
+    intervalDays: intervalDays ?? null,
     createdAt: new Date().toISOString(),
     lastTriggeredAt: null,
     showDetails: false,
@@ -986,9 +1028,53 @@ function computeRebasedEnd(startIso, endIso, rebasedStartIso) {
   return rebaseDateTimeToReference(endIso, fallbackReference);
 }
 
+function getStartOfDay(date) {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function isIntervalEligible(task, referenceDate = new Date()) {
+  const interval = task.intervalDays;
+  if (!Number.isFinite(interval) || interval <= 0) return true;
+
+  const baseline = task.lastTriggeredAt ?? task.createdAt;
+  if (!baseline) return true;
+
+  const last = getStartOfDay(new Date(baseline));
+  const reference = getStartOfDay(referenceDate);
+  const diffDays = Math.floor((reference - last) / 86400000);
+  return diffDays >= interval;
+}
+
+function isWeekdayEligible(task, referenceDate = new Date()) {
+  if (!task.triggerDays || task.triggerDays.length === 0) return true;
+  const today = new Date(referenceDate).getDay();
+  return task.triggerDays.includes(today);
+}
+
+function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
+  return isWeekdayEligible(task, referenceDate) && isIntervalEligible(task, referenceDate);
+}
+
+function describeDailySchedule(task) {
+  const parts = [];
+  if (task.triggerDays?.length) {
+    const ordered = [...task.triggerDays].sort((a, b) => a - b);
+    parts.push(`Weekdays: ${ordered.map((day) => WEEKDAY_LABELS[day] ?? day).join(", ")}`);
+  }
+  if (Number.isFinite(task.intervalDays) && task.intervalDays > 0) {
+    const suffix = task.intervalDays === 1 ? "day" : "days";
+    parts.push(`Every ${task.intervalDays} ${suffix}`);
+  }
+  if (parts.length === 0) return "Every day";
+  return parts.join(" · ");
+}
+
 function triggerDailyTask(id) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
+  if (!canTriggerDailyTaskToday(template)) return;
   if (template.lastTriggeredAt && isToday(template.lastTriggeredAt)) return;
 
   const now = new Date();
@@ -1377,9 +1463,19 @@ formEl.addEventListener("submit", (event) => {
     endMinsEl.value
   );
   const color = colorEl.value?.trim() || null;
+  const triggerDays = taskType === "daily" ? parseSelectedWeekdays(dailyWeekdayInputs) : [];
+  const intervalDays = taskType === "daily" ? parseIntervalValue(dailyIntervalDaysEl) : null;
   const added =
     taskType === "daily"
-      ? addDailyTask(inputEl.value, commentEl.value, startTime, endTime, color)
+      ? addDailyTask(
+          inputEl.value,
+          commentEl.value,
+          startTime,
+          endTime,
+          color,
+          triggerDays,
+          intervalDays
+        )
       : addTodo(inputEl.value, commentEl.value, startTime, endTime, color);
   if (added) {
     inputEl.value = "";
@@ -1390,6 +1486,11 @@ formEl.addEventListener("submit", (event) => {
     endMinsEl.value = "";
     colorEl.value = DEFAULT_COLOR;
     typeSelectEl.value = "one-time";
+    dailyWeekdayInputs.forEach((input) => {
+      input.checked = false;
+    });
+    dailyIntervalDaysEl.value = "";
+    dailyOptionsEl.hidden = true;
     dialogEl.close();
   }
 });
@@ -1403,12 +1504,21 @@ openAddEl.addEventListener("click", () => {
   endMinsEl.value = "";
   colorEl.value = DEFAULT_COLOR;
   typeSelectEl.value = "one-time";
+  dailyWeekdayInputs.forEach((input) => {
+    input.checked = false;
+  });
+  dailyIntervalDaysEl.value = "";
+  dailyOptionsEl.hidden = true;
   dialogEl.showModal();
   inputEl.focus();
 });
 
 cancelAddEl.addEventListener("click", () => {
   dialogEl.close();
+});
+
+typeSelectEl.addEventListener("change", () => {
+  dailyOptionsEl.hidden = typeSelectEl.value !== "daily";
 });
 
 editColorEl.addEventListener("input", () => {
@@ -1482,6 +1592,8 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       dailyEditEndHoursEl.value,
       dailyEditEndMinsEl.value
     ) ?? currentTask?.endTime ?? null;
+  const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
+  const intervalDays = parseIntervalValue(dailyEditIntervalDaysEl);
   const color =
     dailyEditColorEl.dataset.touched === "true"
       ? dailyEditColorEl.value?.trim() || null
@@ -1497,10 +1609,21 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       (task.comments ?? "") !== comments ||
       task.startTime !== startTime ||
       task.endTime !== endTime ||
-      (task.color ?? null) !== color
+      (task.color ?? null) !== color ||
+      JSON.stringify(task.triggerDays ?? []) !== JSON.stringify(triggerDays) ||
+      (task.intervalDays ?? null) !== (intervalDays ?? null)
     ) {
       changed = true;
-      return { ...task, text, comments, startTime, endTime, color };
+      return {
+        ...task,
+        text,
+        comments,
+        startTime,
+        endTime,
+        color,
+        triggerDays,
+        intervalDays,
+      };
     }
     return task;
   });

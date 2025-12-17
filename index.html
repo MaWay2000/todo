@@ -88,6 +88,31 @@
           <option value="one-time" selected>One-time task</option>
           <option value="daily">Daily task</option>
         </select>
+        <div id="daily-options" class="daily-options" hidden>
+          <p class="field-label">Daily schedule</p>
+          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
+            <legend class="sr-only">Weekdays</legend>
+            <label><input type="checkbox" name="daily-weekday" value="1" />Mon</label>
+            <label><input type="checkbox" name="daily-weekday" value="2" />Tue</label>
+            <label><input type="checkbox" name="daily-weekday" value="3" />Wed</label>
+            <label><input type="checkbox" name="daily-weekday" value="4" />Thu</label>
+            <label><input type="checkbox" name="daily-weekday" value="5" />Fri</label>
+            <label><input type="checkbox" name="daily-weekday" value="6" />Sat</label>
+            <label><input type="checkbox" name="daily-weekday" value="0" />Sun</label>
+          </fieldset>
+          <label class="interval-field" for="daily-interval-days">
+            <span>Or trigger every N days</span>
+            <input
+              id="daily-interval-days"
+              name="daily-interval-days"
+              type="number"
+              min="0"
+              placeholder="e.g. 2"
+              inputmode="numeric"
+            />
+          </label>
+          <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
+        </div>
         <div class="modal-actions">
           <button id="cancel-add" class="secondary" type="button">Cancel</button>
           <button type="submit">Add</button>
@@ -194,6 +219,31 @@
               />
             </label>
           </div>
+        </div>
+        <div class="daily-options">
+          <p class="field-label">Daily schedule</p>
+          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
+            <legend class="sr-only">Weekdays</legend>
+            <label><input type="checkbox" name="daily-edit-weekday" value="1" />Mon</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="2" />Tue</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="3" />Wed</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="4" />Thu</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="5" />Fri</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="6" />Sat</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="0" />Sun</label>
+          </fieldset>
+          <label class="interval-field" for="daily-edit-interval-days">
+            <span>Or trigger every N days</span>
+            <input
+              id="daily-edit-interval-days"
+              name="daily-edit-interval-days"
+              type="number"
+              min="0"
+              placeholder="e.g. 2"
+              inputmode="numeric"
+            />
+          </label>
+          <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
         </div>
         <div class="modal-actions">
           <button id="cancel-daily-edit" class="secondary" type="button">Cancel</button>
