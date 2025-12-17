@@ -1039,6 +1039,16 @@ function getStartOfDay(date) {
   return copy;
 }
 
+function isStartTimeEligible(task, referenceDate = new Date()) {
+  if (!task.startTime) return true;
+  const start = new Date(task.startTime);
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(reference.getTime())) {
+    return true;
+  }
+  return reference >= start;
+}
+
 function isIntervalEligible(task, referenceDate = new Date()) {
   const interval = task.intervalDays;
   if (!Number.isFinite(interval) || interval <= 0) return true;
@@ -1059,7 +1069,11 @@ function isWeekdayEligible(task, referenceDate = new Date()) {
 }
 
 function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
-  return isWeekdayEligible(task, referenceDate) && isIntervalEligible(task, referenceDate);
+  return (
+    isWeekdayEligible(task, referenceDate) &&
+    isIntervalEligible(task, referenceDate) &&
+    isStartTimeEligible(task, referenceDate)
+  );
 }
 
 function describeDailySchedule(task) {
