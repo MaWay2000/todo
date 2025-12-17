@@ -1704,3 +1704,10 @@ timeRefreshHandle = setInterval(() => {
   maybeAutoTriggerDailyTasks();
   renderCurrentView();
 }, TIME_REFRESH_INTERVAL);
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    maybeAutoTriggerDailyTasks();
+    renderCurrentView();
+  }
+});
