@@ -1041,7 +1041,10 @@ function getStartOfDay(date) {
 
 function isStartTimeEligible(task, referenceDate = new Date()) {
   if (!task.startTime) return true;
-  const start = new Date(task.startTime);
+  const rebasedStartIso = rebaseDateTimeToReference(task.startTime, referenceDate);
+  if (!rebasedStartIso) return true;
+
+  const start = new Date(rebasedStartIso);
   const reference = new Date(referenceDate);
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(reference.getTime())) {
     return true;
@@ -1077,6 +1080,7 @@ function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
 }
 
 function maybeAutoTriggerDailyTasks(referenceDate = new Date()) {
+  // Daily templates are evaluated against today's date rather than their original save date.
   const now = new Date(referenceDate);
   if (!Number.isFinite(now.getTime())) return;
 
