@@ -126,7 +126,8 @@ textarea {
 }
 
 #todo-color,
-#edit-color {
+#edit-color,
+#category-color {
   padding: 0.35rem;
   width: 3.25rem;
   height: 3rem;
@@ -545,6 +546,17 @@ button.danger:hover {
   margin-left: auto;
 }
 
+.category-pill.has-color {
+  --category-color: var(--category-color, var(--accent));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--category-color) 24%, transparent),
+    color-mix(in srgb, var(--category-color) 12%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--category-color) 55%, rgba(148, 163, 184, 0.35));
+  color: var(--text);
+}
+
 .category-pill[data-empty="true"] {
   opacity: 0.8;
   font-style: italic;
@@ -718,6 +730,16 @@ button.danger:hover {
   min-width: 180px;
 }
 
+.category-form #category-color {
+  width: 3rem;
+  height: 3rem;
+  padding: 0.35rem;
+  flex: 0 0 auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
 .category-list {
   list-style: none;
   padding: 0;
@@ -742,6 +764,12 @@ button.danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.category-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .category-name {
@@ -772,10 +800,27 @@ button.danger:hover {
   min-width: 180px;
 }
 
+.category-inline-form .category-inline-color {
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  padding: 0.35rem;
+}
+
 .category-inline-actions {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.category-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--category-color, var(--accent));
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
 }
 
 .empty-state {

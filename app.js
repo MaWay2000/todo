@@ -53,12 +53,24 @@ const filterButtons = document.querySelectorAll(".filter-button");
 const categoryPanelEl = document.getElementById("category-panel");
 const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
+const categoryColorEl = document.getElementById("category-color");
 const categoryListEl = document.getElementById("category-list");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const DEFAULT_COLOR = "#38bdf8";
+const CATEGORY_COLOR_PALETTE = [
+  "#f59e0b",
+  "#38bdf8",
+  "#a855f7",
+  "#22c55e",
+  "#f97316",
+  "#f472b6",
+  "#14b8a6",
+  "#fb7185",
+];
+const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
 const DRAG_PERSIST_INTERVAL = 200;
@@ -148,6 +160,49 @@ function parseDateInput(value) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return null;
   return date.toISOString();
+}
+
+function pickPaletteColor(seed = 0) {
+  return CATEGORY_COLOR_PALETTE[Math.abs(seed) % CATEGORY_COLOR_PALETTE.length];
+}
+
+function pickCategoryColor(name, seed = 0) {
+  if (!name) return pickPaletteColor(seed);
+  const normalized = name.trim().toLowerCase();
+  let hash = 0;
+  for (const char of normalized) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return pickPaletteColor(hash + seed);
+}
+
+function normalizeCategories(list = []) {
+  let mutated = false;
+  const normalized = list.map((category, index) => {
+    const name = category.name?.trim() ?? "";
+    const color = category.color?.trim() || pickCategoryColor(name, index);
+    const createdAt = category.createdAt ?? new Date().toISOString();
+    if (name !== category.name || category.color !== color || category.createdAt !== createdAt) {
+      mutated = true;
+    }
+    return {
+      ...category,
+      name,
+      color,
+      createdAt,
+    };
+  });
+
+  return { normalized, mutated };
+}
+
+function getCategoryColor(name) {
+  const normalized = name?.trim().toLowerCase();
+  if (!normalized) return null;
+  const match = categories.find(
+    (category) => category.name.trim().toLowerCase() === normalized
+  );
+  return match?.color ?? null;
 }
 
 function formatDateForInput(value) {
@@ -432,7 +487,12 @@ function saveDailyTasks() {
 function loadCategories() {
   try {
     const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
-    categories = stored ? JSON.parse(stored) : [];
+    const parsed = stored ? JSON.parse(stored) : [];
+    const { normalized, mutated } = normalizeCategories(parsed);
+    categories = normalized;
+    if (mutated) {
+      saveCategories();
+    }
   } catch (error) {
     console.error("Failed to load categories", error);
     categories = [];
@@ -458,10 +518,12 @@ function isDuplicateCategoryName(name, ignoreId = null) {
   );
 }
 
-function createCategory(name) {
+function createCategory(name, color = null) {
+  const resolvedColor = color?.trim() || pickCategoryColor(name, categories.length);
   return {
     id: crypto.randomUUID(),
     name: name.trim(),
+    color: resolvedColor,
     createdAt: new Date().toISOString(),
   };
 }
@@ -644,10 +706,19 @@ function renderTodos() {
     status.textContent = todo.deleted ? "Deleted" : todo.completed ? "Done" : "";
 
     const categoryName = todo.category?.trim() || "";
+    const categoryColor = getCategoryColor(categoryName);
     const categoryBadge = document.createElement("span");
     categoryBadge.className = "category-pill";
-    categoryBadge.textContent = categoryName || UNCATEGORIZED_LABEL;
     categoryBadge.dataset.empty = categoryName ? "false" : "true";
+    categoryBadge.textContent = categoryName || UNCATEGORIZED_LABEL;
+    if (categoryColor) {
+      categoryBadge.classList.add("has-color");
+      categoryBadge.style.setProperty("--category-color", categoryColor);
+      const categoryColorDot = document.createElement("span");
+      categoryColorDot.className = "category-color-dot";
+      categoryColorDot.style.setProperty("--category-color", categoryColor);
+      categoryBadge.prepend(categoryColorDot);
+    }
 
     const title = document.createElement("span");
     title.className = "todo-title";
@@ -1079,7 +1150,7 @@ function cancelCategoryEdit() {
   renderCategories();
 }
 
-function updateCategoryName(id, nextName) {
+function updateCategory(id, nextName, nextColor) {
   const trimmed = nextName.trim();
   const target = categories.find((category) => category.id === id);
   if (!target || !trimmed || isDuplicateCategoryName(trimmed, id)) return;
@@ -1087,9 +1158,10 @@ function updateCategoryName(id, nextName) {
   const previousName = target.name.trim();
   const previousNormalized = previousName.toLowerCase();
   const nextNormalized = trimmed.toLowerCase();
+  const color = nextColor?.trim() || pickCategoryColor(trimmed);
 
   categories = categories.map((category) =>
-    category.id === id ? { ...category, name: trimmed } : category
+    category.id === id ? { ...category, name: trimmed, color } : category
   );
 
   if (previousNormalized !== nextNormalized) {
@@ -1172,7 +1244,9 @@ function renderCategories() {
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         const nextNameInput = form.elements.namedItem("next-name");
+        const nextColorInput = form.elements.namedItem("next-color");
         const nextName = nextNameInput.value.trim();
+        const nextColor = nextColorInput?.value?.trim() || pickCategoryColor(nextName);
         if (!nextName) {
           nextNameInput.reportValidity();
           return;
@@ -1183,7 +1257,7 @@ function renderCategories() {
           return;
         }
         nextNameInput.setCustomValidity("");
-        updateCategoryName(category.id, nextName);
+        updateCategory(category.id, nextName, nextColor);
       });
 
       const label = document.createElement("label");
@@ -1197,6 +1271,12 @@ function renderCategories() {
       input.value = category.name;
       input.required = true;
       input.addEventListener("input", () => input.setCustomValidity(""));
+
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.name = "next-color";
+      colorInput.className = "category-inline-color";
+      colorInput.value = category.color ?? pickCategoryColor(category.name);
 
       const actions = document.createElement("div");
       actions.className = "category-inline-actions";
@@ -1215,21 +1295,32 @@ function renderCategories() {
       actions.appendChild(cancelBtn);
       form.appendChild(label);
       form.appendChild(input);
+      form.appendChild(colorInput);
       form.appendChild(actions);
 
       item.appendChild(form);
     } else {
       const info = document.createElement("div");
       info.className = "category-info";
+      const nameRow = document.createElement("div");
+      nameRow.className = "category-name-row";
+      const colorDot = document.createElement("span");
+      colorDot.className = "category-color-dot";
+      colorDot.style.setProperty(
+        "--category-color",
+        category.color ?? DEFAULT_CATEGORY_COLOR
+      );
       const name = document.createElement("span");
       name.className = "category-name";
       name.textContent = category.name;
+      nameRow.appendChild(colorDot);
+      nameRow.appendChild(name);
       const usage = document.createElement("span");
       usage.className = "category-usage";
       const usageCount = getCategoryUsageCount(category.name);
       usage.textContent =
         usageCount === 1 ? "Used by 1 task" : `Used by ${usageCount} tasks`;
-      info.appendChild(name);
+      info.appendChild(nameRow);
       info.appendChild(usage);
 
       const actions = document.createElement("div");
@@ -2063,6 +2154,7 @@ if (categoryFormEl) {
   categoryFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const name = categoryNameEl.value.trim();
+    const color = categoryColorEl?.value?.trim() || DEFAULT_CATEGORY_COLOR;
     if (!name) {
       categoryNameEl.reportValidity();
       return;
@@ -2073,10 +2165,13 @@ if (categoryFormEl) {
       return;
     }
     categoryNameEl.setCustomValidity("");
-    categories = [...categories, createCategory(name)];
+    categories = [...categories, createCategory(name, color)];
     saveCategories();
     renderCategoryOptions();
     categoryNameEl.value = "";
+    if (categoryColorEl) {
+      categoryColorEl.value = pickCategoryColor(name, categories.length);
+    }
     renderCategories();
   });
 
