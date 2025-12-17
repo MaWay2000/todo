@@ -1056,7 +1056,7 @@ function isIntervalEligible(task, referenceDate = new Date()) {
   const interval = task.intervalDays;
   if (!Number.isFinite(interval) || interval <= 0) return true;
 
-  const baseline = task.lastTriggeredAt ?? task.createdAt;
+  const baseline = task.lastTriggeredAt;
   if (!baseline) return true;
 
   const last = getStartOfDay(new Date(baseline));
