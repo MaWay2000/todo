@@ -12,6 +12,10 @@
   box-sizing: border-box;
 }
 
+:where([hidden]) {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.08), transparent 25%),
