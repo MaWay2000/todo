@@ -558,11 +558,15 @@ button.danger:hover {
 }
 
 .meta-chip {
+  display: inline-flex;
+  align-items: center;
   background: rgba(148, 163, 184, 0.16);
   border: 1px solid rgba(148, 163, 184, 0.35);
   color: var(--muted);
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
+  line-height: 1;
+  font-size: 0.85rem;
 }
 
 .meta-chip.accent {
