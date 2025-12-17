@@ -93,6 +93,7 @@
         <input
           id="todo-category"
           name="category"
+          list="category-options"
           placeholder="e.g. Work, Personal"
           aria-label="Task category"
         />
@@ -153,6 +154,7 @@
         <input
           id="edit-category"
           name="edit-category"
+          list="category-options"
           placeholder="e.g. Work, Personal"
           aria-label="Task category"
         />
@@ -266,6 +268,30 @@
         </div>
       </form>
     </dialog>
+
+    <section id="category-panel" class="category-panel" hidden>
+      <div class="category-panel-header">
+        <div>
+          <p class="eyebrow">Categories</p>
+          <h2 class="category-panel-title">Organize your work</h2>
+          <p class="subtitle">Create reusable categories to keep your tasks tidy.</p>
+        </div>
+        <form id="category-form" class="category-form" autocomplete="off">
+          <label class="sr-only" for="category-name">Category name</label>
+          <input
+            id="category-name"
+            name="category-name"
+            placeholder="e.g. Work, Errands"
+            aria-label="New category name"
+            required
+          />
+          <button type="submit">Add category</button>
+        </form>
+      </div>
+      <ul id="category-list" class="category-list" aria-live="polite"></ul>
+    </section>
+
+    <datalist id="category-options"></datalist>
 
     <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
   </main>
