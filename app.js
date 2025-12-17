@@ -53,7 +53,6 @@ const categoryPanelEl = document.getElementById("category-panel");
 const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
 const categoryListEl = document.getElementById("category-list");
-const categoryOptionsEl = document.getElementById("category-options");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
@@ -466,17 +465,6 @@ function createCategory(name) {
   };
 }
 
-function registerCategory(name) {
-  const trimmed = name?.trim();
-  if (!trimmed || isDuplicateCategoryName(trimmed)) return;
-  categories = [...categories, createCategory(trimmed)];
-  saveCategories();
-  renderCategoryOptions();
-  if (filter === "categories") {
-    renderCategories();
-  }
-}
-
 function syncCategoriesFromTodos() {
   const known = new Set(
     categories.map((category) => category.name.trim().toLowerCase()).filter(Boolean)
@@ -500,12 +488,39 @@ function syncCategoriesFromTodos() {
 }
 
 function renderCategoryOptions() {
-  if (!categoryOptionsEl) return;
-  categoryOptionsEl.innerHTML = "";
-  sortCategories(categories).forEach((category) => {
-    const option = document.createElement("option");
-    option.value = category.name;
-    categoryOptionsEl.appendChild(option);
+  const selects = [categoryEl, editCategoryEl];
+  const sorted = sortCategories(categories);
+
+  selects.forEach((select) => {
+    if (!select) return;
+    const previousValue = select.value ?? "";
+    const normalizedPrevious = previousValue.trim().toLowerCase();
+    select.innerHTML = "";
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "No category";
+    select.appendChild(emptyOption);
+
+    sorted.forEach((category) => {
+      const option = document.createElement("option");
+      option.value = category.name;
+      option.textContent = category.name;
+      select.appendChild(option);
+    });
+
+    const hasExistingMatch = sorted.some(
+      (category) => category.name.trim().toLowerCase() === normalizedPrevious
+    );
+
+    if (previousValue && !hasExistingMatch) {
+      const missingOption = document.createElement("option");
+      missingOption.value = previousValue;
+      missingOption.textContent = `${previousValue} (missing category)`;
+      select.appendChild(missingOption);
+    }
+
+    select.value = previousValue;
   });
 }
 
@@ -1267,7 +1282,6 @@ function addTodo(
   if (!trimmed) return false;
   const cleanedComments = comments.trim();
   const cleanedCategory = category.trim();
-  registerCategory(cleanedCategory);
   const id = crypto.randomUUID();
   todos.unshift({
     id,
@@ -1945,7 +1959,6 @@ editFormEl.addEventListener("submit", (event) => {
   editDialogEl.close();
 
   if (changed) {
-    registerCategory(category);
     saveTodos();
     renderCurrentView();
   }
