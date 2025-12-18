@@ -275,8 +275,19 @@ function parseDurationParts(daysValue, hoursValue, minsValue) {
   return { days, hours, mins };
 }
 
+function parseOffsetParts(daysValue, hoursValue, minsValue) {
+  const days = Number.parseInt(daysValue, 10) || 0;
+  const hours = Number.parseInt(hoursValue, 10) || 0;
+  const mins = Number.parseInt(minsValue, 10) || 0;
+
+  if (days < 0 || hours < 0 || mins < 0) return null;
+  if (hours > 23 || mins > 59) return null;
+
+  return { days, hours, mins };
+}
+
 function computeStartFromOffset(daysValue, hoursValue, minsValue) {
-  const duration = parseDurationParts(daysValue, hoursValue, minsValue);
+  const duration = parseOffsetParts(daysValue, hoursValue, minsValue);
   if (!duration) return null;
 
   const totalMs =
