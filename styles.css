@@ -337,6 +337,12 @@ button.danger:hover {
   width: 100%;
 }
 
+.duration-group.start-offset .duration-input {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
 .duration-input-label {
   color: var(--muted);
   font-weight: 600;
