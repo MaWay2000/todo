@@ -11,6 +11,9 @@ const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
 const startEl = document.getElementById("todo-start");
+const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
+const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
+const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
@@ -272,6 +275,16 @@ function parseDurationParts(daysValue, hoursValue, minsValue) {
   return { days, hours, mins };
 }
 
+function computeStartFromOffset(daysValue, hoursValue, minsValue) {
+  const duration = parseDurationParts(daysValue, hoursValue, minsValue);
+  if (!duration) return null;
+
+  const totalMs =
+    duration.days * 86400000 + duration.hours * 3600000 + duration.mins * 60000;
+
+  return new Date(Date.now() + totalMs).toISOString();
+}
+
 function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
   if (!start) return null;
   const duration = parseDurationParts(daysValue, hoursValue, minsValue);
@@ -284,6 +297,20 @@ function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
     duration.days * 86400000 + duration.hours * 3600000 + duration.mins * 60000;
 
   return new Date(startDate.getTime() + totalMs).toISOString();
+}
+
+function updateStartFromOffsetPreview() {
+  const offsetStart = computeStartFromOffset(
+    startOffsetDaysEl.value,
+    startOffsetHoursEl.value,
+    startOffsetMinsEl.value
+  );
+
+  if (offsetStart) {
+    startEl.value = formatDateForInput(offsetStart);
+  } else if (!startEl.value) {
+    startEl.value = formatDateForInput(new Date().toISOString());
+  }
 }
 
 function deriveDurationFromRange(start, end) {
@@ -2002,7 +2029,12 @@ function updateCanvasHeight() {
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
-  const startTime = parseDateInput(startEl.value) ?? new Date().toISOString();
+  const offsetStartTime = computeStartFromOffset(
+    startOffsetDaysEl.value,
+    startOffsetHoursEl.value,
+    startOffsetMinsEl.value
+  );
+  const startTime = offsetStartTime ?? parseDateInput(startEl.value) ?? new Date().toISOString();
   const endTime = computeEndFromDuration(
     startTime,
     endDaysEl.value,
@@ -2031,6 +2063,9 @@ formEl.addEventListener("submit", (event) => {
     inputEl.value = "";
     commentEl.value = "";
     startEl.value = formatDateForInput(new Date().toISOString());
+    startOffsetDaysEl.value = "";
+    startOffsetHoursEl.value = "";
+    startOffsetMinsEl.value = "";
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
@@ -2055,6 +2090,9 @@ openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
   startEl.value = formatDateForInput(new Date().toISOString());
+  startOffsetDaysEl.value = "";
+  startOffsetHoursEl.value = "";
+  startOffsetMinsEl.value = "";
   endDaysEl.value = "";
   endHoursEl.value = "";
   endMinsEl.value = "";
@@ -2077,6 +2115,15 @@ openAddEl.addEventListener("click", () => {
 
 cancelAddEl.addEventListener("click", () => {
   dialogEl.close();
+});
+
+[
+  startOffsetDaysEl,
+  startOffsetHoursEl,
+  startOffsetMinsEl,
+].forEach((input) => {
+  input?.addEventListener("input", updateStartFromOffsetPreview);
+  input?.addEventListener("change", updateStartFromOffsetPreview);
 });
 
 typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
