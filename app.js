@@ -2141,10 +2141,10 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const category = dailyEditCategoryEl?.value?.trim() ?? "";
   const colorEnabled = dailyEditColorToggleEl?.checked ?? true;
   const color = colorEnabled
-    ? dailyEditColorEl.dataset.touched === "true"
-      ? dailyEditColorEl.value?.trim() || null
-      : currentTask?.color ?? dailyEditColorEl.value?.trim() || null
-    : null;
+      ? dailyEditColorEl.dataset.touched === "true"
+        ? dailyEditColorEl.value?.trim() || null
+        : currentTask?.color ?? (dailyEditColorEl.value?.trim() || null)
+      : null;
 
   if (!activeDailyEditId || !text) return;
 
