@@ -15,6 +15,7 @@ const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
 const colorEl = document.getElementById("todo-color");
+const colorToggleEl = document.getElementById("todo-color-toggle");
 const categoryEl = document.getElementById("todo-category");
 const typeSelectEl = document.getElementById("todo-type");
 const dailyOptionsEl = document.getElementById("daily-options");
@@ -32,6 +33,7 @@ const editCommentEl = document.getElementById("edit-comment");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
 const editColorEl = document.getElementById("edit-color");
+const editColorToggleEl = document.getElementById("edit-color-toggle");
 const editCategoryEl = document.getElementById("edit-category");
 const cancelEditEl = document.getElementById("cancel-edit");
 const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
@@ -43,6 +45,7 @@ const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
+const dailyEditColorToggleEl = document.getElementById("daily-edit-color-toggle");
 const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
   "input[name='daily-edit-weekday']"
@@ -203,6 +206,14 @@ function getCategoryColor(name) {
     (category) => category.name.trim().toLowerCase() === normalized
   );
   return match?.color ?? null;
+}
+
+function setColorEnabled(toggle, input) {
+  if (!input) return;
+  const enabled = toggle?.checked ?? true;
+  input.disabled = !enabled;
+  const row = input.closest(".color-input-row");
+  row?.classList.toggle("is-disabled", !enabled);
 }
 
 function formatDateForInput(value) {
@@ -983,6 +994,10 @@ function editDailyTask(id) {
   dailyEditEndHoursEl.value = duration?.hours ?? "";
   dailyEditEndMinsEl.value = duration?.mins ?? "";
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
+  if (dailyEditColorToggleEl) {
+    dailyEditColorToggleEl.checked = Boolean(task.color);
+    setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+  }
   if (dailyEditCategoryEl) {
     dailyEditCategoryEl.value = task.category ?? "";
   }
@@ -1673,6 +1688,10 @@ function editTodo(id) {
   editStartEl.value = formatDateForInput(todo.startTime);
   editEndEl.value = formatDateForInput(todo.endTime);
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
+  if (editColorToggleEl) {
+    editColorToggleEl.checked = Boolean(todo.color);
+    setColorEnabled(editColorToggleEl, editColorEl);
+  }
   editCategoryEl.value = todo.category ?? "";
   editColorEl.dataset.touched = "false";
   editDialogEl.showModal();
@@ -1953,7 +1972,8 @@ formEl.addEventListener("submit", (event) => {
     endHoursEl.value,
     endMinsEl.value
   );
-  const color = colorEl.value?.trim() || null;
+  const colorEnabled = colorToggleEl?.checked ?? true;
+  const color = colorEnabled ? colorEl.value?.trim() || null : null;
   const category = categoryEl.value?.trim() ?? "";
   const triggerDays = taskType === "daily" ? parseSelectedWeekdays(dailyWeekdayInputs) : [];
   const intervalDays = taskType === "daily" ? parseIntervalValue(dailyIntervalDaysEl) : null;
@@ -1978,6 +1998,10 @@ formEl.addEventListener("submit", (event) => {
     endHoursEl.value = "";
     endMinsEl.value = "";
     colorEl.value = DEFAULT_COLOR;
+    if (colorToggleEl) {
+      colorToggleEl.checked = true;
+      setColorEnabled(colorToggleEl, colorEl);
+    }
     categoryEl.value = "";
     typeSelectEl.value = "one-time";
     dailyWeekdayInputs.forEach((input) => {
@@ -1997,6 +2021,10 @@ openAddEl.addEventListener("click", () => {
   endHoursEl.value = "";
   endMinsEl.value = "";
   colorEl.value = DEFAULT_COLOR;
+  if (colorToggleEl) {
+    colorToggleEl.checked = true;
+    setColorEnabled(colorToggleEl, colorEl);
+  }
   categoryEl.value = "";
   typeSelectEl.value = "one-time";
   dailyWeekdayInputs.forEach((input) => {
@@ -2016,6 +2044,22 @@ typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
 
 updateDailyOptionsVisibility();
 
+setColorEnabled(colorToggleEl, colorEl);
+setColorEnabled(editColorToggleEl, editColorEl);
+setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+
+colorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(colorToggleEl, colorEl);
+});
+
+editColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(editColorToggleEl, editColorEl);
+});
+
+dailyEditColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+});
+
 editColorEl.addEventListener("input", () => {
   editColorEl.dataset.touched = "true";
 });
@@ -2032,10 +2076,12 @@ editFormEl.addEventListener("submit", (event) => {
   const endTime = parseDateInput(editEndEl.value);
   const currentTodo = todos.find((todo) => todo.id === activeEditId);
   const category = editCategoryEl.value.trim();
-  const color =
-    editColorEl.dataset.touched === "true"
+  const colorEnabled = editColorToggleEl?.checked ?? true;
+  const color = colorEnabled
+    ? editColorEl.dataset.touched === "true"
       ? editColorEl.value?.trim() || null
-      : currentTodo?.color ?? null;
+      : currentTodo?.color ?? editColorEl.value?.trim() || null
+    : null;
 
   if (!activeEditId || !text) return;
 
@@ -2074,6 +2120,7 @@ cancelEditEl.addEventListener("click", () => {
 editDialogEl.addEventListener("close", () => {
   activeEditId = null;
   editColorEl.dataset.touched = "false";
+  setColorEnabled(editColorToggleEl, editColorEl);
 });
 
 dailyEditFormEl.addEventListener("submit", (event) => {
@@ -2092,10 +2139,12 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
   const intervalDays = parseIntervalValue(dailyEditIntervalDaysEl);
   const category = dailyEditCategoryEl?.value?.trim() ?? "";
-  const color =
-    dailyEditColorEl.dataset.touched === "true"
+  const colorEnabled = dailyEditColorToggleEl?.checked ?? true;
+  const color = colorEnabled
+    ? dailyEditColorEl.dataset.touched === "true"
       ? dailyEditColorEl.value?.trim() || null
-      : currentTask?.color ?? null;
+      : currentTask?.color ?? dailyEditColorEl.value?.trim() || null
+    : null;
 
   if (!activeDailyEditId || !text) return;
 
@@ -2144,6 +2193,7 @@ dailyEditDialogEl.addEventListener("close", () => {
   activeDailyEditId = null;
   dailyEditFormEl.reset();
   dailyEditColorEl.dataset.touched = "false";
+  setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
 });
 
 filterButtons.forEach((button) => {
