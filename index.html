@@ -34,15 +34,21 @@
           rows="3"
           placeholder="Comments (optional)"
         ></textarea>
-        <label class="field-label" for="todo-color">Color</label>
         <div class="color-toggle">
           <label class="toggle">
             <input id="todo-color-toggle" type="checkbox" aria-label="Enable task color" checked />
-            <span>Color</span>
+            <span class="color-picker-trigger" data-color-trigger="todo-color">Color</span>
           </label>
         </div>
         <div class="color-input-row">
-          <input id="todo-color" name="color" type="color" value="#38bdf8" aria-label="Task color" />
+          <input
+            id="todo-color"
+            class="color-picker-input"
+            name="color"
+            type="color"
+            value="#38bdf8"
+            aria-label="Task color"
+          />
         </div>
         <label class="sr-only" for="todo-start">Start time</label>
         <label class="field-label" for="todo-start">Start</label>
@@ -142,15 +148,21 @@
           rows="3"
           placeholder="Comments (optional)"
         ></textarea>
-        <label class="field-label" for="edit-color">Color</label>
         <div class="color-toggle">
           <label class="toggle">
             <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
-            <span>Color</span>
+            <span class="color-picker-trigger" data-color-trigger="edit-color">Color</span>
           </label>
         </div>
         <div class="color-input-row">
-          <input id="edit-color" name="edit-color" type="color" value="#38bdf8" aria-label="Task color" />
+          <input
+            id="edit-color"
+            class="color-picker-input"
+            name="edit-color"
+            type="color"
+            value="#38bdf8"
+            aria-label="Task color"
+          />
         </div>
         <label class="sr-only" for="edit-start">Start time</label>
         <input id="edit-start" name="edit-start" type="datetime-local" />
@@ -184,7 +196,6 @@
           rows="3"
           placeholder="Comments (optional)"
         ></textarea>
-        <label class="field-label" for="daily-edit-color">Color</label>
         <div class="color-toggle">
           <label class="toggle">
             <input
@@ -193,12 +204,13 @@
               aria-label="Enable daily task color"
               checked
             />
-            <span>Color</span>
+            <span class="color-picker-trigger" data-color-trigger="daily-edit-color">Color</span>
           </label>
         </div>
         <div class="color-input-row">
           <input
             id="daily-edit-color"
+            class="color-picker-input"
             name="daily-edit-color"
             type="color"
             value="#38bdf8"
