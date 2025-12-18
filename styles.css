@@ -129,6 +129,21 @@ textarea {
   opacity: 0.55;
 }
 
+.color-picker-trigger {
+  color: var(--muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.color-picker-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+}
+
 .color-toggle {
   display: flex;
   justify-content: flex-start;
@@ -168,8 +183,6 @@ textarea {
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
 }
 
-#todo-color,
-#edit-color,
 #category-color {
   padding: 0.35rem;
   width: 3.25rem;

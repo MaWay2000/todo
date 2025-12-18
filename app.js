@@ -15,6 +15,7 @@ const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
 const colorEl = document.getElementById("todo-color");
+const colorTriggerEl = document.querySelector("[data-color-trigger='todo-color']");
 const colorToggleEl = document.getElementById("todo-color-toggle");
 const categoryEl = document.getElementById("todo-category");
 const typeSelectEl = document.getElementById("todo-type");
@@ -33,6 +34,9 @@ const editCommentEl = document.getElementById("edit-comment");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
 const editColorEl = document.getElementById("edit-color");
+const editColorTriggerEl = document.querySelector(
+  "[data-color-trigger='edit-color']"
+);
 const editColorToggleEl = document.getElementById("edit-color-toggle");
 const editCategoryEl = document.getElementById("edit-category");
 const cancelEditEl = document.getElementById("cancel-edit");
@@ -45,6 +49,9 @@ const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
+const dailyEditColorTriggerEl = document.querySelector(
+  "[data-color-trigger='daily-edit-color']"
+);
 const dailyEditColorToggleEl = document.getElementById("daily-edit-color-toggle");
 const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
@@ -214,6 +221,28 @@ function setColorEnabled(toggle, input) {
   input.disabled = !enabled;
   const row = input.closest(".color-input-row");
   row?.classList.toggle("is-disabled", !enabled);
+}
+
+function openColorPicker(input) {
+  if (!input) return;
+  if (typeof input.showPicker === "function") {
+    input.showPicker();
+  } else {
+    input.click();
+  }
+}
+
+function attachColorPickerTrigger(trigger, input, toggle) {
+  if (!trigger || !input) return;
+
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (toggle && !toggle.checked) {
+      toggle.checked = true;
+      setColorEnabled(toggle, input);
+    }
+    openColorPicker(input);
+  });
 }
 
 function formatDateForInput(value) {
@@ -2047,6 +2076,14 @@ updateDailyOptionsVisibility();
 setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
 setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+
+attachColorPickerTrigger(colorTriggerEl, colorEl, colorToggleEl);
+attachColorPickerTrigger(editColorTriggerEl, editColorEl, editColorToggleEl);
+attachColorPickerTrigger(
+  dailyEditColorTriggerEl,
+  dailyEditColorEl,
+  dailyEditColorToggleEl
+);
 
 colorToggleEl?.addEventListener("change", () => {
   setColorEnabled(colorToggleEl, colorEl);
