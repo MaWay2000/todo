@@ -354,6 +354,36 @@ button.danger:hover {
   text-align: center;
   flex: 1;
   min-width: 0;
+  padding-right: 2.25rem;
+  appearance: textfield;
+}
+
+.duration-inputs input[type="number"]::-webkit-outer-spin-button,
+.duration-inputs input[type="number"]::-webkit-inner-spin-button {
+  appearance: inner-spin-button;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  border-left: 1px solid var(--border);
+  border-radius: 0 8px 8px 0;
+  width: 2.1rem;
+  height: 100%;
+  margin: 0;
+  filter: invert(0.85);
+}
+
+.duration-inputs input[type="number"]:focus-visible::-webkit-outer-spin-button,
+.duration-inputs input[type="number"]:focus-visible::-webkit-inner-spin-button {
+  filter: none;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+}
+
+.duration-inputs input[type="number"]::-moz-number-spin-box {
+  border-left: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+}
+
+.duration-inputs input[type="number"]::-moz-number-spin-up,
+.duration-inputs input[type="number"]::-moz-number-spin-down {
+  color: inherit;
 }
 
 .daily-options {
