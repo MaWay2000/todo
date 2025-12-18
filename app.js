@@ -2068,20 +2068,20 @@ dailyEditColorEl.addEventListener("input", () => {
   dailyEditColorEl.dataset.touched = "true";
 });
 
-editFormEl.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const text = editInputEl.value.trim();
-  const comments = editCommentEl.value.trim();
-  const startTime = parseDateInput(editStartEl.value);
-  const endTime = parseDateInput(editEndEl.value);
-  const currentTodo = todos.find((todo) => todo.id === activeEditId);
-  const category = editCategoryEl.value.trim();
-  const colorEnabled = editColorToggleEl?.checked ?? true;
-  const color = colorEnabled
-    ? editColorEl.dataset.touched === "true"
-      ? editColorEl.value?.trim() || null
-      : currentTodo?.color ?? editColorEl.value?.trim() || null
-    : null;
+  editFormEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const text = editInputEl.value.trim();
+    const comments = editCommentEl.value.trim();
+    const startTime = parseDateInput(editStartEl.value);
+    const endTime = parseDateInput(editEndEl.value);
+    const currentTodo = todos.find((todo) => todo.id === activeEditId);
+    const category = editCategoryEl.value.trim();
+    const colorEnabled = editColorToggleEl?.checked ?? true;
+    const color = colorEnabled
+      ? editColorEl.dataset.touched === "true"
+        ? editColorEl.value?.trim() || null
+        : currentTodo?.color ?? (editColorEl.value?.trim() || null)
+      : null;
 
   if (!activeEditId || !text) return;
 
