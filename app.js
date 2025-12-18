@@ -226,6 +226,12 @@ function setColorEnabled(toggle, input) {
   row?.classList.toggle("is-disabled", !enabled);
 }
 
+function syncColorToggleSwatch(toggle, input) {
+  if (!toggle) return;
+  const color = input?.value?.trim() || DEFAULT_COLOR;
+  toggle.style.setProperty("--color-swatch", color);
+}
+
 function openColorPicker(input) {
   if (!input) return;
   if (typeof input.showPicker === "function") {
@@ -1050,6 +1056,7 @@ function editDailyTask(id) {
   dailyEditEndHoursEl.value = duration?.hours ?? "";
   dailyEditEndMinsEl.value = duration?.mins ?? "";
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
+  syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
   if (dailyEditColorToggleEl) {
     dailyEditColorToggleEl.checked = Boolean(task.color);
     setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
@@ -1744,6 +1751,7 @@ function editTodo(id) {
   editStartEl.value = formatDateForInput(todo.startTime);
   editEndEl.value = formatDateForInput(todo.endTime);
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
+  syncColorToggleSwatch(editColorToggleEl, editColorEl);
   if (editColorToggleEl) {
     editColorToggleEl.checked = Boolean(todo.color);
     setColorEnabled(editColorToggleEl, editColorEl);
@@ -2062,6 +2070,7 @@ formEl.addEventListener("submit", (event) => {
     endHoursEl.value = "";
     endMinsEl.value = "";
     colorEl.value = DEFAULT_COLOR;
+    syncColorToggleSwatch(colorToggleEl, colorEl);
     if (colorToggleEl) {
       colorToggleEl.checked = true;
       setColorEnabled(colorToggleEl, colorEl);
@@ -2088,6 +2097,7 @@ openAddEl.addEventListener("click", () => {
   endHoursEl.value = "";
   endMinsEl.value = "";
   colorEl.value = DEFAULT_COLOR;
+  syncColorToggleSwatch(colorToggleEl, colorEl);
   if (colorToggleEl) {
     colorToggleEl.checked = true;
     setColorEnabled(colorToggleEl, colorEl);
@@ -2124,6 +2134,10 @@ setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
 setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
 
+syncColorToggleSwatch(colorToggleEl, colorEl);
+syncColorToggleSwatch(editColorToggleEl, editColorEl);
+syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
+
 attachColorPickerTrigger(colorTriggerEl, colorEl, colorToggleEl);
 attachColorPickerTrigger(editColorTriggerEl, editColorEl, editColorToggleEl);
 attachColorPickerTrigger(
@@ -2144,12 +2158,18 @@ dailyEditColorToggleEl?.addEventListener("change", () => {
   setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
 });
 
+colorEl?.addEventListener("input", () => {
+  syncColorToggleSwatch(colorToggleEl, colorEl);
+});
+
 editColorEl.addEventListener("input", () => {
   editColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(editColorToggleEl, editColorEl);
 });
 
 dailyEditColorEl.addEventListener("input", () => {
   dailyEditColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
 });
 
   editFormEl.addEventListener("submit", (event) => {

@@ -173,9 +173,18 @@ textarea {
 }
 
 .color-toggle input[type="checkbox"]:checked {
-  border-color: rgba(56, 189, 248, 0.9);
-  background: radial-gradient(circle at center, var(--accent) 55%, transparent 55%);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  border-color: var(--color-swatch, rgba(56, 189, 248, 0.9));
+  background:
+    radial-gradient(
+      circle at center,
+      var(--color-swatch, var(--accent)) 55%,
+      transparent 55%
+    );
+  box-shadow: 0 0 0 3px color-mix(
+      in srgb,
+      var(--color-swatch, rgba(56, 189, 248, 0.9)) 20%,
+      transparent
+    );
 }
 
 .color-toggle input[type="checkbox"]:focus-visible {
