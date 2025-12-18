@@ -671,6 +671,16 @@ function renderCategoryOptions() {
   });
 }
 
+function hasTaskStarted(task, referenceDate = new Date()) {
+  if (!task.startTime) return true;
+  const start = new Date(task.startTime);
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(reference.getTime())) {
+    return true;
+  }
+  return reference >= start;
+}
+
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
@@ -682,7 +692,7 @@ function renderTodos() {
   const filtered = todos
     .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
     .filter((todo) => {
-      if (filter === "active") return !todo.completed;
+      if (filter === "active") return !todo.completed && hasTaskStarted(todo);
       if (filter === "completed") return todo.completed;
       if (filter === "daily") return isToday(todo.createdAt);
       if (filter === "categories") return true;
