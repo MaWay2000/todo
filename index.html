@@ -35,6 +35,12 @@
           placeholder="Comments (optional)"
         ></textarea>
         <label class="field-label" for="todo-color">Color</label>
+        <div class="color-toggle">
+          <label class="toggle">
+            <input id="todo-color-toggle" type="checkbox" aria-label="Enable task color" checked />
+            <span>Use a color for this task</span>
+          </label>
+        </div>
         <div class="color-input-row">
           <input id="todo-color" name="color" type="color" value="#38bdf8" aria-label="Task color" />
           <span class="color-hint">Pick a color to make this task easier to spot (optional).</span>
@@ -138,6 +144,12 @@
           placeholder="Comments (optional)"
         ></textarea>
         <label class="field-label" for="edit-color">Color</label>
+        <div class="color-toggle">
+          <label class="toggle">
+            <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
+            <span>Use a color for this task</span>
+          </label>
+        </div>
         <div class="color-input-row">
           <input id="edit-color" name="edit-color" type="color" value="#38bdf8" aria-label="Task color" />
           <span class="color-hint">Update the task color or leave as-is.</span>
@@ -175,6 +187,17 @@
           placeholder="Comments (optional)"
         ></textarea>
         <label class="field-label" for="daily-edit-color">Color</label>
+        <div class="color-toggle">
+          <label class="toggle">
+            <input
+              id="daily-edit-color-toggle"
+              type="checkbox"
+              aria-label="Enable daily task color"
+              checked
+            />
+            <span>Use a color for this daily task</span>
+          </label>
+        </div>
         <div class="color-input-row">
           <input
             id="daily-edit-color"
