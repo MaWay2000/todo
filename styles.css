@@ -258,6 +258,23 @@ button.danger:hover {
   margin: 0;
 }
 
+.start-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.9rem;
+}
+
+.start-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.start-date-field input {
+  width: min(260px, 100%);
+}
+
 .field-label {
   color: var(--muted);
   font-weight: 600;
