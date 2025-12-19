@@ -69,6 +69,7 @@ const dailyEditWeekdayInputs = document.querySelectorAll(
 );
 const dailyEditIntervalToggleEl = document.getElementById("daily-edit-interval-enabled");
 const dailyEditIntervalDaysEl = document.getElementById("daily-edit-interval-days");
+const durationNumberInputs = document.querySelectorAll(".duration-inputs input[type='number']");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const categoryPanelEl = document.getElementById("category-panel");
@@ -2295,6 +2296,16 @@ const handleDailyEditWeekdayChange = () =>
     dailyEditIntervalDaysEl
   );
 
+function enforceNumericInput(input) {
+  if (!input) return;
+  input.addEventListener("input", () => {
+    const numericValue = input.value.replace(/[^0-9]/g, "");
+    if (input.value !== numericValue) {
+      input.value = numericValue;
+    }
+  });
+}
+
 function enforceMaxLength(input, maxLength = DURATION_INPUT_MAX_LENGTH) {
   if (!input) return;
   const limit =
@@ -2307,9 +2318,14 @@ function enforceMaxLength(input, maxLength = DURATION_INPUT_MAX_LENGTH) {
   });
 }
 
-document.querySelectorAll(".duration-inputs input[type='number']").forEach((input) => {
+durationNumberInputs.forEach((input) => {
   enforceMaxLength(input);
+  enforceNumericInput(input);
 });
+
+[dailyIntervalDaysEl, dailyEditIntervalDaysEl].forEach((input) =>
+  enforceNumericInput(input)
+);
 
 dailyWeekdayInputs.forEach((input) => {
   input.addEventListener("change", handleDailyWeekdayChange);

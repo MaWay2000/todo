@@ -341,9 +341,10 @@ button.danger:hover {
   background: rgba(17, 24, 39, 0.65);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.55rem 0.65rem;
+  padding: 0.4rem 0.55rem;
   width: 100%;
   position: relative;
+  min-height: 2.6rem;
 }
 
 .duration-group.start-offset .duration-input {
@@ -366,8 +367,10 @@ button.danger:hover {
   text-align: right;
   flex: 1;
   min-width: 0;
-  padding-right: 0.4rem;
-  padding-left: 0.25rem;
+  padding: 0.35rem 0.45rem;
+  height: 2.15rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
   appearance: textfield;
 }
 
