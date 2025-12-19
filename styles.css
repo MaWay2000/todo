@@ -329,8 +329,9 @@ button.danger:hover {
 
 .duration-inputs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, auto);
   gap: 0.6rem;
+  justify-content: flex-start;
 }
 
 .duration-input {
@@ -342,7 +343,7 @@ button.danger:hover {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.4rem 0.55rem;
-  width: 100%;
+  width: auto;
   position: relative;
   min-height: 2.6rem;
 }
@@ -363,10 +364,11 @@ button.danger:hover {
 }
 
 .duration-inputs input {
-  width: 100%;
   text-align: right;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: calc(4ch + 2rem);
+  min-width: calc(4ch + 2rem);
+  max-width: calc(4ch + 2rem);
   padding: 0.35rem 0.45rem;
   height: 2.15rem;
   line-height: 1.2;
