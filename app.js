@@ -93,7 +93,7 @@ const CATEGORY_COLOR_PALETTE = [
 const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
-const DURATION_INPUT_MAX_LENGTH = 3;
+const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
@@ -278,31 +278,28 @@ function formatDateForInput(value) {
   return local.toISOString().slice(0, 16);
 }
 
-function parseDurationParts(daysValue, hoursValue, minsValue) {
-  const days = Number.parseInt(daysValue, 10) || 0;
-  const hours = Number.parseInt(hoursValue, 10) || 0;
-  const mins = Number.parseInt(minsValue, 10) || 0;
+function normalizeDurationParts(daysValue, hoursValue, minsValue) {
+  let days = Number.parseInt(daysValue, 10) || 0;
+  let hours = Number.parseInt(hoursValue, 10) || 0;
+  let mins = Number.parseInt(minsValue, 10) || 0;
 
   if (days < 0 || hours < 0 || mins < 0) return null;
-  if (hours > 23 || mins > 59) return null;
+
+  const extraHoursFromMins = Math.floor(mins / 60);
+  mins = mins % 60;
+  hours += extraHoursFromMins;
+
+  const extraDaysFromHours = Math.floor(hours / 24);
+  hours = hours % 24;
+  days += extraDaysFromHours;
 
   if (days === 0 && hours === 0 && mins === 0) return null;
 
   return { days, hours, mins };
 }
 
-function parseOffsetParts(daysValue, hoursValue, minsValue) {
-  const days = Number.parseInt(daysValue, 10) || 0;
-  const hours = Number.parseInt(hoursValue, 10) || 0;
-  const mins = Number.parseInt(minsValue, 10) || 0;
-
-  if (days < 0 || hours < 0 || mins < 0) return null;
-  if (hours > 23 || mins > 59) return null;
-
-  if (days === 0 && hours === 0 && mins === 0) return null;
-
-  return { days, hours, mins };
-}
+const parseDurationParts = normalizeDurationParts;
+const parseOffsetParts = normalizeDurationParts;
 
 function computeStartFromOffset(daysValue, hoursValue, minsValue) {
   const duration = parseOffsetParts(daysValue, hoursValue, minsValue);
