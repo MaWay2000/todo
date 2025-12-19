@@ -249,6 +249,12 @@ function syncColorToggleSwatch(toggle, input) {
   toggle.style.setProperty("--color-swatch", color);
 }
 
+function updateColorTriggerLabel(trigger, name, fallback = "Color") {
+  if (!trigger) return;
+  const label = name?.trim();
+  trigger.textContent = label ? `${fallback} for “${label}”` : fallback;
+}
+
 function openColorPicker(input) {
   if (!input) return;
   if (typeof input.showPicker === "function") {
@@ -1169,6 +1175,7 @@ function editDailyTask(id) {
   dailyEditIntervalDaysEl.value = hasInterval ? task.intervalDays : "1";
   handleDailyEditWeekdayChange();
   dailyEditColorEl.dataset.touched = "false";
+  updateColorTriggerLabel(dailyEditColorTriggerEl, task.text);
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
 }
@@ -1873,6 +1880,7 @@ function editTodo(id) {
   }
   editCategoryEl.value = todo.category ?? "";
   editColorEl.dataset.touched = "false";
+  updateColorTriggerLabel(editColorTriggerEl, todo.text);
   editDialogEl.showModal();
   editInputEl.focus();
 }
@@ -2194,6 +2202,7 @@ formEl.addEventListener("submit", (event) => {
       colorToggleEl.checked = true;
       setColorEnabled(colorToggleEl, colorEl);
     }
+    updateColorTriggerLabel(colorTriggerEl, "");
     categoryEl.value = "";
     typeSelectEl.value = "one-time";
     dailyWeekdayInputs.forEach((input) => {
@@ -2227,6 +2236,7 @@ openAddEl.addEventListener("click", () => {
     colorToggleEl.checked = true;
     setColorEnabled(colorToggleEl, colorEl);
   }
+  updateColorTriggerLabel(colorTriggerEl, inputEl.value);
   categoryEl.value = "";
   typeSelectEl.value = "one-time";
   dailyWeekdayInputs.forEach((input) => {
@@ -2386,6 +2396,18 @@ editColorEl.addEventListener("input", () => {
 dailyEditColorEl.addEventListener("input", () => {
   dailyEditColorEl.dataset.touched = "true";
   syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
+});
+
+inputEl?.addEventListener("input", () => {
+  updateColorTriggerLabel(colorTriggerEl, inputEl.value);
+});
+
+editInputEl?.addEventListener("input", () => {
+  updateColorTriggerLabel(editColorTriggerEl, editInputEl.value);
+});
+
+dailyEditInputEl?.addEventListener("input", () => {
+  updateColorTriggerLabel(dailyEditColorTriggerEl, dailyEditInputEl.value);
 });
 
   editFormEl.addEventListener("submit", (event) => {
