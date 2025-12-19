@@ -252,7 +252,7 @@ function syncColorToggleSwatch(toggle, input) {
 function updateColorTriggerLabel(trigger, name, fallback = "Color") {
   if (!trigger) return;
   const label = name?.trim();
-  trigger.textContent = label ? `${fallback} for “${label}”` : fallback;
+  trigger.textContent = label || fallback;
 }
 
 function openColorPicker(input) {
