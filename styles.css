@@ -274,6 +274,13 @@ button.danger:hover {
   gap: 0.9rem;
 }
 
+.finish-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.9rem;
+}
+
 .start-date-field {
   display: flex;
   flex-direction: column;
