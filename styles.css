@@ -283,8 +283,8 @@ button.danger:hover {
 
 .start-date-field {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .start-date-field input {
