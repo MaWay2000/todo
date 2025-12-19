@@ -336,10 +336,12 @@ button.danger:hover {
 .duration-input {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
   background: rgba(17, 24, 39, 0.65);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.4rem 0.55rem;
+  padding: 0.55rem 0.65rem;
   width: 100%;
   position: relative;
 }
@@ -354,19 +356,18 @@ button.danger:hover {
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 0.01em;
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
   pointer-events: none;
 }
 
 .duration-inputs input {
   width: 100%;
-  text-align: center;
+  text-align: right;
   flex: 1;
   min-width: 0;
-  padding-right: 3.25rem;
+  padding-right: 0.4rem;
+  padding-left: 0.25rem;
   appearance: textfield;
 }
 
