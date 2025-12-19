@@ -36,6 +36,7 @@ const dailyIntervalDaysEl = document.getElementById("daily-interval-days");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
+const addDialogTitleEl = dialogEl?.querySelector(".modal-title");
 const editDialogEl = document.getElementById("edit-dialog");
 const editFormEl = document.getElementById("edit-form");
 const editInputEl = document.getElementById("edit-input");
@@ -452,6 +453,7 @@ const isToday = (value) => {
 };
 
 function updateDailyOptionsVisibility() {
+  updateAddDialogTitle();
   const isDailyTask = typeSelectEl.value === "daily";
   dailyOptionsEl.hidden = !isDailyTask;
   if (isDailyTask) {
@@ -461,6 +463,12 @@ function updateDailyOptionsVisibility() {
     }
     handleDailyWeekdayChange();
   }
+}
+
+function updateAddDialogTitle() {
+  if (!addDialogTitleEl) return;
+  const isDailyTask = typeSelectEl.value === "daily";
+  addDialogTitleEl.textContent = isDailyTask ? "New daily task" : "New task";
 }
 
 function getContentMinSize(item) {
