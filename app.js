@@ -89,6 +89,7 @@ const CATEGORY_COLOR_PALETTE = [
 const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
+const DURATION_INPUT_MAX_LENGTH = 3;
 const DRAG_PERSIST_INTERVAL = 200;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
@@ -2224,6 +2225,22 @@ const handleDailyEditWeekdayChange = () =>
     dailyEditIntervalToggleEl,
     dailyEditIntervalDaysEl
   );
+
+function enforceMaxLength(input, maxLength = DURATION_INPUT_MAX_LENGTH) {
+  if (!input) return;
+  const limit =
+    Number.isInteger(input.maxLength) && input.maxLength > 0 ? input.maxLength : maxLength;
+  input.addEventListener("input", () => {
+    const value = input.value;
+    if (value && value.length > limit) {
+      input.value = value.slice(0, limit);
+    }
+  });
+}
+
+document.querySelectorAll(".duration-inputs input[type='number']").forEach((input) => {
+  enforceMaxLength(input);
+});
 
 dailyWeekdayInputs.forEach((input) => {
   input.addEventListener("change", handleDailyWeekdayChange);
