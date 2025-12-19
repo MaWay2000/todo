@@ -26,6 +26,7 @@ const dailyOptionsEl = document.getElementById("daily-options");
 const dailyWeekdayInputs = document.querySelectorAll(
   "input[name='daily-weekday']"
 );
+const dailyIntervalToggleEl = document.getElementById("daily-interval-enabled");
 const dailyIntervalDaysEl = document.getElementById("daily-interval-days");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
@@ -60,6 +61,7 @@ const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
   "input[name='daily-edit-weekday']"
 );
+const dailyEditIntervalToggleEl = document.getElementById("daily-edit-interval-enabled");
 const dailyEditIntervalDaysEl = document.getElementById("daily-edit-interval-days");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
@@ -371,10 +373,31 @@ function setSelectedWeekdays(inputs, values = []) {
   });
 }
 
-function parseIntervalValue(input) {
+function parseIntervalValue(toggle, input) {
+  const enabled = toggle?.checked ?? true;
+  if (!enabled) return null;
   const parsed = Number.parseInt(input?.value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return parsed;
+}
+
+function setIntervalEnabled(toggle, input, enabled) {
+  if (toggle) toggle.checked = enabled;
+  if (input) {
+    input.disabled = !enabled;
+    if (enabled && (!input.value || Number.parseInt(input.value, 10) <= 0)) {
+      input.value = "1";
+    }
+  }
+}
+
+function syncIntervalWithWeekdays(weekdays, toggle, input) {
+  const anySelected = Array.from(weekdays).some((inputEl) => inputEl.checked);
+  if (anySelected) {
+    setIntervalEnabled(toggle, input, false);
+  } else if (toggle && !toggle.disabled && toggle.dataset.userDisabled !== "true") {
+    setIntervalEnabled(toggle, input, true);
+  }
 }
 
 function makeActionButton(icon, label, handler, extraClass = "") {
@@ -402,6 +425,13 @@ const isToday = (value) => {
 function updateDailyOptionsVisibility() {
   const isDailyTask = typeSelectEl.value === "daily";
   dailyOptionsEl.hidden = !isDailyTask;
+  if (isDailyTask) {
+    setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
+    if (!dailyIntervalDaysEl.value) {
+      dailyIntervalDaysEl.value = "1";
+    }
+    handleDailyWeekdayChange();
+  }
 }
 
 function getContentMinSize(item) {
@@ -1096,7 +1126,11 @@ function editDailyTask(id) {
     dailyEditCategoryEl.value = task.category ?? "";
   }
   setSelectedWeekdays(dailyEditWeekdayInputs, task.triggerDays ?? []);
-  dailyEditIntervalDaysEl.value = task.intervalDays ?? "";
+  const hasInterval = Number.isFinite(task.intervalDays) && task.intervalDays > 0;
+  setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, hasInterval);
+  dailyEditIntervalToggleEl.dataset.userDisabled = hasInterval ? "false" : "true";
+  dailyEditIntervalDaysEl.value = hasInterval ? task.intervalDays : "1";
+  handleDailyEditWeekdayChange();
   dailyEditColorEl.dataset.touched = "false";
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
@@ -2089,7 +2123,8 @@ formEl.addEventListener("submit", (event) => {
   const color = colorEnabled ? colorEl.value?.trim() || null : null;
   const category = categoryEl.value?.trim() ?? "";
   const triggerDays = taskType === "daily" ? parseSelectedWeekdays(dailyWeekdayInputs) : [];
-  const intervalDays = taskType === "daily" ? parseIntervalValue(dailyIntervalDaysEl) : null;
+  const intervalDays =
+    taskType === "daily" ? parseIntervalValue(dailyIntervalToggleEl, dailyIntervalDaysEl) : null;
   const added =
     taskType === "daily"
       ? addDailyTask(
@@ -2124,7 +2159,8 @@ formEl.addEventListener("submit", (event) => {
     dailyWeekdayInputs.forEach((input) => {
       input.checked = false;
     });
-    dailyIntervalDaysEl.value = "";
+    setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
+    dailyIntervalDaysEl.value = "1";
     updateDailyOptionsVisibility();
     dialogEl.close();
   }
@@ -2151,7 +2187,8 @@ openAddEl.addEventListener("click", () => {
   dailyWeekdayInputs.forEach((input) => {
     input.checked = false;
   });
-  dailyIntervalDaysEl.value = "";
+  setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
+  dailyIntervalDaysEl.value = "1";
   updateDailyOptionsVisibility();
   dialogEl.showModal();
   inputEl.focus();
@@ -2172,7 +2209,60 @@ cancelAddEl.addEventListener("click", () => {
 
 typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
 
+const handleDailyWeekdayChange = () =>
+  syncIntervalWithWeekdays(dailyWeekdayInputs, dailyIntervalToggleEl, dailyIntervalDaysEl);
+const handleDailyEditWeekdayChange = () =>
+  syncIntervalWithWeekdays(
+    dailyEditWeekdayInputs,
+    dailyEditIntervalToggleEl,
+    dailyEditIntervalDaysEl
+  );
+
+dailyWeekdayInputs.forEach((input) => {
+  input.addEventListener("change", handleDailyWeekdayChange);
+});
+
+dailyEditWeekdayInputs.forEach((input) => {
+  input.addEventListener("change", handleDailyEditWeekdayChange);
+});
+
+dailyIntervalToggleEl?.addEventListener("change", () => {
+  const enabled = dailyIntervalToggleEl.checked;
+  dailyIntervalToggleEl.dataset.userDisabled = enabled ? "false" : "true";
+  setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, enabled);
+  handleDailyWeekdayChange();
+});
+
+dailyEditIntervalToggleEl?.addEventListener("change", () => {
+  const enabled = dailyEditIntervalToggleEl.checked;
+  dailyEditIntervalToggleEl.dataset.userDisabled = enabled ? "false" : "true";
+  setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, enabled);
+  handleDailyEditWeekdayChange();
+});
+
+const clampIntervalInput = (toggle, input) => {
+  const value = Number.parseInt(input.value, 10);
+  if (!Number.isFinite(value) || value <= 0) {
+    input.value = "";
+    setIntervalEnabled(toggle, input, false);
+    if (toggle) toggle.dataset.userDisabled = "true";
+  } else {
+    setIntervalEnabled(toggle, input, true);
+    if (toggle) toggle.dataset.userDisabled = "false";
+  }
+};
+
+dailyIntervalDaysEl?.addEventListener("change", () =>
+  clampIntervalInput(dailyIntervalToggleEl, dailyIntervalDaysEl)
+);
+dailyEditIntervalDaysEl?.addEventListener("change", () =>
+  clampIntervalInput(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl)
+);
+
 updateDailyOptionsVisibility();
+setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
+if (dailyIntervalToggleEl) dailyIntervalToggleEl.dataset.userDisabled = "false";
+if (dailyIntervalDaysEl && !dailyIntervalDaysEl.value) dailyIntervalDaysEl.value = "1";
 
 setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
@@ -2285,7 +2375,7 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       dailyEditEndMinsEl.value
     ) ?? currentTask?.endTime ?? null;
   const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
-  const intervalDays = parseIntervalValue(dailyEditIntervalDaysEl);
+  const intervalDays = parseIntervalValue(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl);
   const category = dailyEditCategoryEl?.value?.trim() ?? "";
   const colorEnabled = dailyEditColorToggleEl?.checked ?? true;
   const color = colorEnabled
@@ -2342,6 +2432,9 @@ dailyEditDialogEl.addEventListener("close", () => {
   dailyEditFormEl.reset();
   dailyEditColorEl.dataset.touched = "false";
   setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+  setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, true);
+  if (dailyEditIntervalToggleEl) dailyEditIntervalToggleEl.dataset.userDisabled = "false";
+  if (dailyEditIntervalDaysEl) dailyEditIntervalDaysEl.value = "1";
 });
 
 filterButtons.forEach((button) => {
