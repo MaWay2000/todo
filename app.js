@@ -100,6 +100,14 @@ const formatDateTime = (value) =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+const formatTime = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    timeStyle: "short",
+  }).format(date);
+};
 
 const formatDuration = (start, end) => {
   if (!start || !end) return null;
@@ -1137,6 +1145,19 @@ function renderDailyTasks() {
 
     shell.appendChild(status);
     shell.appendChild(title);
+
+    const startLabel = formatTime(task.startTime);
+    const endLabel = formatTime(task.endTime);
+    const hasStartTime = Boolean(startLabel);
+    const hasEndTime = Boolean(endLabel);
+    if (hasStartTime || hasEndTime) {
+      const timeChip = document.createElement("span");
+      timeChip.className = "time-range-chip";
+      const formattedStart = hasStartTime ? startLabel : "—";
+      const formattedEnd = hasEndTime ? endLabel : "—";
+      timeChip.textContent = `${formattedStart} - ${formattedEnd}`;
+      shell.appendChild(timeChip);
+    }
 
     const meta = document.createElement("div");
     meta.className = "todo-details";
