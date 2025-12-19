@@ -72,6 +72,7 @@ const dailyEditIntervalDaysEl = document.getElementById("daily-edit-interval-day
 const durationNumberInputs = document.querySelectorAll(".duration-inputs input[type='number']");
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
+const dailyPanelEl = document.getElementById("daily-panel");
 const categoryPanelEl = document.getElementById("category-panel");
 const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
@@ -1553,8 +1554,12 @@ function renderCategories() {
 
 function renderCurrentView() {
   const isCategoryView = filter === "categories";
+  const isDailyView = filter === "daily";
   if (categoryPanelEl) {
     categoryPanelEl.hidden = !isCategoryView;
+  }
+  if (dailyPanelEl) {
+    dailyPanelEl.hidden = !isDailyView;
   }
   listEl.hidden = isCategoryView;
   if (isCategoryView) {
@@ -1562,7 +1567,7 @@ function renderCurrentView() {
     return;
   }
 
-  if (filter === "daily") {
+  if (isDailyView) {
     renderDailyTasks();
     return;
   }

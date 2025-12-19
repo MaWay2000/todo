@@ -871,6 +871,20 @@ button.danger:hover {
   border-color: rgba(56, 189, 248, 0.6);
 }
 
+.info-panel {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.info-panel-title {
+  margin: 0;
+}
+
 .category-panel {
   background: rgba(17, 24, 39, 0.8);
   border: 1px solid var(--border);
