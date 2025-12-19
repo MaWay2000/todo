@@ -167,17 +167,21 @@
             <label><input type="checkbox" name="daily-weekday" value="6" />Sat</label>
             <label><input type="checkbox" name="daily-weekday" value="0" />Sun</label>
           </fieldset>
-          <label class="interval-field" for="daily-interval-days">
-            <span>Or trigger every N days</span>
+          <div class="interval-field" role="group" aria-labelledby="daily-interval-label">
+            <label class="interval-toggle" id="daily-interval-label">
+              <input type="checkbox" id="daily-interval-enabled" name="daily-interval-enabled" checked />
+              <span>Or trigger every N days</span>
+            </label>
             <input
               id="daily-interval-days"
               name="daily-interval-days"
               type="number"
               min="0"
-              placeholder="e.g. 2"
+              value="1"
               inputmode="numeric"
+              aria-label="Trigger every N days"
             />
-          </label>
+          </div>
           <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
         </div>
         <div class="modal-actions">
@@ -332,17 +336,26 @@
             <label><input type="checkbox" name="daily-edit-weekday" value="6" />Sat</label>
             <label><input type="checkbox" name="daily-edit-weekday" value="0" />Sun</label>
           </fieldset>
-          <label class="interval-field" for="daily-edit-interval-days">
-            <span>Or trigger every N days</span>
+          <div class="interval-field" role="group" aria-labelledby="daily-edit-interval-label">
+            <label class="interval-toggle" id="daily-edit-interval-label">
+              <input
+                type="checkbox"
+                id="daily-edit-interval-enabled"
+                name="daily-edit-interval-enabled"
+                checked
+              />
+              <span>Or trigger every N days</span>
+            </label>
             <input
               id="daily-edit-interval-days"
               name="daily-edit-interval-days"
               type="number"
               min="0"
-              placeholder="e.g. 2"
+              value="1"
               inputmode="numeric"
+              aria-label="Trigger every N days"
             />
-          </label>
+          </div>
           <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
         </div>
         <div class="modal-actions">
