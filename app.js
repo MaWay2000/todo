@@ -291,6 +291,8 @@ function parseOffsetParts(daysValue, hoursValue, minsValue) {
   if (days < 0 || hours < 0 || mins < 0) return null;
   if (hours > 23 || mins > 59) return null;
 
+  if (days === 0 && hours === 0 && mins === 0) return null;
+
   return { days, hours, mins };
 }
 
