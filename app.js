@@ -18,6 +18,10 @@ const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
+
+if (endEl) {
+  endEl.dataset.synced = "true";
+}
 const colorEl = document.getElementById("todo-color");
 const colorTriggerEl = document.querySelector("[data-color-trigger='todo-color']");
 const colorToggleEl = document.getElementById("todo-color-toggle");
@@ -335,6 +339,32 @@ function updateStartFromOffsetPreview() {
     startEl.value = formatDateForInput(offsetStart);
   } else if (!startEl.value) {
     startEl.value = formatDateForInput(new Date().toISOString());
+  }
+
+  syncEndTimeWithStart();
+}
+
+function syncEndTimeWithStart() {
+  if (!startEl || !endEl) return;
+
+  const startValue = parseDateInput(startEl.value);
+  if (!startValue) return;
+
+  const derivedEnd = computeEndFromDuration(
+    startValue,
+    endDaysEl.value,
+    endHoursEl.value,
+    endMinsEl.value
+  );
+
+  if (derivedEnd) {
+    endEl.value = formatDateForInput(derivedEnd);
+    endEl.dataset.synced = "true";
+    return;
+  }
+
+  if (endEl.dataset.synced === "true") {
+    endEl.value = formatDateForInput(startValue);
   }
 }
 
@@ -2149,6 +2179,7 @@ formEl.addEventListener("submit", (event) => {
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
     endEl.value = startEl.value;
+    endEl.dataset.synced = "true";
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
@@ -2177,6 +2208,7 @@ openAddEl.addEventListener("click", () => {
   startEl.value = startValue;
   if (endEl) {
     endEl.value = startValue;
+    endEl.dataset.synced = "true";
   }
   startOffsetDaysEl.value = "";
   startOffsetHoursEl.value = "";
@@ -2213,6 +2245,27 @@ cancelAddEl.addEventListener("click", () => {
 ].forEach((input) => {
   input?.addEventListener("input", updateStartFromOffsetPreview);
   input?.addEventListener("change", updateStartFromOffsetPreview);
+});
+
+startEl?.addEventListener("input", () => {
+  if (endEl && !endEl.dataset.synced) {
+    endEl.dataset.synced = "true";
+  }
+  syncEndTimeWithStart();
+});
+startEl?.addEventListener("change", syncEndTimeWithStart);
+
+[endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
+  input?.addEventListener("input", () => {
+    if (endEl) {
+      endEl.dataset.synced = "true";
+    }
+    syncEndTimeWithStart();
+  });
+});
+
+endEl?.addEventListener("input", () => {
+  endEl.dataset.synced = "false";
 });
 
 typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
