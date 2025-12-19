@@ -92,6 +92,7 @@ const CATEGORY_COLOR_PALETTE = [
   "#fb7185",
 ];
 const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
+const DEFAULT_TASK_PLACEHOLDER = "Task name";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
 const DURATION_INPUT_MAX_LENGTH = 5;
@@ -249,7 +250,7 @@ function syncColorToggleSwatch(toggle, input) {
   toggle.style.setProperty("--color-swatch", color);
 }
 
-function updateColorTriggerLabel(trigger, name, fallback = "Color") {
+function updateColorTriggerLabel(trigger, name, fallback = DEFAULT_TASK_PLACEHOLDER) {
   if (!trigger) return;
   const label = name?.trim();
   trigger.textContent = label || fallback;
