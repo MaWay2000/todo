@@ -11,6 +11,7 @@ const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
 const startEl = document.getElementById("todo-start");
+const endEl = document.getElementById("todo-end");
 const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
 const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
 const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
@@ -2079,7 +2080,8 @@ formEl.addEventListener("submit", (event) => {
     startOffsetMinsEl.value
   );
   const startTime = offsetStartTime ?? parseDateInput(startEl.value) ?? new Date().toISOString();
-  const endTime = computeEndFromDuration(
+  const explicitEndTime = parseDateInput(endEl?.value);
+  const endTime = explicitEndTime ?? computeEndFromDuration(
     startTime,
     endDaysEl.value,
     endHoursEl.value,
@@ -2110,6 +2112,7 @@ formEl.addEventListener("submit", (event) => {
     startOffsetDaysEl.value = "";
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
+    endEl.value = startEl.value;
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
@@ -2133,7 +2136,11 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
-  startEl.value = formatDateForInput(new Date().toISOString());
+  const startValue = formatDateForInput(new Date().toISOString());
+  startEl.value = startValue;
+  if (endEl) {
+    endEl.value = startValue;
+  }
   startOffsetDaysEl.value = "";
   startOffsetHoursEl.value = "";
   startOffsetMinsEl.value = "";
