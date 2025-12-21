@@ -146,6 +146,9 @@ textarea {
 
 .color-toggle {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   justify-content: flex-start;
   margin: 0.25rem 0 0.35rem;
 }
@@ -190,6 +193,18 @@ textarea {
 .color-toggle input[type="checkbox"]:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+
+.preview-category {
+  margin-left: auto;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.preview-category .category-pill-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 #category-color {

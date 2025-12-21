@@ -26,6 +26,7 @@ const colorEl = document.getElementById("todo-color");
 const colorTriggerEl = document.querySelector("[data-color-trigger='todo-color']");
 const colorToggleEl = document.getElementById("todo-color-toggle");
 const categoryEl = document.getElementById("todo-category");
+const categoryPreviewEl = document.getElementById("todo-preview-category");
 const typeSelectEl = document.getElementById("todo-type");
 const dailyOptionsEl = document.getElementById("daily-options");
 const dailyWeekdayInputs = document.querySelectorAll(
@@ -49,6 +50,7 @@ const editColorTriggerEl = document.querySelector(
 );
 const editColorToggleEl = document.getElementById("edit-color-toggle");
 const editCategoryEl = document.getElementById("edit-category");
+const editCategoryPreviewEl = document.getElementById("edit-preview-category");
 const cancelEditEl = document.getElementById("cancel-edit");
 const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
 const dailyEditFormEl = document.getElementById("daily-edit-form");
@@ -64,6 +66,7 @@ const dailyEditColorTriggerEl = document.querySelector(
 );
 const dailyEditColorToggleEl = document.getElementById("daily-edit-color-toggle");
 const dailyEditCategoryEl = document.getElementById("daily-edit-category");
+const dailyEditCategoryPreviewEl = document.getElementById("daily-edit-preview-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
   "input[name='daily-edit-weekday']"
 );
@@ -256,6 +259,49 @@ function updateColorTriggerLabel(trigger, name, fallback = DEFAULT_TASK_PLACEHOL
   if (!trigger) return;
   const label = name?.trim();
   trigger.textContent = label || fallback;
+}
+
+function updateCategoryPreview(select, preview) {
+  if (!select || !preview) return;
+  const labelEl = preview.querySelector(".category-pill-label");
+  const colorDot = preview.querySelector(".category-color-dot");
+  const value = select.value?.trim() ?? "";
+  if (!value) {
+    preview.hidden = true;
+    preview.classList.remove("has-color");
+    preview.style.removeProperty("--category-color");
+    if (colorDot) colorDot.hidden = true;
+    if (labelEl) labelEl.textContent = "";
+    return;
+  }
+
+  const color = getCategoryColor(value);
+  if (labelEl) {
+    labelEl.textContent = value;
+  }
+  if (colorDot) {
+    colorDot.hidden = !color;
+  }
+  preview.hidden = false;
+  preview.classList.toggle("has-color", Boolean(color));
+  if (color) {
+    preview.style.setProperty("--category-color", color);
+  } else {
+    preview.style.removeProperty("--category-color");
+  }
+}
+
+function updateAllCategoryPreviews() {
+  updateCategoryPreview(categoryEl, categoryPreviewEl);
+  updateCategoryPreview(editCategoryEl, editCategoryPreviewEl);
+  updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
+}
+
+function getCategoryPreviewForSelect(select) {
+  if (select === categoryEl) return categoryPreviewEl;
+  if (select === editCategoryEl) return editCategoryPreviewEl;
+  if (select === dailyEditCategoryEl) return dailyEditCategoryPreviewEl;
+  return null;
 }
 
 function openColorPicker(input) {
@@ -754,6 +800,7 @@ function renderCategoryOptions() {
     }
 
     select.value = previousValue;
+    updateCategoryPreview(select, getCategoryPreviewForSelect(select));
   });
 }
 
@@ -1171,6 +1218,7 @@ function editDailyTask(id) {
   if (dailyEditCategoryEl) {
     dailyEditCategoryEl.value = task.category ?? "";
   }
+  updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
   setSelectedWeekdays(dailyEditWeekdayInputs, task.triggerDays ?? []);
   const hasInterval = Number.isFinite(task.intervalDays) && task.intervalDays > 0;
   setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, hasInterval);
@@ -1886,6 +1934,7 @@ function editTodo(id) {
     setColorEnabled(editColorToggleEl, editColorEl);
   }
   editCategoryEl.value = todo.category ?? "";
+  updateCategoryPreview(editCategoryEl, editCategoryPreviewEl);
   editColorEl.dataset.touched = "false";
   updateColorTriggerLabel(editColorTriggerEl, todo.text);
   editDialogEl.showModal();
@@ -2211,6 +2260,7 @@ formEl.addEventListener("submit", (event) => {
     }
     updateColorTriggerLabel(colorTriggerEl, "");
     categoryEl.value = "";
+    updateCategoryPreview(categoryEl, categoryPreviewEl);
     typeSelectEl.value = "one-time";
     dailyWeekdayInputs.forEach((input) => {
       input.checked = false;
@@ -2245,6 +2295,7 @@ openAddEl.addEventListener("click", () => {
   }
   updateColorTriggerLabel(colorTriggerEl, inputEl.value);
   categoryEl.value = "";
+  updateCategoryPreview(categoryEl, categoryPreviewEl);
   typeSelectEl.value = "one-time";
   dailyWeekdayInputs.forEach((input) => {
     input.checked = false;
@@ -2291,6 +2342,16 @@ endEl?.addEventListener("input", () => {
 });
 
 typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
+
+categoryEl?.addEventListener("change", () =>
+  updateCategoryPreview(categoryEl, categoryPreviewEl)
+);
+editCategoryEl?.addEventListener("change", () =>
+  updateCategoryPreview(editCategoryEl, editCategoryPreviewEl)
+);
+dailyEditCategoryEl?.addEventListener("change", () =>
+  updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl)
+);
 
 const handleDailyWeekdayChange = () =>
   syncIntervalWithWeekdays(dailyWeekdayInputs, dailyIntervalToggleEl, dailyIntervalDaysEl);
@@ -2485,6 +2546,7 @@ editDialogEl.addEventListener("close", () => {
   activeEditId = null;
   editColorEl.dataset.touched = "false";
   setColorEnabled(editColorToggleEl, editColorEl);
+  updateCategoryPreview(editCategoryEl, editCategoryPreviewEl);
 });
 
 dailyEditFormEl.addEventListener("submit", (event) => {
@@ -2561,6 +2623,7 @@ dailyEditDialogEl.addEventListener("close", () => {
   setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, true);
   if (dailyEditIntervalToggleEl) dailyEditIntervalToggleEl.dataset.userDisabled = "false";
   if (dailyEditIntervalDaysEl) dailyEditIntervalDaysEl.value = "1";
+  updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
 });
 
 filterButtons.forEach((button) => {
@@ -2603,6 +2666,7 @@ loadCategories();
 ensureLayoutDefaults();
 syncCategoriesFromTodos();
 renderCategoryOptions();
+updateAllCategoryPreviews();
 maybeAutoTriggerDailyTasks();
 setFilter(filter);
 
