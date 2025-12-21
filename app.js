@@ -15,9 +15,12 @@ const endEl = document.getElementById("todo-end");
 const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
 const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
 const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
+const startOffsetToggleEl = document.getElementById("todo-start-offset-enabled");
+const startOffsetToggleLabelEl = document.getElementById("todo-start-offset-toggle-label");
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
+const startNowChipEl = document.getElementById("todo-start-now-chip");
 
 if (endEl) {
   endEl.dataset.synced = "true";
@@ -100,6 +103,7 @@ const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const DEFAULT_TASK_PLACEHOLDER = "Task name";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
+const START_NOW_THRESHOLD_MS = 120000;
 const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -334,6 +338,21 @@ function formatDateForInput(value) {
   return local.toISOString().slice(0, 16);
 }
 
+function isStartNow(value, reference = null) {
+  if (!value) return false;
+  const date = new Date(value);
+  const comparison = reference ? new Date(reference) : new Date();
+  if (!Number.isFinite(date.getTime()) || !Number.isFinite(comparison.getTime())) return false;
+  return Math.abs(date.getTime() - comparison.getTime()) <= START_NOW_THRESHOLD_MS;
+}
+
+function formatStartLabel(value, reference = null) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return "";
+  return isStartNow(value, reference) ? "Now" : formatDateTime(parsed);
+}
+
 function normalizeDurationParts(daysValue, hoursValue, minsValue) {
   let days = Number.parseInt(daysValue, 10) || 0;
   let hours = Number.parseInt(hoursValue, 10) || 0;
@@ -381,7 +400,44 @@ function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
   return new Date(startDate.getTime() + totalMs).toISOString();
 }
 
+function updateStartNowIndicator() {
+  if (!startNowChipEl || !startEl) return;
+  const parsedStart = parseDateInput(startEl.value);
+  const showNow = isStartNow(parsedStart);
+  startNowChipEl.hidden = !showNow;
+}
+
+function syncStartOffsetToggleLabel() {
+  if (!startOffsetToggleLabelEl || !startOffsetToggleEl) return;
+  const enabled = startOffsetToggleEl.checked;
+  const onText = startOffsetToggleLabelEl.dataset.on ?? "On";
+  const offText = startOffsetToggleLabelEl.dataset.off ?? "Off";
+  startOffsetToggleLabelEl.textContent = enabled ? onText : offText;
+}
+
+function setStartOffsetEnabled(enabled) {
+  [startOffsetDaysEl, startOffsetHoursEl, startOffsetMinsEl].forEach((input) => {
+    if (!input) return;
+    input.disabled = !enabled;
+  });
+  syncStartOffsetToggleLabel();
+  if (enabled) {
+    updateStartFromOffsetPreview();
+  } else {
+    updateStartNowIndicator();
+  }
+}
+
 function updateStartFromOffsetPreview() {
+  if (startOffsetToggleEl && !startOffsetToggleEl.checked) {
+    if (startEl && !startEl.value) {
+      startEl.value = formatDateForInput(new Date().toISOString());
+    }
+    syncEndTimeWithStart();
+    updateStartNowIndicator();
+    return;
+  }
+
   const offsetStart = computeStartFromOffset(
     startOffsetDaysEl.value,
     startOffsetHoursEl.value,
@@ -395,6 +451,7 @@ function updateStartFromOffsetPreview() {
   }
 
   syncEndTimeWithStart();
+  updateStartNowIndicator();
 }
 
 function syncEndTimeWithStart() {
@@ -1095,8 +1152,9 @@ function renderTodos() {
     }
     const startMeta = document.createElement("div");
     if (todo.startTime && todo.endTime) {
-      startMeta.innerHTML = `<strong>Start:</strong> ${formatDateTime(
-        todo.startTime
+      startMeta.innerHTML = `<strong>Start:</strong> ${formatStartLabel(
+        todo.startTime,
+        todo.createdAt
       )}`;
     }
     const categoryMeta = document.createElement("div");
@@ -1301,7 +1359,9 @@ function renderDailyTasks() {
     const categoryName = task.category?.trim() || UNCATEGORIZED_LABEL;
     const scheduleParts = [];
     if (task.startTime) {
-      scheduleParts.push(`<div><strong>Start:</strong> ${formatDateTime(task.startTime)}</div>`);
+      scheduleParts.push(
+        `<div><strong>Start:</strong> ${formatStartLabel(task.startTime, task.createdAt)}</div>`
+      );
     }
     if (task.endTime) {
       const duration = task.startTime
@@ -2208,11 +2268,13 @@ function updateCanvasHeight() {
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
-  const offsetStartTime = computeStartFromOffset(
-    startOffsetDaysEl.value,
-    startOffsetHoursEl.value,
-    startOffsetMinsEl.value
-  );
+  const offsetStartTime = startOffsetToggleEl?.checked
+    ? computeStartFromOffset(
+        startOffsetDaysEl.value,
+        startOffsetHoursEl.value,
+        startOffsetMinsEl.value
+      )
+    : null;
   const startTime = offsetStartTime ?? parseDateInput(startEl.value) ?? new Date().toISOString();
   const explicitEndTime = parseDateInput(endEl?.value);
   const endTime = explicitEndTime ?? computeEndFromDuration(
@@ -2244,9 +2306,14 @@ formEl.addEventListener("submit", (event) => {
     inputEl.value = "";
     commentEl.value = "";
     startEl.value = formatDateForInput(new Date().toISOString());
+    updateStartNowIndicator();
     startOffsetDaysEl.value = "";
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
+    if (startOffsetToggleEl) {
+      startOffsetToggleEl.checked = true;
+    }
+    setStartOffsetEnabled(true);
     endEl.value = startEl.value;
     endEl.dataset.synced = "true";
     endDaysEl.value = "";
@@ -2277,6 +2344,7 @@ openAddEl.addEventListener("click", () => {
   commentEl.value = "";
   const startValue = formatDateForInput(new Date().toISOString());
   startEl.value = startValue;
+  updateStartNowIndicator();
   if (endEl) {
     endEl.value = startValue;
     endEl.dataset.synced = "true";
@@ -2284,6 +2352,10 @@ openAddEl.addEventListener("click", () => {
   startOffsetDaysEl.value = "";
   startOffsetHoursEl.value = "";
   startOffsetMinsEl.value = "";
+  if (startOffsetToggleEl) {
+    startOffsetToggleEl.checked = true;
+  }
+  setStartOffsetEnabled(true);
   endDaysEl.value = "";
   endHoursEl.value = "";
   endMinsEl.value = "";
@@ -2320,13 +2392,21 @@ cancelAddEl.addEventListener("click", () => {
   input?.addEventListener("change", updateStartFromOffsetPreview);
 });
 
+startOffsetToggleEl?.addEventListener("change", () =>
+  setStartOffsetEnabled(startOffsetToggleEl.checked)
+);
+
 startEl?.addEventListener("input", () => {
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
   }
   syncEndTimeWithStart();
+  updateStartNowIndicator();
 });
-startEl?.addEventListener("change", syncEndTimeWithStart);
+startEl?.addEventListener("change", () => {
+  syncEndTimeWithStart();
+  updateStartNowIndicator();
+});
 
 [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
   input?.addEventListener("input", () => {
@@ -2438,6 +2518,12 @@ updateDailyOptionsVisibility();
 setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
 if (dailyIntervalToggleEl) dailyIntervalToggleEl.dataset.userDisabled = "false";
 if (dailyIntervalDaysEl && !dailyIntervalDaysEl.value) dailyIntervalDaysEl.value = "1";
+
+if (startOffsetToggleEl) {
+  startOffsetToggleEl.checked = true;
+}
+setStartOffsetEnabled(startOffsetToggleEl ? startOffsetToggleEl.checked : true);
+updateStartNowIndicator();
 
 setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
