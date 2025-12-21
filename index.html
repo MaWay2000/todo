@@ -179,17 +179,21 @@
           <div class="interval-field" role="group" aria-labelledby="daily-interval-label">
             <label class="interval-toggle" id="daily-interval-label">
               <input type="checkbox" id="daily-interval-enabled" name="daily-interval-enabled" checked />
-              <span>Or trigger every N days</span>
+              <span class="interval-icon" aria-hidden="true">+</span>
+              <span class="interval-text">Repeat every</span>
             </label>
-            <input
-              id="daily-interval-days"
-              name="daily-interval-days"
-              type="number"
-              min="0"
-              value="1"
-              inputmode="numeric"
-              aria-label="Trigger every N days"
-            />
+            <div class="interval-input-group">
+              <input
+                id="daily-interval-days"
+                name="daily-interval-days"
+                type="number"
+                min="0"
+                value="1"
+                inputmode="numeric"
+                aria-label="Repeat every N days"
+              />
+              <span class="interval-unit" aria-hidden="true">days</span>
+            </div>
           </div>
           <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
         </div>
@@ -352,17 +356,21 @@
                 name="daily-edit-interval-enabled"
                 checked
               />
-              <span>Or trigger every N days</span>
+              <span class="interval-icon" aria-hidden="true">+</span>
+              <span class="interval-text">Repeat every</span>
             </label>
-            <input
-              id="daily-edit-interval-days"
-              name="daily-edit-interval-days"
-              type="number"
-              min="0"
-              value="1"
-              inputmode="numeric"
-              aria-label="Trigger every N days"
-            />
+            <div class="interval-input-group">
+              <input
+                id="daily-edit-interval-days"
+                name="daily-edit-interval-days"
+                type="number"
+                min="0"
+                value="1"
+                inputmode="numeric"
+                aria-label="Repeat every N days"
+              />
+              <span class="interval-unit" aria-hidden="true">days</span>
+            </div>
           </div>
           <p class="field-hint">Leave schedule empty to allow triggering every day.</p>
         </div>
