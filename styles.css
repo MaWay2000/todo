@@ -281,6 +281,17 @@ button.danger:hover {
   gap: 0.9rem;
 }
 
+.select-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.select-row select {
+  width: 100%;
+}
+
 .start-date-field {
   display: flex;
   align-items: center;

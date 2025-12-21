@@ -150,14 +150,20 @@
             </div>
           </div>
         </div>
-        <label class="sr-only" for="todo-type">Task type</label>
-        <select id="todo-type" name="type">
-          <option value="one-time" selected>One-time task</option>
-          <option value="daily">Daily task</option>
-        </select>
-        <select id="todo-category" name="category" aria-label="Task category">
-          <option value="">No category</option>
-        </select>
+        <div class="select-row">
+          <div>
+            <label class="sr-only" for="todo-type">Task type</label>
+            <select id="todo-type" name="type">
+              <option value="one-time" selected>One-time task</option>
+              <option value="daily">Daily task</option>
+            </select>
+          </div>
+          <div>
+            <select id="todo-category" name="category" aria-label="Task category">
+              <option value="">No category</option>
+            </select>
+          </div>
+        </div>
         <div id="daily-options" class="daily-options" hidden>
           <p class="field-label">Daily schedule</p>
           <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
