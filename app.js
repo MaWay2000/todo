@@ -103,6 +103,7 @@ const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const DEFAULT_TASK_PLACEHOLDER = "Task name";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
 const TIME_REFRESH_INTERVAL = 30000;
+const FORM_TIME_REFRESH_INTERVAL = 1000;
 const START_NOW_THRESHOLD_MS = 120000;
 const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
@@ -112,6 +113,7 @@ let activeEditId = null;
 let activeDailyEditId = null;
 let activeCategoryEditId = null;
 let timeRefreshHandle = null;
+let addFormTimeRefreshHandle = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -452,6 +454,21 @@ function updateStartFromOffsetPreview() {
 
   syncEndTimeWithStart();
   updateStartNowIndicator();
+}
+
+function stopAddFormTimeRefresh() {
+  if (addFormTimeRefreshHandle) {
+    clearInterval(addFormTimeRefreshHandle);
+    addFormTimeRefreshHandle = null;
+  }
+}
+
+function startAddFormTimeRefresh() {
+  stopAddFormTimeRefresh();
+  addFormTimeRefreshHandle = setInterval(() => {
+    if (!dialogEl?.open) return;
+    updateStartFromOffsetPreview();
+  }, FORM_TIME_REFRESH_INTERVAL);
 }
 
 function syncEndTimeWithStart() {
@@ -2377,6 +2394,7 @@ openAddEl.addEventListener("click", () => {
   updateDailyOptionsVisibility();
   dialogEl.showModal();
   inputEl.focus();
+  startAddFormTimeRefresh();
 });
 
 cancelAddEl.addEventListener("click", () => {
@@ -2714,6 +2732,10 @@ dailyEditDialogEl.addEventListener("close", () => {
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
+});
+
+dialogEl?.addEventListener("close", () => {
+  stopAddFormTimeRefresh();
 });
 
 if (categoryFormEl) {
