@@ -313,6 +313,16 @@ button.danger:hover {
   gap: 0.65rem;
 }
 
+.start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus) {
+  color: transparent;
+}
+
+.start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus)::-webkit-datetime-edit,
+.start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus)::-webkit-datetime-edit-fields-wrapper,
+.start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus)::-webkit-datetime-edit-text {
+  color: transparent;
+}
+
 .start-now-chip {
   display: inline-flex;
   align-items: center;
