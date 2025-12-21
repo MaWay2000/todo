@@ -341,6 +341,10 @@ button.danger:hover {
   width: min(260px, 100%);
 }
 
+.start-date-field.is-start-now input {
+  display: none;
+}
+
 .field-label {
   color: var(--muted);
   font-weight: 600;
