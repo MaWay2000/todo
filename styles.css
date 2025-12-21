@@ -313,6 +313,20 @@ button.danger:hover {
   gap: 0.65rem;
 }
 
+.start-now-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.18);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .start-date-field input {
   width: min(260px, 100%);
 }
@@ -347,6 +361,64 @@ button.danger:hover {
   gap: 0.5rem;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.delay-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delay-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.delay-toggle-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.delay-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111827;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.delay-toggle input:checked + .delay-toggle-track {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.delay-toggle input:checked + .delay-toggle-track .delay-toggle-thumb {
+  transform: translateX(20px);
+  background: #38bdf8;
+}
+
+.delay-toggle-text {
+  min-width: 2.5ch;
+}
+
+.duration-inputs input[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .duration-hint {

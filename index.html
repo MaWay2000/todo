@@ -58,11 +58,29 @@
         <div class="start-row">
           <div class="start-date-field">
             <label class="field-label" for="todo-start">Start</label>
+            <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
             <input id="todo-start" name="start" type="datetime-local" />
           </div>
           <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
             <div class="duration-label-row">
               <span id="start-offset-label">Delay by:</span>
+              <label class="delay-toggle" for="todo-start-offset-enabled">
+                <input
+                  id="todo-start-offset-enabled"
+                  name="start-offset-enabled"
+                  type="checkbox"
+                  aria-label="Enable delay by duration"
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="todo-start-offset-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >Off</span>
+              </label>
             </div>
             <div class="duration-inputs">
               <label class="duration-input" for="todo-start-offset-days">
