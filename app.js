@@ -404,9 +404,43 @@ function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
 
 function updateStartNowIndicator() {
   if (!startNowChipEl || !startEl) return;
-  const parsedStart = parseDateInput(startEl.value);
-  const showNow = isStartNow(parsedStart);
+  const isNow =
+    startEl.dataset.startNow === "true" ||
+    isStartNow(parseDateInput(startEl.value));
+  const showNow = Boolean(isNow);
   startNowChipEl.hidden = !showNow;
+}
+
+function setStartInputValue(value, displayAsNow = false) {
+  if (!startEl) return;
+  const parsed = parseDateInput(value);
+  const shouldShowNow = displayAsNow || isStartNow(parsed ?? value);
+  if (shouldShowNow) {
+    const resolved = parsed ?? new Date().toISOString();
+    startEl.value = "";
+    startEl.placeholder = "Now";
+    startEl.dataset.startNow = "true";
+    startEl.dataset.startNowValue = resolved;
+  } else if (parsed) {
+    startEl.value = formatDateForInput(parsed);
+    startEl.placeholder = "";
+    startEl.dataset.startNow = "false";
+    startEl.dataset.startNowValue = "";
+  } else {
+    startEl.placeholder = "";
+    startEl.dataset.startNow = "false";
+    startEl.dataset.startNowValue = "";
+  }
+  updateStartNowIndicator();
+}
+
+function getStartTimeValue() {
+  if (!startEl) return null;
+  if (startEl.dataset.startNow === "true") {
+    const stored = parseDateInput(startEl.dataset.startNowValue);
+    return stored ?? new Date().toISOString();
+  }
+  return parseDateInput(startEl.value);
 }
 
 function syncStartOffsetToggleLabel() {
@@ -426,14 +460,14 @@ function setStartOffsetEnabled(enabled) {
   if (enabled) {
     updateStartFromOffsetPreview();
   } else {
-    updateStartNowIndicator();
+    updateStartFromOffsetPreview();
   }
 }
 
 function updateStartFromOffsetPreview() {
   if (startOffsetToggleEl && !startOffsetToggleEl.checked) {
-    if (startEl && !startEl.value) {
-      startEl.value = formatDateForInput(new Date().toISOString());
+    if (startEl?.dataset.startNow === "true" || !startEl?.value) {
+      setStartInputValue(new Date().toISOString(), true);
     }
     syncEndTimeWithStart();
     updateStartNowIndicator();
@@ -447,9 +481,9 @@ function updateStartFromOffsetPreview() {
   );
 
   if (offsetStart) {
-    startEl.value = formatDateForInput(offsetStart);
-  } else if (!startEl.value) {
-    startEl.value = formatDateForInput(new Date().toISOString());
+    setStartInputValue(offsetStart);
+  } else {
+    setStartInputValue(new Date().toISOString(), true);
   }
 
   syncEndTimeWithStart();
@@ -474,7 +508,7 @@ function startAddFormTimeRefresh() {
 function syncEndTimeWithStart() {
   if (!startEl || !endEl) return;
 
-  const startValue = parseDateInput(startEl.value);
+  const startValue = getStartTimeValue();
   if (!startValue) return;
 
   const derivedEnd = computeEndFromDuration(
@@ -2292,7 +2326,7 @@ formEl.addEventListener("submit", (event) => {
         startOffsetMinsEl.value
       )
     : null;
-  const startTime = offsetStartTime ?? parseDateInput(startEl.value) ?? new Date().toISOString();
+  const startTime = offsetStartTime ?? getStartTimeValue() ?? new Date().toISOString();
   const explicitEndTime = parseDateInput(endEl?.value);
   const endTime = explicitEndTime ?? computeEndFromDuration(
     startTime,
@@ -2322,8 +2356,8 @@ formEl.addEventListener("submit", (event) => {
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
-    startEl.value = formatDateForInput(new Date().toISOString());
-    updateStartNowIndicator();
+    const nowValue = new Date().toISOString();
+    setStartInputValue(nowValue, true);
     startOffsetDaysEl.value = "";
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
@@ -2331,7 +2365,7 @@ formEl.addEventListener("submit", (event) => {
       startOffsetToggleEl.checked = true;
     }
     setStartOffsetEnabled(true);
-    endEl.value = startEl.value;
+    endEl.value = formatDateForInput(nowValue);
     endEl.dataset.synced = "true";
     endDaysEl.value = "";
     endHoursEl.value = "";
@@ -2359,11 +2393,10 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
-  const startValue = formatDateForInput(new Date().toISOString());
-  startEl.value = startValue;
-  updateStartNowIndicator();
+  const startValue = new Date().toISOString();
+  setStartInputValue(startValue, true);
   if (endEl) {
-    endEl.value = startValue;
+    endEl.value = formatDateForInput(startValue);
     endEl.dataset.synced = "true";
   }
   startOffsetDaysEl.value = "";
@@ -2414,17 +2447,22 @@ startOffsetToggleEl?.addEventListener("change", () =>
   setStartOffsetEnabled(startOffsetToggleEl.checked)
 );
 
-startEl?.addEventListener("input", () => {
+const handleStartInputInteraction = () => {
+  if (!startEl) return;
+  if (startEl.value) {
+    startEl.dataset.startNow = "false";
+    startEl.dataset.startNowValue = "";
+    startEl.placeholder = "";
+  }
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
   }
   syncEndTimeWithStart();
   updateStartNowIndicator();
-});
-startEl?.addEventListener("change", () => {
-  syncEndTimeWithStart();
-  updateStartNowIndicator();
-});
+};
+
+startEl?.addEventListener("input", handleStartInputInteraction);
+startEl?.addEventListener("change", handleStartInputInteraction);
 
 [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
   input?.addEventListener("input", () => {
