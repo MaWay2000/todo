@@ -12,6 +12,9 @@ const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
 const inputEl = document.getElementById("todo-input");
 const commentEl = document.getElementById("todo-comment");
+const commentToggleEl = document.getElementById("todo-comment-toggle");
+const commentToggleTextEl = document.getElementById("todo-comment-toggle-text");
+const commentFieldEl = commentEl?.closest(".comment-field");
 const startEl = document.getElementById("todo-start");
 const endEl = document.getElementById("todo-end");
 const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
@@ -53,6 +56,9 @@ const editDialogEl = document.getElementById("edit-dialog");
 const editFormEl = document.getElementById("edit-form");
 const editInputEl = document.getElementById("edit-input");
 const editCommentEl = document.getElementById("edit-comment");
+const editCommentToggleEl = document.getElementById("edit-comment-toggle");
+const editCommentToggleTextEl = document.getElementById("edit-comment-toggle-text");
+const editCommentFieldEl = editCommentEl?.closest(".comment-field");
 const editStartEl = document.getElementById("edit-start");
 const editEndEl = document.getElementById("edit-end");
 const editColorEl = document.getElementById("edit-color");
@@ -67,6 +73,9 @@ const dailyEditDialogEl = document.getElementById("daily-edit-dialog");
 const dailyEditFormEl = document.getElementById("daily-edit-form");
 const dailyEditInputEl = document.getElementById("daily-edit-input");
 const dailyEditCommentEl = document.getElementById("daily-edit-comment");
+const dailyEditCommentToggleEl = document.getElementById("daily-edit-comment-toggle");
+const dailyEditCommentToggleTextEl = document.getElementById("daily-edit-comment-toggle-text");
+const dailyEditCommentFieldEl = dailyEditCommentEl?.closest(".comment-field");
 const dailyEditStartEl = document.getElementById("daily-edit-start");
 const dailyEditEndEl = document.getElementById("daily-edit-end");
 const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
@@ -179,6 +188,33 @@ const formatDuration = (start, end) => {
   }
 
   return parts.length ? parts.join(" ") : "0s";
+};
+
+const updateInlineToggleText = (toggleEl, textEl) => {
+  if (!textEl) return;
+  const onText = textEl.dataset.on || "On";
+  const offText = textEl.dataset.off || "Off";
+  textEl.textContent = toggleEl?.checked ? onText : offText;
+};
+
+const setCommentFieldState = (toggleEl, fieldEl, textareaEl, textEl) => {
+  const enabled = toggleEl?.checked ?? true;
+  if (textareaEl) {
+    textareaEl.disabled = !enabled;
+    textareaEl.setAttribute("aria-hidden", enabled ? "false" : "true");
+    if (enabled) textareaEl.removeAttribute("aria-hidden");
+  }
+  if (fieldEl) {
+    fieldEl.hidden = !enabled;
+    fieldEl.classList.toggle("is-disabled", !enabled);
+  }
+  updateInlineToggleText(toggleEl, textEl);
+};
+
+const getCleanedComment = (toggleEl, textareaEl) => {
+  if (!textareaEl) return "";
+  const enabled = toggleEl?.checked ?? true;
+  return enabled ? textareaEl.value.trim() : "";
 };
 
 const getTimeLeftInfo = (end, referenceDate = null) => {
@@ -1689,6 +1725,15 @@ function editDailyTask(id) {
   activeDailyEditId = id;
   dailyEditInputEl.value = task.text ?? "";
   dailyEditCommentEl.value = task.comments ?? "";
+  if (dailyEditCommentToggleEl) {
+    dailyEditCommentToggleEl.checked = Boolean((task.comments ?? "").trim());
+  }
+  setCommentFieldState(
+    dailyEditCommentToggleEl,
+    dailyEditCommentFieldEl,
+    dailyEditCommentEl,
+    dailyEditCommentToggleTextEl
+  );
   dailyEditStartEl.value = formatDateForInput(task.startTime);
   if (dailyEditEndEl) {
     dailyEditEndEl.value = formatDateForInput(task.endTime);
@@ -2437,6 +2482,15 @@ function editTodo(id) {
   editEndEl.value = formatDateForInput(todo.endTime);
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
   syncColorToggleSwatch(editColorToggleEl, editColorEl);
+  if (editCommentToggleEl) {
+    editCommentToggleEl.checked = Boolean((todo.comments ?? "").trim());
+  }
+  setCommentFieldState(
+    editCommentToggleEl,
+    editCommentFieldEl,
+    editCommentEl,
+    editCommentToggleTextEl
+  );
   if (editColorToggleEl) {
     editColorToggleEl.checked = Boolean(todo.color);
     setColorEnabled(editColorToggleEl, editColorEl);
@@ -2743,7 +2797,7 @@ formEl.addEventListener("submit", (event) => {
     taskType === "daily"
       ? addDailyTask(
           inputEl.value,
-          commentEl.value,
+          getCleanedComment(commentToggleEl, commentEl),
           startTime,
           endTime,
           color,
@@ -2751,10 +2805,21 @@ formEl.addEventListener("submit", (event) => {
           triggerDays,
           intervalDays
         )
-      : addTodo(inputEl.value, commentEl.value, startTime, endTime, color, category);
+      : addTodo(
+          inputEl.value,
+          getCleanedComment(commentToggleEl, commentEl),
+          startTime,
+          endTime,
+          color,
+          category
+        );
   if (added) {
     inputEl.value = "";
     commentEl.value = "";
+    if (commentToggleEl) {
+      commentToggleEl.checked = true;
+    }
+    setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
     const nowValue = new Date().toISOString();
     setStartInputValue(nowValue, true);
     startOffsetDaysEl.value = "";
@@ -2792,6 +2857,10 @@ formEl.addEventListener("submit", (event) => {
 openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
+  if (commentToggleEl) {
+    commentToggleEl.checked = true;
+  }
+  setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
   const startValue = new Date().toISOString();
   setStartInputValue(startValue, true);
   if (endEl) {
@@ -2881,6 +2950,26 @@ startEl?.addEventListener("change", handleStartInputInteraction);
 endEl?.addEventListener("input", () => {
   endEl.dataset.synced = "false";
 });
+
+commentToggleEl?.addEventListener("change", () =>
+  setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl)
+);
+editCommentToggleEl?.addEventListener("change", () =>
+  setCommentFieldState(
+    editCommentToggleEl,
+    editCommentFieldEl,
+    editCommentEl,
+    editCommentToggleTextEl
+  )
+);
+dailyEditCommentToggleEl?.addEventListener("change", () =>
+  setCommentFieldState(
+    dailyEditCommentToggleEl,
+    dailyEditCommentFieldEl,
+    dailyEditCommentEl,
+    dailyEditCommentToggleTextEl
+  )
+);
 
 typeSelectEl.addEventListener("change", updateDailyOptionsVisibility);
 
@@ -2986,6 +3075,20 @@ if (startOffsetToggleEl) {
 setStartOffsetEnabled(startOffsetToggleEl ? startOffsetToggleEl.checked : true);
 updateStartNowIndicator();
 
+setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
+setCommentFieldState(
+  editCommentToggleEl,
+  editCommentFieldEl,
+  editCommentEl,
+  editCommentToggleTextEl
+);
+setCommentFieldState(
+  dailyEditCommentToggleEl,
+  dailyEditCommentFieldEl,
+  dailyEditCommentEl,
+  dailyEditCommentToggleTextEl
+);
+
 setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
 setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
@@ -3056,7 +3159,7 @@ dailyEditInputEl?.addEventListener("input", () => {
   editFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = editInputEl.value.trim();
-    const comments = editCommentEl.value.trim();
+    const comments = getCleanedComment(editCommentToggleEl, editCommentEl);
     const startTime = parseDateInput(editStartEl.value);
     const endTime = parseDateInput(editEndEl.value);
     const currentTodo = todos.find((todo) => todo.id === activeEditId);
@@ -3112,7 +3215,7 @@ editDialogEl.addEventListener("close", () => {
 dailyEditFormEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = dailyEditInputEl.value.trim();
-  const comments = dailyEditCommentEl.value.trim();
+  const comments = getCleanedComment(dailyEditCommentToggleEl, dailyEditCommentEl);
   const startTime = parseDateInput(dailyEditStartEl.value);
   const explicitEndTime = parseDateInput(dailyEditEndEl?.value);
   const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
