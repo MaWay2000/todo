@@ -28,6 +28,7 @@ const endDurationToggleLabelEl = document.getElementById("todo-end-duration-togg
 const endDurationGroupEl = document.getElementById("finish-duration-group");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
 const startDateFieldEl = startEl?.closest(".start-date-field");
+const finishDateFieldEl = endEl?.closest(".start-date-field") ?? endEl;
 
 if (endEl) {
   endEl.dataset.synced = "true";
@@ -76,6 +77,8 @@ const dailyEditEndDurationToggleLabelEl = document.getElementById(
   "daily-edit-end-duration-toggle-label"
 );
 const dailyEditDurationGroupEl = document.getElementById("daily-edit-duration-group");
+const dailyEditFinishDateFieldEl =
+  dailyEditEndEl?.closest(".start-date-field") ?? dailyEditEndEl;
 const dailyEditColorEl = document.getElementById("daily-edit-color");
 const dailyEditColorTriggerEl = document.querySelector(
   "[data-color-trigger='daily-edit-color']"
@@ -505,6 +508,15 @@ function setStartOffsetEnabled(enabled) {
   }
 }
 
+function setFinishDateFieldVisibility(enabled) {
+  if (!finishDateFieldEl) return;
+  finishDateFieldEl.classList.toggle("is-hidden", !enabled);
+  if (!finishDateFieldEl.classList.contains("start-date-field")) {
+    finishDateFieldEl.hidden = !enabled;
+  }
+  if (endEl) endEl.disabled = !enabled;
+}
+
 function isFinishDurationEnabled() {
   return endDurationToggleEl ? endDurationToggleEl.checked : true;
 }
@@ -534,6 +546,7 @@ function setFinishDurationEnabled(enabled) {
   if (endDurationToggleEl) {
     endDurationToggleEl.checked = enabled;
   }
+  setFinishDateFieldVisibility(enabled);
   syncEndDurationToggleLabel();
   if (!enabled && endEl) {
     endEl.dataset.synced = "false";
@@ -567,11 +580,20 @@ function setDailyEditDurationEnabled(enabled) {
     if (!input) return;
     input.disabled = !enabled;
   });
+  if (dailyEditEndEl) {
+    dailyEditEndEl.disabled = !enabled;
+  }
   if (dailyEditDurationGroupEl) {
     dailyEditDurationGroupEl.classList.toggle("is-disabled", !enabled);
   }
   if (dailyEditEndDurationToggleEl) {
     dailyEditEndDurationToggleEl.checked = enabled;
+  }
+  if (dailyEditFinishDateFieldEl) {
+    dailyEditFinishDateFieldEl.classList.toggle("is-hidden", !enabled);
+    if (!dailyEditFinishDateFieldEl.classList.contains("start-date-field")) {
+      dailyEditFinishDateFieldEl.hidden = !enabled;
+    }
   }
   syncDailyEditDurationToggleLabel();
   if (enabled) {

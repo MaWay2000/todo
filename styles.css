@@ -346,6 +346,10 @@ button.danger:hover {
   gap: 0.65rem;
 }
 
+.start-date-field.is-hidden {
+  display: none;
+}
+
 .start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus) {
   color: transparent;
 }
