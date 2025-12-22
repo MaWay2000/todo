@@ -2817,7 +2817,7 @@ formEl.addEventListener("submit", (event) => {
     inputEl.value = "";
     commentEl.value = "";
     if (commentToggleEl) {
-      commentToggleEl.checked = true;
+      commentToggleEl.checked = false;
     }
     setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
     const nowValue = new Date().toISOString();
@@ -2858,7 +2858,7 @@ openAddEl.addEventListener("click", () => {
   inputEl.value = "";
   commentEl.value = "";
   if (commentToggleEl) {
-    commentToggleEl.checked = true;
+    commentToggleEl.checked = false;
   }
   setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
   const startValue = new Date().toISOString();
