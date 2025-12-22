@@ -540,7 +540,11 @@ function setStartOffsetEnabled(enabled) {
   if (enabled) {
     updateStartFromOffsetPreview();
   } else {
-    updateStartFromOffsetPreview();
+    if (startOffsetDaysEl) startOffsetDaysEl.value = "";
+    if (startOffsetHoursEl) startOffsetHoursEl.value = "";
+    if (startOffsetMinsEl) startOffsetMinsEl.value = "";
+    setStartInputValue(new Date().toISOString(), true);
+    syncEndTimeWithStart();
   }
 }
 
