@@ -773,22 +773,6 @@ button.danger:hover {
 .todo-item.is-new {
   border-color: rgba(56, 189, 248, 0.7);
   box-shadow: 0 16px 32px rgba(56, 189, 248, 0.32);
-  animation: new-todo-pulse 1.15s ease-in-out infinite;
-  animation-direction: alternate;
-  animation-play-state: running;
-  will-change: box-shadow, transform;
-}
-
-@keyframes new-todo-pulse {
-  0%,
-  100% {
-    box-shadow: 0 16px 32px rgba(56, 189, 248, 0.32);
-    transform: translateY(-2px);
-  }
-  50% {
-    box-shadow: 0 20px 40px rgba(56, 189, 248, 0.48);
-    transform: translateY(-4px) scale(1.01);
-  }
 }
 
 .todo-item.dragging,
