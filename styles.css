@@ -317,12 +317,16 @@ button.danger:hover {
 
 .title-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-items: center;
 }
 
 .title-input {
+  width: 100%;
+}
+
+.title-input input {
   width: 100%;
 }
 
