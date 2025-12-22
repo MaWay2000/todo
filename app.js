@@ -1146,6 +1146,30 @@ function autoPlaceTodoItem(item, todo) {
   return mutated;
 }
 
+function getEstimatedTodoHeight(todo) {
+  if (Number.isFinite(todo.size?.height) && todo.size.height > 0) {
+    return todo.size.height;
+  }
+  const expandedHeight = todo.sizeStates?.expanded?.height;
+  if (Number.isFinite(expandedHeight) && expandedHeight > 0) {
+    return expandedHeight;
+  }
+  const compactHeight = todo.sizeStates?.compact?.height;
+  if (Number.isFinite(compactHeight) && compactHeight > 0) {
+    return compactHeight;
+  }
+  return ESTIMATED_CARD_HEIGHT;
+}
+
+function maybeAutoShiftNewTodo(todo) {
+  if (!options.autoShiftExisting || filter === "active") return false;
+  if (!isTodoInActiveView(todo)) return false;
+  const offset = getEstimatedTodoHeight(todo) + CARD_VERTICAL_GAP;
+  const shifted = shiftActiveTodosDown(offset, todo.id);
+  const repositioned = updateTodoPosition(todo.id, { ...DEFAULT_POSITION }, true);
+  return shifted || repositioned;
+}
+
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
@@ -1977,7 +2001,7 @@ function addTodo(
   const cleanedCategory = (category ?? "").trim();
   const id = crypto.randomUUID();
   const position = getInitialNewTodoPosition();
-  todos.unshift({
+  const newTodo = {
     id,
     text: trimmed,
     completed: false,
@@ -1995,7 +2019,9 @@ function addTodo(
     deleted: false,
     needsPositioning: true,
     freshUntil: Date.now() + NEW_TASK_HIGHLIGHT_DURATION_MS,
-  });
+  };
+  todos.unshift(newTodo);
+  maybeAutoShiftNewTodo(newTodo);
   saveTodos();
   renderCurrentView();
   return true;
