@@ -21,6 +21,7 @@ const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
+const startDateFieldEl = startEl?.closest(".start-date-field");
 
 if (endEl) {
   endEl.dataset.synced = "true";
@@ -409,6 +410,22 @@ function updateStartNowIndicator() {
     isStartNow(parseDateInput(startEl.value));
   const showNow = Boolean(isNow);
   startNowChipEl.hidden = !showNow;
+  if (startDateFieldEl) {
+    startDateFieldEl.classList.toggle("is-start-now", showNow);
+  }
+}
+
+function revealStartInputFromNow() {
+  if (!startEl || startEl.dataset.startNow !== "true") return;
+  const stored =
+    parseDateInput(startEl.dataset.startNowValue) ?? new Date().toISOString();
+  startEl.value = formatDateForInput(stored);
+  startEl.dataset.startNow = "false";
+  startEl.dataset.startNowValue = "";
+  startEl.placeholder = "";
+  updateStartNowIndicator();
+  syncEndTimeWithStart();
+  startEl.focus({ preventScroll: true });
 }
 
 function setStartInputValue(value, displayAsNow = false) {
@@ -2446,6 +2463,12 @@ cancelAddEl.addEventListener("click", () => {
 startOffsetToggleEl?.addEventListener("change", () =>
   setStartOffsetEnabled(startOffsetToggleEl.checked)
 );
+
+startDateFieldEl?.addEventListener("click", (event) => {
+  if (startEl?.dataset.startNow !== "true") return;
+  event.preventDefault();
+  revealStartInputFromNow();
+});
 
 const handleStartInputInteraction = () => {
   if (!startEl) return;
