@@ -458,7 +458,7 @@ button.danger:hover {
 }
 
 .start-date-field input {
-  width: min(260px, 100%);
+  width: clamp(180px, 30vw, 220px);
 }
 
 .start-date-field.is-start-now input {
