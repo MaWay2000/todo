@@ -285,14 +285,14 @@ button.danger:hover {
 .start-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: start;
+  align-items: center;
   gap: 0.9rem;
 }
 
 .finish-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: start;
+  align-items: center;
   gap: 0.9rem;
 }
 
