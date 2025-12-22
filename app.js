@@ -467,10 +467,10 @@ function updateStartNowIndicator() {
   const isNow =
     startEl.dataset.startNow === "true" ||
     isStartNow(parseDateInput(startEl.value));
-  const showNow = Boolean(isNow);
+  const showNow = Boolean(isNow && !delayEnabled);
   startNowChipEl.hidden = !showNow;
   if (startDateFieldEl) {
-    startDateFieldEl.classList.toggle("is-start-now", showNow && !delayEnabled);
+    startDateFieldEl.classList.toggle("is-start-now", showNow);
   }
 }
 
