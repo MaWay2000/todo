@@ -554,10 +554,8 @@ function setStartOffsetEnabled(enabled) {
 
 function setFinishDateFieldVisibility(enabled) {
   if (!finishDateFieldEl) return;
-  finishDateFieldEl.classList.toggle("is-hidden", !enabled);
-  if (!finishDateFieldEl.classList.contains("start-date-field")) {
-    finishDateFieldEl.hidden = !enabled;
-  }
+  finishDateFieldEl.classList.remove("is-hidden");
+  finishDateFieldEl.hidden = false;
   if (endEl) endEl.disabled = !enabled;
 }
 
@@ -634,10 +632,8 @@ function setDailyEditDurationEnabled(enabled) {
     dailyEditEndDurationToggleEl.checked = enabled;
   }
   if (dailyEditFinishDateFieldEl) {
-    dailyEditFinishDateFieldEl.classList.toggle("is-hidden", !enabled);
-    if (!dailyEditFinishDateFieldEl.classList.contains("start-date-field")) {
-      dailyEditFinishDateFieldEl.hidden = !enabled;
-    }
+    dailyEditFinishDateFieldEl.classList.remove("is-hidden");
+    dailyEditFinishDateFieldEl.hidden = false;
   }
   syncDailyEditDurationToggleLabel();
   if (enabled) {
