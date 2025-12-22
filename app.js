@@ -412,7 +412,7 @@ function formatStartLabel(value, reference = null) {
   return isStartNow(value, reference) ? "Now" : formatDateTime(parsed);
 }
 
-function normalizeDurationParts(daysValue, hoursValue, minsValue) {
+function normalizeDurationParts(daysValue, hoursValue, minsValue, { allowZero = false } = {}) {
   let days = Number.parseInt(daysValue, 10) || 0;
   let hours = Number.parseInt(hoursValue, 10) || 0;
   let mins = Number.parseInt(minsValue, 10) || 0;
@@ -427,13 +427,15 @@ function normalizeDurationParts(daysValue, hoursValue, minsValue) {
   hours = hours % 24;
   days += extraDaysFromHours;
 
-  if (days === 0 && hours === 0 && mins === 0) return null;
+  if (!allowZero && days === 0 && hours === 0 && mins === 0) return null;
 
   return { days, hours, mins };
 }
 
-const parseDurationParts = normalizeDurationParts;
-const parseOffsetParts = normalizeDurationParts;
+const parseDurationParts = (daysValue, hoursValue, minsValue) =>
+  normalizeDurationParts(daysValue, hoursValue, minsValue, { allowZero: false });
+const parseOffsetParts = (daysValue, hoursValue, minsValue) =>
+  normalizeDurationParts(daysValue, hoursValue, minsValue, { allowZero: true });
 
 function computeStartFromOffset(daysValue, hoursValue, minsValue) {
   const duration = parseOffsetParts(daysValue, hoursValue, minsValue);
