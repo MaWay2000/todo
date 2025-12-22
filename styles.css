@@ -508,6 +508,10 @@ button.danger:hover {
   padding: 0;
 }
 
+.duration-group.is-disabled .duration-inputs {
+  display: none;
+}
+
 .duration-group.start-offset.is-disabled .duration-inputs {
   display: none;
 }

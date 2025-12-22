@@ -132,9 +132,32 @@
             <label class="field-label" for="todo-end">Finish</label>
             <input id="todo-end" name="end" type="datetime-local" />
           </div>
-          <div class="duration-group start-offset" role="group" aria-labelledby="duration-label">
+          <div
+            id="finish-duration-group"
+            class="duration-group start-offset"
+            role="group"
+            aria-labelledby="duration-label"
+          >
             <div class="duration-label-row">
               <span id="duration-label">Time to finish</span>
+              <label class="delay-toggle" for="todo-end-duration-toggle">
+                <input
+                  id="todo-end-duration-toggle"
+                  name="end-duration-enabled"
+                  type="checkbox"
+                  aria-label="Toggle time to finish inputs"
+                  checked
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="todo-end-duration-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >On</span>
+              </label>
             </div>
             <div class="duration-inputs">
               <label class="duration-input" for="todo-end-days">
@@ -327,9 +350,34 @@
         </select>
         <label class="sr-only" for="daily-edit-start">Start time</label>
         <input id="daily-edit-start" name="daily-edit-start" type="datetime-local" />
-        <div class="duration-group" role="group" aria-labelledby="daily-duration-label">
+        <label class="sr-only" for="daily-edit-end">Finish time</label>
+        <input id="daily-edit-end" name="daily-edit-end" type="datetime-local" />
+        <div
+          id="daily-edit-duration-group"
+          class="duration-group"
+          role="group"
+          aria-labelledby="daily-duration-label"
+        >
           <div class="duration-label-row">
             <span id="daily-duration-label">Time to finish</span>
+            <label class="delay-toggle" for="daily-edit-end-duration-toggle">
+              <input
+                id="daily-edit-end-duration-toggle"
+                name="daily-edit-end-duration-toggle"
+                type="checkbox"
+                aria-label="Toggle time to finish inputs for daily tasks"
+                checked
+              />
+              <span class="delay-toggle-track" aria-hidden="true">
+                <span class="delay-toggle-thumb"></span>
+              </span>
+              <span
+                id="daily-edit-end-duration-toggle-label"
+                class="delay-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >On</span>
+            </label>
           </div>
           <div class="duration-inputs">
             <label class="duration-input" for="daily-edit-end-days">

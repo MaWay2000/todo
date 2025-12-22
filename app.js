@@ -23,6 +23,9 @@ const startOffsetGroupEl = startOffsetToggleEl?.closest(".duration-group.start-o
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
+const endDurationToggleEl = document.getElementById("todo-end-duration-toggle");
+const endDurationToggleLabelEl = document.getElementById("todo-end-duration-toggle-label");
+const endDurationGroupEl = document.getElementById("finish-duration-group");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
 const startDateFieldEl = startEl?.closest(".start-date-field");
 
@@ -64,9 +67,15 @@ const dailyEditFormEl = document.getElementById("daily-edit-form");
 const dailyEditInputEl = document.getElementById("daily-edit-input");
 const dailyEditCommentEl = document.getElementById("daily-edit-comment");
 const dailyEditStartEl = document.getElementById("daily-edit-start");
+const dailyEditEndEl = document.getElementById("daily-edit-end");
 const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
+const dailyEditEndDurationToggleEl = document.getElementById("daily-edit-end-duration-toggle");
+const dailyEditEndDurationToggleLabelEl = document.getElementById(
+  "daily-edit-end-duration-toggle-label"
+);
+const dailyEditDurationGroupEl = document.getElementById("daily-edit-duration-group");
 const dailyEditColorEl = document.getElementById("daily-edit-color");
 const dailyEditColorTriggerEl = document.querySelector(
   "[data-color-trigger='daily-edit-color']"
@@ -109,7 +118,7 @@ const CATEGORY_COLOR_PALETTE = [
 const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const DEFAULT_TASK_PLACEHOLDER = "Task name";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
-const DEFAULT_OPTIONS = { autoShiftExisting: false };
+const DEFAULT_OPTIONS = { autoShiftExisting: false, showTimeToFinish: true };
 const TIME_REFRESH_INTERVAL = 30000;
 const FORM_TIME_REFRESH_INTERVAL = 1000;
 const START_NOW_THRESHOLD_MS = 120000;
@@ -468,12 +477,16 @@ function getStartTimeValue() {
   return parseDateInput(startEl.value);
 }
 
+function syncToggleLabel(toggleEl, labelEl) {
+  if (!toggleEl || !labelEl) return;
+  const enabled = toggleEl.checked;
+  const onText = labelEl.dataset.on ?? "On";
+  const offText = labelEl.dataset.off ?? "Off";
+  labelEl.textContent = enabled ? onText : offText;
+}
+
 function syncStartOffsetToggleLabel() {
-  if (!startOffsetToggleLabelEl || !startOffsetToggleEl) return;
-  const enabled = startOffsetToggleEl.checked;
-  const onText = startOffsetToggleLabelEl.dataset.on ?? "On";
-  const offText = startOffsetToggleLabelEl.dataset.off ?? "Off";
-  startOffsetToggleLabelEl.textContent = enabled ? onText : offText;
+  syncToggleLabel(startOffsetToggleEl, startOffsetToggleLabelEl);
 }
 
 function setStartOffsetEnabled(enabled) {
@@ -490,6 +503,87 @@ function setStartOffsetEnabled(enabled) {
   } else {
     updateStartFromOffsetPreview();
   }
+}
+
+function isFinishDurationEnabled() {
+  return endDurationToggleEl ? endDurationToggleEl.checked : true;
+}
+
+function syncEndDurationToggleLabel() {
+  syncToggleLabel(endDurationToggleEl, endDurationToggleLabelEl);
+}
+
+function syncFinishDurationInputsFromRange() {
+  if (!startEl || !endEl) return;
+  const startValue = getStartTimeValue();
+  const endValue = parseDateInput(endEl.value);
+  const duration = deriveDurationFromRange(startValue, endValue);
+  endDaysEl.value = duration?.days ?? "";
+  endHoursEl.value = duration?.hours ?? "";
+  endMinsEl.value = duration?.mins ?? "";
+}
+
+function setFinishDurationEnabled(enabled) {
+  [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
+    if (!input) return;
+    input.disabled = !enabled;
+  });
+  if (endDurationGroupEl) {
+    endDurationGroupEl.classList.toggle("is-disabled", !enabled);
+  }
+  if (endDurationToggleEl) {
+    endDurationToggleEl.checked = enabled;
+  }
+  syncEndDurationToggleLabel();
+  if (!enabled && endEl) {
+    endEl.dataset.synced = "false";
+  }
+  if (enabled) {
+    syncFinishDurationInputsFromRange();
+    syncEndTimeWithStart();
+  }
+}
+
+function isDailyEditDurationEnabled() {
+  return dailyEditEndDurationToggleEl ? dailyEditEndDurationToggleEl.checked : true;
+}
+
+function syncDailyEditDurationToggleLabel() {
+  syncToggleLabel(dailyEditEndDurationToggleEl, dailyEditEndDurationToggleLabelEl);
+}
+
+function syncDailyEditDurationFromRange() {
+  if (!dailyEditStartEl || !dailyEditEndEl) return;
+  const startValue = parseDateInput(dailyEditStartEl.value);
+  const endValue = parseDateInput(dailyEditEndEl.value);
+  const duration = deriveDurationFromRange(startValue, endValue);
+  dailyEditEndDaysEl.value = duration?.days ?? "";
+  dailyEditEndHoursEl.value = duration?.hours ?? "";
+  dailyEditEndMinsEl.value = duration?.mins ?? "";
+}
+
+function setDailyEditDurationEnabled(enabled) {
+  [dailyEditEndDaysEl, dailyEditEndHoursEl, dailyEditEndMinsEl].forEach((input) => {
+    if (!input) return;
+    input.disabled = !enabled;
+  });
+  if (dailyEditDurationGroupEl) {
+    dailyEditDurationGroupEl.classList.toggle("is-disabled", !enabled);
+  }
+  if (dailyEditEndDurationToggleEl) {
+    dailyEditEndDurationToggleEl.checked = enabled;
+  }
+  syncDailyEditDurationToggleLabel();
+  if (enabled) {
+    syncDailyEditDurationFromRange();
+  }
+}
+
+function updateTimeToFinishPreference(enabled) {
+  setFinishDurationEnabled(enabled);
+  setDailyEditDurationEnabled(enabled);
+  options = { ...options, showTimeToFinish: enabled };
+  saveOptions();
 }
 
 function updateStartFromOffsetPreview() {
@@ -535,6 +629,7 @@ function startAddFormTimeRefresh() {
 
 function syncEndTimeWithStart() {
   if (!startEl || !endEl) return;
+  if (!isFinishDurationEnabled()) return;
 
   const startValue = getStartTimeValue();
   if (!startValue) return;
@@ -844,6 +939,12 @@ function ensureOptionsDefaults() {
 function syncOptionsUI() {
   if (autoShiftToggleEl) {
     autoShiftToggleEl.checked = Boolean(options.autoShiftExisting);
+  }
+  if (endDurationToggleEl) {
+    setFinishDurationEnabled(Boolean(options.showTimeToFinish));
+  }
+  if (dailyEditEndDurationToggleEl) {
+    setDailyEditDurationEnabled(Boolean(options.showTimeToFinish));
   }
 }
 
@@ -1567,10 +1668,26 @@ function editDailyTask(id) {
   dailyEditInputEl.value = task.text ?? "";
   dailyEditCommentEl.value = task.comments ?? "";
   dailyEditStartEl.value = formatDateForInput(task.startTime);
-  const duration = deriveDurationFromRange(task.startTime, task.endTime);
-  dailyEditEndDaysEl.value = duration?.days ?? "";
-  dailyEditEndHoursEl.value = duration?.hours ?? "";
-  dailyEditEndMinsEl.value = duration?.mins ?? "";
+  if (dailyEditEndEl) {
+    dailyEditEndEl.value = formatDateForInput(task.endTime);
+  }
+  const durationEnabled = dailyEditEndDurationToggleEl
+    ? Boolean(options.showTimeToFinish)
+    : true;
+  if (dailyEditEndDurationToggleEl) {
+    dailyEditEndDurationToggleEl.checked = durationEnabled;
+  }
+  if (durationEnabled) {
+    const duration = deriveDurationFromRange(task.startTime, task.endTime);
+    dailyEditEndDaysEl.value = duration?.days ?? "";
+    dailyEditEndHoursEl.value = duration?.hours ?? "";
+    dailyEditEndMinsEl.value = duration?.mins ?? "";
+  } else {
+    dailyEditEndDaysEl.value = "";
+    dailyEditEndHoursEl.value = "";
+    dailyEditEndMinsEl.value = "";
+  }
+  setDailyEditDurationEnabled(durationEnabled);
   dailyEditColorEl.value = task.color ?? DEFAULT_COLOR;
   syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
   if (dailyEditColorToggleEl) {
@@ -2586,12 +2703,14 @@ formEl.addEventListener("submit", (event) => {
     : null;
   const startTime = offsetStartTime ?? getStartTimeValue() ?? new Date().toISOString();
   const explicitEndTime = parseDateInput(endEl?.value);
-  const endTime = explicitEndTime ?? computeEndFromDuration(
-    startTime,
-    endDaysEl.value,
-    endHoursEl.value,
-    endMinsEl.value
-  );
+  const endTime = explicitEndTime ?? (isFinishDurationEnabled()
+    ? computeEndFromDuration(
+        startTime,
+        endDaysEl.value,
+        endHoursEl.value,
+        endMinsEl.value
+      )
+    : null);
   const colorEnabled = colorToggleEl?.checked ?? true;
   const color = colorEnabled ? colorEl.value?.trim() || null : null;
   const category = categoryEl.value?.trim() ?? "";
@@ -2624,7 +2743,7 @@ formEl.addEventListener("submit", (event) => {
     }
     setStartOffsetEnabled(false);
     endEl.value = formatDateForInput(nowValue);
-    endEl.dataset.synced = "true";
+    endEl.dataset.synced = isFinishDurationEnabled() ? "true" : "false";
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
@@ -2655,7 +2774,7 @@ openAddEl.addEventListener("click", () => {
   setStartInputValue(startValue, true);
   if (endEl) {
     endEl.value = formatDateForInput(startValue);
-    endEl.dataset.synced = "true";
+    endEl.dataset.synced = isFinishDurationEnabled() ? "true" : "false";
   }
   startOffsetDaysEl.value = "";
   startOffsetHoursEl.value = "";
@@ -2887,6 +3006,14 @@ dailyEditColorEl.addEventListener("input", () => {
   syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
 });
 
+endDurationToggleEl?.addEventListener("change", () => {
+  updateTimeToFinishPreference(endDurationToggleEl.checked);
+});
+
+dailyEditEndDurationToggleEl?.addEventListener("change", () => {
+  updateTimeToFinishPreference(dailyEditEndDurationToggleEl.checked);
+});
+
 autoShiftToggleEl?.addEventListener("change", () => {
   options = { ...options, autoShiftExisting: autoShiftToggleEl.checked };
   saveOptions();
@@ -2965,14 +3092,18 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const text = dailyEditInputEl.value.trim();
   const comments = dailyEditCommentEl.value.trim();
   const startTime = parseDateInput(dailyEditStartEl.value);
+  const explicitEndTime = parseDateInput(dailyEditEndEl?.value);
   const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
   const endTime =
-    computeEndFromDuration(
-      startTime,
-      dailyEditEndDaysEl.value,
-      dailyEditEndHoursEl.value,
-      dailyEditEndMinsEl.value
-    ) ?? currentTask?.endTime ?? null;
+    explicitEndTime ??
+    (isDailyEditDurationEnabled()
+      ? computeEndFromDuration(
+          startTime,
+          dailyEditEndDaysEl.value,
+          dailyEditEndHoursEl.value,
+          dailyEditEndMinsEl.value
+        )
+      : currentTask?.endTime ?? null);
   const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
   const intervalDays = parseIntervalValue(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl);
   const category = dailyEditCategoryEl?.value?.trim() ?? "";
