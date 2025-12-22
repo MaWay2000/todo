@@ -17,6 +17,7 @@ const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
 const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
 const startOffsetToggleEl = document.getElementById("todo-start-offset-enabled");
 const startOffsetToggleLabelEl = document.getElementById("todo-start-offset-toggle-label");
+const startOffsetGroupEl = startOffsetToggleEl?.closest(".duration-group.start-offset");
 const endDaysEl = document.getElementById("todo-end-days");
 const endHoursEl = document.getElementById("todo-end-hours");
 const endMinsEl = document.getElementById("todo-end-mins");
@@ -473,6 +474,9 @@ function setStartOffsetEnabled(enabled) {
     if (!input) return;
     input.disabled = !enabled;
   });
+  if (startOffsetGroupEl) {
+    startOffsetGroupEl.classList.toggle("is-disabled", !enabled);
+  }
   syncStartOffsetToggleLabel();
   if (enabled) {
     updateStartFromOffsetPreview();
@@ -2379,9 +2383,9 @@ formEl.addEventListener("submit", (event) => {
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
     if (startOffsetToggleEl) {
-      startOffsetToggleEl.checked = true;
+      startOffsetToggleEl.checked = false;
     }
-    setStartOffsetEnabled(true);
+    setStartOffsetEnabled(false);
     endEl.value = formatDateForInput(nowValue);
     endEl.dataset.synced = "true";
     endDaysEl.value = "";
@@ -2420,9 +2424,9 @@ openAddEl.addEventListener("click", () => {
   startOffsetHoursEl.value = "";
   startOffsetMinsEl.value = "";
   if (startOffsetToggleEl) {
-    startOffsetToggleEl.checked = true;
+    startOffsetToggleEl.checked = false;
   }
-  setStartOffsetEnabled(true);
+  setStartOffsetEnabled(false);
   endDaysEl.value = "";
   endHoursEl.value = "";
   endMinsEl.value = "";
@@ -2599,7 +2603,7 @@ if (dailyIntervalToggleEl) dailyIntervalToggleEl.dataset.userDisabled = "false";
 if (dailyIntervalDaysEl && !dailyIntervalDaysEl.value) dailyIntervalDaysEl.value = "1";
 
 if (startOffsetToggleEl) {
-  startOffsetToggleEl.checked = true;
+  startOffsetToggleEl.checked = false;
 }
 setStartOffsetEnabled(startOffsetToggleEl ? startOffsetToggleEl.checked : true);
 updateStartNowIndicator();
