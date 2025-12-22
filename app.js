@@ -113,6 +113,7 @@ const DEFAULT_OPTIONS = { autoShiftExisting: false };
 const TIME_REFRESH_INTERVAL = 30000;
 const FORM_TIME_REFRESH_INTERVAL = 1000;
 const START_NOW_THRESHOLD_MS = 120000;
+const NEW_TASK_HIGHLIGHT_DURATION_MS = 5000;
 const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -988,6 +989,30 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   return reference >= start;
 }
 
+function isTodoFresh(todo, referenceTime = Date.now()) {
+  if (!Number.isFinite(todo?.freshUntil)) return false;
+  return todo.freshUntil > referenceTime;
+}
+
+function clearExpiredFreshness(referenceTime = Date.now()) {
+  const expiredIds = [];
+  todos.forEach((todo) => {
+    if (!Number.isFinite(todo?.freshUntil)) return;
+    if (todo.freshUntil <= referenceTime) {
+      expiredIds.push(todo.id);
+    }
+  });
+  if (!expiredIds.length) return false;
+
+  todos = todos.map((todo) => {
+    if (!expiredIds.includes(todo.id)) return todo;
+    const { freshUntil, ...rest } = todo;
+    return { ...rest };
+  });
+  saveTodos();
+  return true;
+}
+
 function isTodoInActiveView(todo) {
   return !todo.deleted && !todo.completed && hasTaskStarted(todo);
 }
@@ -1128,6 +1153,7 @@ function renderTodos() {
   const stackedLayout =
     showingDeleted || filter === "completed" || filter === "all" || isCategoryView;
   const isCompletedView = filter === "completed";
+  const renderTime = Date.now();
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const filtered = todos
     .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
@@ -1196,11 +1222,13 @@ function renderTodos() {
   let layoutMutated = false;
 
   filtered.forEach((todo) => {
+    const isFresh = isTodoFresh(todo, renderTime);
     const item = document.createElement("li");
     item.className =
       "todo-item" +
       (todo.completed && !todo.deleted ? " completed" : "") +
-      (todo.deleted ? " deleted" : "");
+      (todo.deleted ? " deleted" : "") +
+      (isFresh ? " is-fresh" : "");
     item.classList.toggle("has-color", Boolean(todo.color));
     if (todo.color) {
       item.style.setProperty("--task-color", todo.color);
@@ -1915,6 +1943,7 @@ function renderCategories() {
 function renderCurrentView() {
   const isCategoryView = filter === "categories";
   const isDailyView = filter === "daily";
+  clearExpiredFreshness();
   if (categoryPanelEl) {
     categoryPanelEl.hidden = !isCategoryView;
   }
@@ -1965,6 +1994,7 @@ function addTodo(
     showActions: false,
     deleted: false,
     needsPositioning: true,
+    freshUntil: Date.now() + NEW_TASK_HIGHLIGHT_DURATION_MS,
   });
   saveTodos();
   renderCurrentView();
