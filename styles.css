@@ -779,6 +779,18 @@ button.danger:hover {
   will-change: box-shadow, transform;
 }
 
+.todo-item.is-fresh {
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 16px 32px rgba(56, 189, 248, 0.34);
+  animation: new-task-blink 1.05s ease-in-out infinite alternate;
+}
+
+.todo-item.is-new.is-fresh {
+  animation:
+    new-todo-pulse 1.15s ease-in-out infinite alternate,
+    new-task-blink 1.05s ease-in-out infinite alternate;
+}
+
 @keyframes new-todo-pulse {
   0%,
   100% {
@@ -788,6 +800,27 @@ button.danger:hover {
   50% {
     box-shadow: 0 20px 40px rgba(56, 189, 248, 0.48);
     transform: translateY(-4px) scale(1.01);
+  }
+}
+
+@keyframes new-task-blink {
+  0% {
+    box-shadow:
+      0 16px 32px rgba(56, 189, 248, 0.34),
+      0 0 0 0 rgba(56, 189, 248, 0.32);
+    transform: translateY(-1px);
+  }
+  50% {
+    box-shadow:
+      0 18px 36px rgba(56, 189, 248, 0.38),
+      0 0 0 5px rgba(56, 189, 248, 0.2);
+    transform: translateY(-3px) scale(1.01);
+  }
+  100% {
+    box-shadow:
+      0 16px 32px rgba(56, 189, 248, 0.34),
+      0 0 0 0 rgba(56, 189, 248, 0.12);
+    transform: translateY(-1px);
   }
 }
 
