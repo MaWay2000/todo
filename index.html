@@ -153,31 +153,30 @@
           </div>
           <div
             id="finish-duration-group"
-            class="duration-group start-offset"
-            role="group"
-            aria-labelledby="duration-label"
-          >
-            <div class="duration-label-row">
-              <span id="duration-label">Time</span>
-              <label class="delay-toggle" for="todo-end-duration-toggle">
-                <input
-                  id="todo-end-duration-toggle"
-                  name="end-duration-enabled"
-                  type="checkbox"
-                  aria-label="Toggle time inputs"
-                  checked
-                />
-                <span class="delay-toggle-track" aria-hidden="true">
-                  <span class="delay-toggle-thumb"></span>
-                </span>
-                <span
-                  id="todo-end-duration-toggle-label"
-                  class="delay-toggle-text"
-                  data-on="On"
-                  data-off="Off"
-                >On</span>
-              </label>
-            </div>
+          class="duration-group start-offset"
+          role="group"
+          aria-labelledby="duration-label"
+        >
+          <div class="duration-label-row">
+            <span id="duration-label">Time</span>
+            <label class="delay-toggle" for="todo-end-duration-toggle">
+              <input
+                id="todo-end-duration-toggle"
+                name="end-duration-enabled"
+                type="checkbox"
+                aria-label="Toggle time inputs"
+                checked
+              />
+              <span class="delay-toggle-track" aria-hidden="true">
+                <span class="delay-toggle-thumb"></span>
+              </span>
+              <span
+                id="todo-end-duration-toggle-label"
+                class="delay-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >On</span>
+            </label>
             <div class="duration-inputs">
               <label class="duration-input" for="todo-end-days">
                 <input
@@ -217,6 +216,7 @@
               </label>
             </div>
           </div>
+        </div>
         </div>
         <div class="select-row">
           <div>
@@ -435,44 +435,44 @@
                 data-off="Off"
               >On</span>
             </label>
-          </div>
-          <div class="duration-inputs">
-            <label class="duration-input" for="daily-edit-end-days">
-              <input
-                id="daily-edit-end-days"
-                name="daily-edit-end-days"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                maxlength="5"
-                placeholder="0"
-              />
-              <span class="duration-input-label">Days</span>
-            </label>
-            <label class="duration-input" for="daily-edit-end-hours">
-              <input
-                id="daily-edit-end-hours"
-                name="daily-edit-end-hours"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                maxlength="5"
-                placeholder="00"
-              />
-              <span class="duration-input-label">Hours</span>
-            </label>
-            <label class="duration-input" for="daily-edit-end-mins">
-              <input
-                id="daily-edit-end-mins"
-                name="daily-edit-end-mins"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                maxlength="5"
-                placeholder="00"
-              />
-              <span class="duration-input-label">Mins</span>
-            </label>
+            <div class="duration-inputs">
+              <label class="duration-input" for="daily-edit-end-days">
+                <input
+                  id="daily-edit-end-days"
+                  name="daily-edit-end-days"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  maxlength="5"
+                  placeholder="0"
+                />
+                <span class="duration-input-label">Days</span>
+              </label>
+              <label class="duration-input" for="daily-edit-end-hours">
+                <input
+                  id="daily-edit-end-hours"
+                  name="daily-edit-end-hours"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  maxlength="5"
+                  placeholder="00"
+                />
+                <span class="duration-input-label">Hours</span>
+              </label>
+              <label class="duration-input" for="daily-edit-end-mins">
+                <input
+                  id="daily-edit-end-mins"
+                  name="daily-edit-end-mins"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  maxlength="5"
+                  placeholder="00"
+                />
+                <span class="duration-input-label">Mins</span>
+              </label>
+            </div>
           </div>
         </div>
         <div class="daily-options">
