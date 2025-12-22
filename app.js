@@ -463,13 +463,14 @@ function computeEndFromDuration(start, daysValue, hoursValue, minsValue) {
 
 function updateStartNowIndicator() {
   if (!startNowChipEl || !startEl) return;
+  const delayEnabled = startOffsetToggleEl?.checked ?? false;
   const isNow =
     startEl.dataset.startNow === "true" ||
     isStartNow(parseDateInput(startEl.value));
   const showNow = Boolean(isNow);
   startNowChipEl.hidden = !showNow;
   if (startDateFieldEl) {
-    startDateFieldEl.classList.toggle("is-start-now", showNow);
+    startDateFieldEl.classList.toggle("is-start-now", showNow && !delayEnabled);
   }
 }
 
@@ -489,7 +490,8 @@ function revealStartInputFromNow() {
 function setStartInputValue(value, displayAsNow = false) {
   if (!startEl) return;
   const parsed = parseDateInput(value);
-  const shouldShowNow = displayAsNow || isStartNow(parsed ?? value);
+  const isDelayEnabled = startOffsetToggleEl?.checked ?? false;
+  const shouldShowNow = displayAsNow || (!isDelayEnabled && isStartNow(parsed ?? value));
   if (shouldShowNow) {
     const resolved = parsed ?? new Date().toISOString();
     startEl.value = "";
