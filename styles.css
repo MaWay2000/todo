@@ -61,6 +61,39 @@ body {
   width: 100%;
 }
 
+.auto-shift-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.4rem 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.auto-shift-toggle input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--card);
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.auto-shift-toggle input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+
+.auto-shift-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.1em;
