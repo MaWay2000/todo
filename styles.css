@@ -466,6 +466,10 @@ button.danger:hover {
   padding: 0;
 }
 
+.duration-group.start-offset.is-disabled .duration-inputs {
+  display: none;
+}
+
 .duration-input-label {
   color: var(--muted);
   font-weight: 600;
