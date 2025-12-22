@@ -1,9 +1,11 @@
 const STORAGE_KEY = "local-todo-items";
 const DAILY_STORAGE_KEY = "local-daily-templates";
 const CATEGORY_STORAGE_KEY = "local-categories";
+const OPTIONS_STORAGE_KEY = "local-options";
 let todos = [];
 let dailyTasks = [];
 let categories = [];
+let options = {};
 let filter = "active";
 
 const listEl = document.getElementById("todo-list");
@@ -86,10 +88,13 @@ const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
 const categoryColorEl = document.getElementById("category-color");
 const categoryListEl = document.getElementById("category-list");
+const autoShiftToggleEl = document.getElementById("auto-shift-toggle");
 const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
+const CARD_VERTICAL_GAP = 12;
+const ESTIMATED_CARD_HEIGHT = 160;
 const DEFAULT_COLOR = "#38bdf8";
 const CATEGORY_COLOR_PALETTE = [
   "#f59e0b",
@@ -104,6 +109,7 @@ const CATEGORY_COLOR_PALETTE = [
 const DEFAULT_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0];
 const DEFAULT_TASK_PLACEHOLDER = "Task name";
 const EMPTY_SIZE_STATES = { compact: null, expanded: null };
+const DEFAULT_OPTIONS = { autoShiftExisting: false };
 const TIME_REFRESH_INTERVAL = 30000;
 const FORM_TIME_REFRESH_INTERVAL = 1000;
 const START_NOW_THRESHOLD_MS = 120000;
@@ -801,6 +807,45 @@ function ensureLayoutDefaults() {
   }
 }
 
+function loadOptions() {
+  try {
+    const stored = localStorage.getItem(OPTIONS_STORAGE_KEY);
+    options = stored ? JSON.parse(stored) : { ...DEFAULT_OPTIONS };
+  } catch (error) {
+    console.error("Failed to load options", error);
+    options = { ...DEFAULT_OPTIONS };
+  }
+}
+
+function saveOptions() {
+  localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(options));
+}
+
+function ensureOptionsDefaults() {
+  let mutated = false;
+  if (!options || typeof options !== "object") {
+    options = { ...DEFAULT_OPTIONS };
+    mutated = true;
+  } else {
+    options = { ...DEFAULT_OPTIONS, ...options };
+  }
+  Object.keys(DEFAULT_OPTIONS).forEach((key) => {
+    if (!(key in options)) {
+      mutated = true;
+      options[key] = DEFAULT_OPTIONS[key];
+    }
+  });
+  if (mutated) {
+    saveOptions();
+  }
+}
+
+function syncOptionsUI() {
+  if (autoShiftToggleEl) {
+    autoShiftToggleEl.checked = Boolean(options.autoShiftExisting);
+  }
+}
+
 function loadTodos() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -943,6 +988,139 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   return reference >= start;
 }
 
+function isTodoInActiveView(todo) {
+  return !todo.deleted && !todo.completed && hasTaskStarted(todo);
+}
+
+function getRenderedLayout(excludeId = null) {
+  if (listEl.classList.contains("stacked-layout")) return [];
+  return Array.from(listEl.querySelectorAll(".todo-item"))
+    .filter((item) => item.dataset.id && item.dataset.id !== excludeId)
+    .map((item) => {
+      const left = parseFloat(item.style.left) || 0;
+      const top = parseFloat(item.style.top) || 0;
+      const width = item.offsetWidth || parseFloat(item.style.width) || DEFAULT_CARD_WIDTH;
+      const height =
+        item.offsetHeight ||
+        parseFloat(item.style.height) ||
+        item.getBoundingClientRect().height ||
+        ESTIMATED_CARD_HEIGHT;
+      return { id: item.dataset.id, x: left, y: top, width, height };
+    });
+}
+
+function getActiveLayoutFromState() {
+  return todos
+    .filter((todo) => isTodoInActiveView(todo))
+    .map((todo) => ({
+      id: todo.id,
+      x: todo.position?.x ?? DEFAULT_POSITION.x,
+      y: todo.position?.y ?? DEFAULT_POSITION.y,
+      width: todo.size?.width ?? DEFAULT_CARD_WIDTH,
+      height:
+        Number.isFinite(todo.size?.height) && todo.size.height > 0
+          ? todo.size.height
+          : ESTIMATED_CARD_HEIGHT,
+    }));
+}
+
+function computeStackedPosition(layout = [], gap = CARD_VERTICAL_GAP) {
+  if (!layout.length) {
+    return { ...DEFAULT_POSITION };
+  }
+  const maxBottom = layout.reduce(
+    (max, item) => Math.max(max, (item.y ?? DEFAULT_POSITION.y) + Math.max(item.height ?? 0, 0)),
+    DEFAULT_POSITION.y
+  );
+  return { x: DEFAULT_POSITION.x, y: maxBottom + gap };
+}
+
+function getInitialNewTodoPosition() {
+  const renderedLayout = getRenderedLayout();
+  if (renderedLayout.length) {
+    return computeStackedPosition(renderedLayout);
+  }
+  const activeLayout = getActiveLayoutFromState();
+  return computeStackedPosition(activeLayout);
+}
+
+function applyPositionToElement(element, position) {
+  element.style.left = `${position.x}px`;
+  element.style.top = `${position.y}px`;
+}
+
+function updateTodoPosition(id, position, clearNeedsPositioning = false) {
+  let mutated = false;
+  todos = todos.map((todo) => {
+    if (todo.id !== id) return todo;
+    const needsPositioning = clearNeedsPositioning ? false : todo.needsPositioning;
+    if (
+      todo.position?.x === position.x &&
+      todo.position?.y === position.y &&
+      todo.needsPositioning === needsPositioning
+    ) {
+      return todo;
+    }
+    mutated = true;
+    return { ...todo, position, needsPositioning };
+  });
+  return mutated;
+}
+
+function shiftActiveTodosDown(offset, excludeId = null) {
+  if (!offset || offset <= 0) return false;
+  let mutated = false;
+  todos = todos.map((todo) => {
+    if (!isTodoInActiveView(todo) || todo.id === excludeId) return todo;
+    const current = todo.position ?? DEFAULT_POSITION;
+    const nextY = (current.y ?? DEFAULT_POSITION.y) + offset;
+    if (nextY === current.y) return todo;
+    mutated = true;
+    return { ...todo, position: { ...current, y: nextY } };
+  });
+
+  if (mutated) {
+    Array.from(listEl.querySelectorAll(".todo-item")).forEach((item) => {
+      if (!item.dataset.id || item.dataset.id === excludeId) return;
+      const todo = todos.find((entry) => entry.id === item.dataset.id);
+      if (todo && isTodoInActiveView(todo)) {
+        applyPositionToElement(item, todo.position ?? DEFAULT_POSITION);
+      }
+    });
+  }
+
+  return mutated;
+}
+
+function autoPlaceTodoItem(item, todo) {
+  if (listEl.classList.contains("stacked-layout") || !todo.needsPositioning) return false;
+
+  const measuredWidth = item.offsetWidth || parseFloat(item.style.width) || DEFAULT_CARD_WIDTH;
+  const measuredHeight =
+    item.offsetHeight ||
+    parseFloat(item.style.height) ||
+    item.getBoundingClientRect().height ||
+    ESTIMATED_CARD_HEIGHT;
+  const autoShiftEnabled = options.autoShiftExisting && filter === "active";
+
+  let mutated = false;
+  if (autoShiftEnabled) {
+    const offset = measuredHeight + CARD_VERTICAL_GAP;
+    const shifted = shiftActiveTodosDown(offset, todo.id);
+    const nextPosition = { ...DEFAULT_POSITION };
+    applyPositionToElement(item, nextPosition);
+    item.classList.remove("is-new");
+    mutated = updateTodoPosition(todo.id, nextPosition, true) || shifted;
+  } else {
+    const layout = getRenderedLayout(todo.id);
+    const nextPosition = computeStackedPosition(layout, CARD_VERTICAL_GAP);
+    applyPositionToElement(item, nextPosition);
+    item.classList.remove("is-new");
+    mutated = updateTodoPosition(todo.id, nextPosition, true);
+  }
+  return mutated;
+}
+
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
@@ -1015,6 +1193,7 @@ function renderTodos() {
   }
 
   let sizeAdjusted = false;
+  let layoutMutated = false;
 
   filtered.forEach((todo) => {
     const item = document.createElement("li");
@@ -1032,14 +1211,14 @@ function renderTodos() {
       item.classList.add("is-new");
     }
     item.dataset.id = todo.id;
+    const basePosition = todo.position ?? DEFAULT_POSITION;
     if (stackedLayout) {
       item.style.left = "";
       item.style.top = "";
       item.style.width = "";
       item.style.height = "";
     } else {
-      item.style.left = `${todo.position.x}px`;
-      item.style.top = `${todo.position.y}px`;
+      applyPositionToElement(item, basePosition);
       item.style.width = `${todo.size.width}px`;
       if (todo.size.height) {
         item.style.height = `${todo.size.height}px`;
@@ -1292,6 +1471,7 @@ function renderTodos() {
 
     if (!stackedLayout) {
       sizeAdjusted = adjustItemSizeToContent(item, todo) || sizeAdjusted;
+      layoutMutated = autoPlaceTodoItem(item, todo) || layoutMutated;
     }
     attachDrag(item, item, todo.id, {
       onTap: () => {
@@ -1302,7 +1482,7 @@ function renderTodos() {
     attachResize(resizeHandle, item, todo.id);
   });
 
-  if (sizeAdjusted) {
+  if (sizeAdjusted || layoutMutated) {
     saveTodos();
   }
 
@@ -1767,12 +1947,13 @@ function addTodo(
   const cleanedComments = comments.trim();
   const cleanedCategory = (category ?? "").trim();
   const id = crypto.randomUUID();
+  const position = getInitialNewTodoPosition();
   todos.unshift({
     id,
     text: trimmed,
     completed: false,
     completedAt: null,
-    position: DEFAULT_POSITION,
+    position,
     size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
     sizeStates: EMPTY_SIZE_STATES,
     createdAt: new Date().toISOString(),
@@ -2650,6 +2831,11 @@ dailyEditColorEl.addEventListener("input", () => {
   syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
 });
 
+autoShiftToggleEl?.addEventListener("change", () => {
+  options = { ...options, autoShiftExisting: autoShiftToggleEl.checked };
+  saveOptions();
+});
+
 inputEl?.addEventListener("input", () => {
   updateColorTriggerLabel(colorTriggerEl, inputEl.value);
 });
@@ -2836,7 +3022,10 @@ if (categoryFormEl) {
 loadDailyTasks();
 loadTodos();
 loadCategories();
+loadOptions();
 ensureLayoutDefaults();
+ensureOptionsDefaults();
+syncOptionsUI();
 syncCategoriesFromTodos();
 renderCategoryOptions();
 updateAllCategoryPreviews();
