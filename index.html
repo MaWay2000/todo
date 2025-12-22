@@ -29,15 +29,34 @@
     <dialog id="add-dialog" class="modal">
       <form id="todo-form" class="modal-form" method="dialog" autocomplete="off">
         <h2 class="modal-title">New task</h2>
-        <label class="sr-only" for="todo-input">Task name</label>
-        <input id="todo-input" name="todo" placeholder="Task name" required />
-        <label class="sr-only" for="todo-comment">Task comments</label>
-        <textarea
-          id="todo-comment"
-          name="comment"
-          rows="3"
-          placeholder="Comments (optional)"
-        ></textarea>
+        <div class="title-row">
+          <div class="title-input">
+            <label class="sr-only" for="todo-input">Task name</label>
+            <input id="todo-input" name="todo" placeholder="Task name" required />
+          </div>
+          <label class="inline-toggle" for="todo-comment-toggle">
+            <span class="inline-toggle-label">Comments</span>
+            <input id="todo-comment-toggle" type="checkbox" checked />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="todo-comment-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
+          </label>
+        </div>
+        <div class="comment-field">
+          <label class="sr-only" for="todo-comment">Task comments</label>
+          <textarea
+            id="todo-comment"
+            name="comment"
+            rows="3"
+            placeholder="Comments (optional)"
+          ></textarea>
+        </div>
         <div class="color-toggle">
           <label class="toggle">
             <input id="todo-color-toggle" type="checkbox" aria-label="Enable task color" checked />
@@ -256,15 +275,34 @@
     <dialog id="edit-dialog" class="modal">
       <form id="edit-form" class="modal-form" method="dialog" autocomplete="off">
         <h2 class="modal-title">Edit task</h2>
-        <label class="sr-only" for="edit-input">Task description</label>
-        <input id="edit-input" name="edit-todo" placeholder="Update the task title" required />
-        <label class="sr-only" for="edit-comment">Task comments</label>
-        <textarea
-          id="edit-comment"
-          name="edit-comment"
-          rows="3"
-          placeholder="Comments (optional)"
-        ></textarea>
+        <div class="title-row">
+          <div class="title-input">
+            <label class="sr-only" for="edit-input">Task description</label>
+            <input id="edit-input" name="edit-todo" placeholder="Update the task title" required />
+          </div>
+          <label class="inline-toggle" for="edit-comment-toggle">
+            <span class="inline-toggle-label">Comments</span>
+            <input id="edit-comment-toggle" type="checkbox" checked />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="edit-comment-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
+          </label>
+        </div>
+        <div class="comment-field">
+          <label class="sr-only" for="edit-comment">Task comments</label>
+          <textarea
+            id="edit-comment"
+            name="edit-comment"
+            rows="3"
+            placeholder="Comments (optional)"
+          ></textarea>
+        </div>
         <div class="color-toggle">
           <label class="toggle">
             <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
@@ -302,20 +340,39 @@
     <dialog id="daily-edit-dialog" class="modal">
       <form id="daily-edit-form" class="modal-form" method="dialog" autocomplete="off">
         <h2 class="modal-title">Edit daily task</h2>
-        <label class="sr-only" for="daily-edit-input">Task description</label>
-        <input
-          id="daily-edit-input"
-          name="daily-edit-todo"
-          placeholder="Update the daily task title"
-          required
-        />
-        <label class="sr-only" for="daily-edit-comment">Task comments</label>
-        <textarea
-          id="daily-edit-comment"
-          name="daily-edit-comment"
-          rows="3"
-          placeholder="Comments (optional)"
-        ></textarea>
+        <div class="title-row">
+          <div class="title-input">
+            <label class="sr-only" for="daily-edit-input">Task description</label>
+            <input
+              id="daily-edit-input"
+              name="daily-edit-todo"
+              placeholder="Update the daily task title"
+              required
+            />
+          </div>
+          <label class="inline-toggle" for="daily-edit-comment-toggle">
+            <span class="inline-toggle-label">Comments</span>
+            <input id="daily-edit-comment-toggle" type="checkbox" checked />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="daily-edit-comment-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
+          </label>
+        </div>
+        <div class="comment-field">
+          <label class="sr-only" for="daily-edit-comment">Task comments</label>
+          <textarea
+            id="daily-edit-comment"
+            name="daily-edit-comment"
+            rows="3"
+            placeholder="Comments (optional)"
+          ></textarea>
+        </div>
         <div class="color-toggle">
           <label class="toggle">
             <input

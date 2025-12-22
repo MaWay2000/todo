@@ -315,6 +315,85 @@ button.danger:hover {
   margin: 0;
 }
 
+.title-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.title-input {
+  width: 100%;
+}
+
+.inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.inline-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.inline-toggle-label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.inline-toggle-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.inline-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111827;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.inline-toggle input:checked + .inline-toggle-track {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.inline-toggle input:checked + .inline-toggle-track .inline-toggle-thumb {
+  transform: translateX(18px);
+  background: #38bdf8;
+}
+
+.inline-toggle-text {
+  min-width: 2.5ch;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.comment-field.is-disabled textarea {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .start-row {
   display: grid;
   grid-template-columns: auto 1fr;
