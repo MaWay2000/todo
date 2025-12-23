@@ -114,8 +114,8 @@ const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
-const CARD_VERTICAL_GAP = 12;
-const ESTIMATED_CARD_HEIGHT = 160;
+const CARD_VERTICAL_GAP = 6;
+const ESTIMATED_CARD_HEIGHT = 110;
 const DEFAULT_COLOR = "#38bdf8";
 const CATEGORY_COLOR_PALETTE = [
   "#f59e0b",
