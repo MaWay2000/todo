@@ -146,6 +146,7 @@ let activeDailyEditId = null;
 let activeCategoryEditId = null;
 let timeRefreshHandle = null;
 let addFormTimeRefreshHandle = null;
+let manualPositionCache = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const formatDateTime = (value) =>
@@ -1319,6 +1320,43 @@ function updateTodoPosition(id, position, clearNeedsPositioning = false) {
     mutated = true;
     return { ...todo, position, needsPositioning };
   });
+  return mutated;
+}
+
+function cacheManualPositions() {
+  manualPositionCache = new Map();
+  todos.forEach((todo) => {
+    const position = todo.position ?? { ...DEFAULT_POSITION };
+    manualPositionCache.set(todo.id, { ...position });
+  });
+}
+
+function restoreManualPositions() {
+  if (!manualPositionCache) return false;
+
+  let mutated = false;
+  todos = todos.map((todo) => {
+    const cached = manualPositionCache.get(todo.id);
+    if (!cached) return todo;
+
+    if (
+      todo.position?.x === cached.x &&
+      todo.position?.y === cached.y &&
+      todo.needsPositioning === false
+    ) {
+      return todo;
+    }
+
+    mutated = true;
+    return { ...todo, position: { ...cached }, needsPositioning: false };
+  });
+
+  manualPositionCache = null;
+
+  if (mutated) {
+    saveTodos();
+  }
+
   return mutated;
 }
 
@@ -3345,7 +3383,16 @@ dailyEditEndDurationToggleEl?.addEventListener("change", () => {
 });
 
 autoShiftToggleEl?.addEventListener("change", () => {
-  options = { ...options, autoShiftExisting: autoShiftToggleEl.checked };
+  const previouslyEnabled = options.autoShiftExisting;
+  const enabled = autoShiftToggleEl.checked;
+
+  if (enabled && !previouslyEnabled) {
+    cacheManualPositions();
+  } else if (!enabled && previouslyEnabled) {
+    restoreManualPositions();
+  }
+
+  options = { ...options, autoShiftExisting: enabled };
   saveOptions();
   renderCurrentView();
 });
