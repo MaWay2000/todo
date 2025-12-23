@@ -964,12 +964,12 @@ button.danger:hover {
 
 
 .todo-shell {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.45rem;
   flex-wrap: nowrap;
-  width: max-content;
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
   cursor: grab;
 }
 
@@ -991,6 +991,11 @@ button.danger:hover {
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .completion-duration {
