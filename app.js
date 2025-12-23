@@ -1450,11 +1450,8 @@ function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
   const isCategoryView = filter === "categories";
-  const stackedLayout =
-    showingDeleted || filter === "completed" || filter === "all" || isCategoryView;
   const isCompletedView = filter === "completed";
   const renderTime = Date.now();
-  listEl.classList.toggle("stacked-layout", stackedLayout);
   const baseFiltered = todos
     .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
     .filter((todo) => {
@@ -1464,6 +1461,15 @@ function renderTodos() {
       if (filter === "categories") return true;
       return true;
     });
+
+  const stackedLayout =
+    showingDeleted ||
+    filter === "completed" ||
+    filter === "all" ||
+    isCategoryView ||
+    (filter === "active" && options.autoShiftExisting);
+
+  listEl.classList.toggle("stacked-layout", stackedLayout);
 
   const filtered = applyAutoShiftSorting(baseFiltered);
 
