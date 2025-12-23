@@ -1071,6 +1071,7 @@ button.danger:hover {
   border-radius: 999px;
   line-height: 1;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .meta-chip.accent {
