@@ -1264,7 +1264,7 @@ function updateTodoPosition(id, position, clearNeedsPositioning = false) {
 
 function getAutoShiftInsertionY(gap = CARD_VERTICAL_GAP) {
   const anchorBottom = todos
-    .filter((todo) => isTodoInActiveView(todo) && !hasValidEndTime(todo))
+    .filter((todo) => isTodoInActiveView(todo) && hasValidEndTime(todo))
     .reduce((max, todo) => {
       const position = todo.position ?? DEFAULT_POSITION;
       const height = getEstimatedTodoHeight(todo);
