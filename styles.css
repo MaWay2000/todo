@@ -991,12 +991,10 @@ button.danger:hover {
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 1 0 auto;
+  min-width: max-content;
   display: block;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .completion-duration {
