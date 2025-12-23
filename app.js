@@ -1430,6 +1430,11 @@ function applyAutoShiftLayout(sortedTimedTodos) {
 function applyAutoShiftSorting(filteredTodos) {
   if (!options.autoShiftExisting || filter !== "active") return filteredTodos;
 
+  const requiresAutoShift = filteredTodos.some(
+    (todo) => todo.needsPositioning && hasValidEndTime(todo)
+  );
+  if (!requiresAutoShift) return filteredTodos;
+
   const withEndTimes = [];
   const withoutEndTimes = [];
 
