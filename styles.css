@@ -825,6 +825,18 @@ button.danger:hover {
   overflow: hidden;
 }
 
+.todo-list.two-column-layout::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--floating-column-x, 55%);
+  width: 1px;
+  background: var(--border);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .todo-list.stacked-layout {
   display: flex;
   flex-direction: column;
