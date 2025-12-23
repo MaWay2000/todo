@@ -583,6 +583,16 @@ function setFinishDurationEnabled(enabled) {
     if (!input) return;
     input.disabled = !enabled;
   });
+  if (!enabled) {
+    [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
+      if (!input) return;
+      input.value = "";
+    });
+    if (endEl) {
+      endEl.value = "";
+      endEl.dataset.synced = "false";
+    }
+  }
   if (endDurationGroupEl) {
     endDurationGroupEl.classList.toggle("is-disabled", !enabled);
   }
@@ -591,10 +601,10 @@ function setFinishDurationEnabled(enabled) {
   }
   setFinishDateFieldVisibility(enabled);
   syncEndDurationToggleLabel();
-  if (!enabled && endEl) {
-    endEl.dataset.synced = "false";
-  }
   if (enabled) {
+    if (endEl && !endEl.dataset.synced) {
+      endEl.dataset.synced = "true";
+    }
     syncFinishDurationInputsFromRange();
     syncEndTimeWithStart();
   }
@@ -2883,15 +2893,12 @@ formEl.addEventListener("submit", (event) => {
       )
     : null;
   const startTime = offsetStartTime ?? getStartTimeValue() ?? new Date().toISOString();
-  const explicitEndTime = parseDateInput(endEl?.value);
-  const endTime = explicitEndTime ?? (isFinishDurationEnabled()
-    ? computeEndFromDuration(
-        startTime,
-        endDaysEl.value,
-        endHoursEl.value,
-        endMinsEl.value
-      )
-    : null);
+  const finishDurationEnabled = isFinishDurationEnabled();
+  const explicitEndTime = finishDurationEnabled ? parseDateInput(endEl?.value) : null;
+  const endTime = finishDurationEnabled
+    ? explicitEndTime ??
+      computeEndFromDuration(startTime, endDaysEl.value, endHoursEl.value, endMinsEl.value)
+    : null;
   const colorEnabled = colorToggleEl?.checked ?? true;
   const color = colorEnabled ? colorEl.value?.trim() || null : null;
   const category = categoryEl.value?.trim() ?? "";
@@ -2934,8 +2941,15 @@ formEl.addEventListener("submit", (event) => {
       startOffsetToggleEl.checked = false;
     }
     setStartOffsetEnabled(false);
-    endEl.value = formatDateForInput(nowValue);
-    endEl.dataset.synced = isFinishDurationEnabled() ? "true" : "false";
+    if (endEl) {
+      if (isFinishDurationEnabled()) {
+        endEl.value = formatDateForInput(nowValue);
+        endEl.dataset.synced = "true";
+      } else {
+        endEl.value = "";
+        endEl.dataset.synced = "false";
+      }
+    }
     endDaysEl.value = "";
     endHoursEl.value = "";
     endMinsEl.value = "";
@@ -2969,8 +2983,13 @@ openAddEl.addEventListener("click", () => {
   const startValue = new Date().toISOString();
   setStartInputValue(startValue, true);
   if (endEl) {
-    endEl.value = formatDateForInput(startValue);
-    endEl.dataset.synced = isFinishDurationEnabled() ? "true" : "false";
+    if (isFinishDurationEnabled()) {
+      endEl.value = formatDateForInput(startValue);
+      endEl.dataset.synced = "true";
+    } else {
+      endEl.value = "";
+      endEl.dataset.synced = "false";
+    }
   }
   startOffsetDaysEl.value = "";
   startOffsetHoursEl.value = "";
@@ -3323,18 +3342,18 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   const text = dailyEditInputEl.value.trim();
   const comments = getCleanedComment(dailyEditCommentToggleEl, dailyEditCommentEl);
   const startTime = parseDateInput(dailyEditStartEl.value);
-  const explicitEndTime = parseDateInput(dailyEditEndEl?.value);
+  const finishDurationEnabled = isDailyEditDurationEnabled();
+  const explicitEndTime = finishDurationEnabled ? parseDateInput(dailyEditEndEl?.value) : null;
   const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
-  const endTime =
-    explicitEndTime ??
-    (isDailyEditDurationEnabled()
-      ? computeEndFromDuration(
-          startTime,
-          dailyEditEndDaysEl.value,
-          dailyEditEndHoursEl.value,
-          dailyEditEndMinsEl.value
-        )
-      : currentTask?.endTime ?? null);
+  const endTime = finishDurationEnabled
+    ? explicitEndTime ??
+      computeEndFromDuration(
+        startTime,
+        dailyEditEndDaysEl.value,
+        dailyEditEndHoursEl.value,
+        dailyEditEndMinsEl.value
+      )
+    : currentTask?.endTime ?? null;
   const triggerDays = parseSelectedWeekdays(dailyEditWeekdayInputs);
   const intervalDays = parseIntervalValue(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl);
   const category = dailyEditCategoryEl?.value?.trim() ?? "";
