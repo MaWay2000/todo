@@ -1263,20 +1263,15 @@ function updateTodoPosition(id, position, clearNeedsPositioning = false) {
 }
 
 function getAutoShiftInsertionY(gap = CARD_VERTICAL_GAP) {
-  const anchorBottom = todos
+  const anchorTop = todos
     .filter((todo) => isTodoInActiveView(todo) && hasValidEndTime(todo))
-    .reduce((max, todo) => {
+    .reduce((min, todo) => {
       const position = todo.position ?? DEFAULT_POSITION;
-      const height = getEstimatedTodoHeight(todo);
-      const bottom = (position.y ?? DEFAULT_POSITION.y) + height;
-      return Math.max(max, bottom);
-    }, -Infinity);
+      const top = position.y ?? DEFAULT_POSITION.y;
+      return Math.min(min, Number.isFinite(top) ? top : DEFAULT_POSITION.y);
+    }, DEFAULT_POSITION.y);
 
-  if (!Number.isFinite(anchorBottom)) {
-    return DEFAULT_POSITION.y;
-  }
-
-  return anchorBottom + gap;
+  return Math.min(anchorTop, DEFAULT_POSITION.y);
 }
 
 function shiftActiveTodosDown(offset, excludeId = null, minY = DEFAULT_POSITION.y) {
@@ -3252,6 +3247,7 @@ dailyEditEndDurationToggleEl?.addEventListener("change", () => {
 autoShiftToggleEl?.addEventListener("change", () => {
   options = { ...options, autoShiftExisting: autoShiftToggleEl.checked };
   saveOptions();
+  renderCurrentView();
 });
 
 inputEl?.addEventListener("input", () => {
