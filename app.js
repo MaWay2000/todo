@@ -1356,13 +1356,17 @@ function getEstimatedTodoHeight(todo) {
   if (Number.isFinite(todo.size?.height) && todo.size.height > 0) {
     return todo.size.height;
   }
-  const expandedHeight = todo.sizeStates?.expanded?.height;
-  if (Number.isFinite(expandedHeight) && expandedHeight > 0) {
-    return expandedHeight;
+  const sizeStates = todo.sizeStates ?? EMPTY_SIZE_STATES;
+  const preferredKey = todo.showActions ? "expanded" : "compact";
+  const fallbackKey = todo.showActions ? "compact" : "expanded";
+
+  const preferredHeight = sizeStates[preferredKey]?.height;
+  if (Number.isFinite(preferredHeight) && preferredHeight > 0) {
+    return preferredHeight;
   }
-  const compactHeight = todo.sizeStates?.compact?.height;
-  if (Number.isFinite(compactHeight) && compactHeight > 0) {
-    return compactHeight;
+  const fallbackHeight = sizeStates[fallbackKey]?.height;
+  if (Number.isFinite(fallbackHeight) && fallbackHeight > 0) {
+    return fallbackHeight;
   }
   return ESTIMATED_CARD_HEIGHT;
 }
