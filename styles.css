@@ -828,7 +828,7 @@ button.danger:hover {
 .todo-list.stacked-layout {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1px;
   min-height: 360px;
 }
 
