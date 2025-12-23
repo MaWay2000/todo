@@ -1371,6 +1371,71 @@ function maybeAutoShiftNewTodo(todo) {
   return shifted || repositioned;
 }
 
+function sortTodosByEndTime(todosToSort) {
+  return [...todosToSort].sort((first, second) => {
+    const firstTime = new Date(first.endTime).getTime();
+    const secondTime = new Date(second.endTime).getTime();
+    if (firstTime === secondTime) {
+      return (first.createdAt ?? "").localeCompare(second.createdAt ?? "");
+    }
+    return firstTime - secondTime;
+  });
+}
+
+function applyAutoShiftLayout(sortedTimedTodos) {
+  if (!sortedTimedTodos.length) return;
+
+  const nextPositions = new Map();
+  let currentY = getAutoShiftInsertionY();
+
+  sortedTimedTodos.forEach((todo) => {
+    nextPositions.set(todo.id, {
+      x: todo.position?.x ?? DEFAULT_POSITION.x,
+      y: currentY,
+    });
+    currentY += getEstimatedTodoHeight(todo) + CARD_VERTICAL_GAP;
+  });
+
+  let mutated = false;
+  todos = todos.map((todo) => {
+    const nextPosition = nextPositions.get(todo.id);
+    if (!nextPosition) return todo;
+    const needsPositioning = false;
+    if (
+      todo.position?.x === nextPosition.x &&
+      todo.position?.y === nextPosition.y &&
+      todo.needsPositioning === needsPositioning
+    ) {
+      return todo;
+    }
+    mutated = true;
+    return { ...todo, position: nextPosition, needsPositioning };
+  });
+
+  if (mutated) {
+    saveTodos();
+  }
+}
+
+function applyAutoShiftSorting(filteredTodos) {
+  if (!options.autoShiftExisting || filter !== "active") return filteredTodos;
+
+  const withEndTimes = [];
+  const withoutEndTimes = [];
+
+  filteredTodos.forEach((todo) => {
+    if (hasValidEndTime(todo)) {
+      withEndTimes.push(todo);
+    } else {
+      withoutEndTimes.push(todo);
+    }
+  });
+
+  const sortedTimedTodos = sortTodosByEndTime(withEndTimes);
+  applyAutoShiftLayout(sortedTimedTodos);
+  return [...withoutEndTimes, ...sortedTimedTodos];
+}
+
 function renderTodos() {
   listEl.innerHTML = "";
   const showingDeleted = filter === "deleted";
@@ -1380,7 +1445,7 @@ function renderTodos() {
   const isCompletedView = filter === "completed";
   const renderTime = Date.now();
   listEl.classList.toggle("stacked-layout", stackedLayout);
-  const filtered = todos
+  const baseFiltered = todos
     .filter((todo) => (showingDeleted ? todo.deleted : !todo.deleted))
     .filter((todo) => {
       if (filter === "active") return !todo.completed && hasTaskStarted(todo);
@@ -1389,6 +1454,8 @@ function renderTodos() {
       if (filter === "categories") return true;
       return true;
     });
+
+  const filtered = applyAutoShiftSorting(baseFiltered);
 
   if (isCompletedView) {
     filtered.sort((first, second) => {
