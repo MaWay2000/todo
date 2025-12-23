@@ -1152,6 +1152,12 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   return reference >= start;
 }
 
+function hasValidEndTime(task) {
+  if (!task?.endTime) return false;
+  const end = new Date(task.endTime);
+  return Number.isFinite(end.getTime());
+}
+
 function isTodoFresh(todo, referenceTime = Date.now()) {
   if (!Number.isFinite(todo?.freshUntil)) return false;
   return todo.freshUntil > referenceTime;
@@ -1255,12 +1261,38 @@ function updateTodoPosition(id, position, clearNeedsPositioning = false) {
   return mutated;
 }
 
-function shiftActiveTodosDown(offset, excludeId = null) {
+function getAutoShiftInsertionY() {
+  const anchorBottom = todos
+    .filter((todo) => isTodoInActiveView(todo) && !hasValidEndTime(todo))
+    .reduce((max, todo) => {
+      const position = todo.position ?? DEFAULT_POSITION;
+      const height = getEstimatedTodoHeight(todo);
+      const bottom = (position.y ?? DEFAULT_POSITION.y) + height;
+      return Math.max(max, bottom);
+    }, -Infinity);
+
+  if (!Number.isFinite(anchorBottom)) {
+    return DEFAULT_POSITION.y;
+  }
+
+  return anchorBottom + CARD_VERTICAL_GAP;
+}
+
+function shiftActiveTodosDown(offset, excludeId = null, minY = DEFAULT_POSITION.y) {
   if (!offset || offset <= 0) return false;
   let mutated = false;
   todos = todos.map((todo) => {
-    if (!isTodoInActiveView(todo) || todo.id === excludeId) return todo;
+    if (
+      !isTodoInActiveView(todo) ||
+      todo.id === excludeId ||
+      !hasValidEndTime(todo)
+    ) {
+      return todo;
+    }
     const current = todo.position ?? DEFAULT_POSITION;
+    if ((current.y ?? DEFAULT_POSITION.y) < minY) {
+      return todo;
+    }
     const nextY = (current.y ?? DEFAULT_POSITION.y) + offset;
     if (nextY === current.y) return todo;
     mutated = true;
@@ -1271,7 +1303,10 @@ function shiftActiveTodosDown(offset, excludeId = null) {
     Array.from(listEl.querySelectorAll(".todo-item")).forEach((item) => {
       if (!item.dataset.id || item.dataset.id === excludeId) return;
       const todo = todos.find((entry) => entry.id === item.dataset.id);
-      if (todo && isTodoInActiveView(todo)) {
+      if (todo && isTodoInActiveView(todo) && hasValidEndTime(todo)) {
+        if ((todo.position?.y ?? DEFAULT_POSITION.y) < minY) {
+          return;
+        }
         applyPositionToElement(item, todo.position ?? DEFAULT_POSITION);
       }
     });
@@ -1289,13 +1324,15 @@ function autoPlaceTodoItem(item, todo) {
     parseFloat(item.style.height) ||
     item.getBoundingClientRect().height ||
     ESTIMATED_CARD_HEIGHT;
-  const autoShiftEnabled = options.autoShiftExisting && filter === "active";
+  const autoShiftEnabled =
+    options.autoShiftExisting && filter === "active" && hasValidEndTime(todo);
 
   let mutated = false;
   if (autoShiftEnabled) {
     const offset = measuredHeight + CARD_VERTICAL_GAP;
-    const shifted = shiftActiveTodosDown(offset, todo.id);
-    const nextPosition = { ...DEFAULT_POSITION };
+    const insertionY = getAutoShiftInsertionY();
+    const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
+    const nextPosition = { ...DEFAULT_POSITION, y: insertionY };
     applyPositionToElement(item, nextPosition);
     item.classList.remove("is-new");
     mutated = updateTodoPosition(todo.id, nextPosition, true) || shifted;
@@ -1326,10 +1363,11 @@ function getEstimatedTodoHeight(todo) {
 
 function maybeAutoShiftNewTodo(todo) {
   if (!options.autoShiftExisting || filter === "active") return false;
-  if (!isTodoInActiveView(todo)) return false;
+  if (!isTodoInActiveView(todo) || !hasValidEndTime(todo)) return false;
   const offset = getEstimatedTodoHeight(todo) + CARD_VERTICAL_GAP;
-  const shifted = shiftActiveTodosDown(offset, todo.id);
-  const repositioned = updateTodoPosition(todo.id, { ...DEFAULT_POSITION }, true);
+  const insertionY = getAutoShiftInsertionY();
+  const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
+  const repositioned = updateTodoPosition(todo.id, { ...DEFAULT_POSITION, y: insertionY }, true);
   return shifted || repositioned;
 }
 
