@@ -114,6 +114,7 @@ const canvasMinHeight = 360;
 const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
+const FLOATING_COLUMN_FALLBACK_X = DEFAULT_POSITION.x + DEFAULT_CARD_WIDTH + 80;
 const CARD_VERTICAL_GAP = 6;
 const AUTO_SHIFT_VERTICAL_GAP = 1;
 const ESTIMATED_CARD_HEIGHT = 110;
@@ -189,6 +190,35 @@ const formatDuration = (start, end) => {
   }
 
   return parts.length ? parts.join(" ") : "0s";
+};
+
+const getDefaultColumnX = (isTimedTask) => {
+  if (isTimedTask) return DEFAULT_POSITION.x;
+  const containerWidth = listEl?.clientWidth || 0;
+  if (!containerWidth) return FLOATING_COLUMN_FALLBACK_X;
+  const halfWidth = Math.max(FLOATING_COLUMN_FALLBACK_X, containerWidth / 2 + 16);
+  return halfWidth;
+};
+
+const getDefaultPosition = (isTimedTask) => ({
+  x: getDefaultColumnX(isTimedTask),
+  y: DEFAULT_POSITION.y,
+});
+
+const normalizePositionForTodo = (todo) => {
+  const isTimedTask = hasValidEndTime(todo);
+  const defaultPosition = getDefaultPosition(isTimedTask);
+  const hasX = Number.isFinite(todo?.position?.x);
+  const hasY = Number.isFinite(todo?.position?.y);
+  const defaultedToTimedColumn = !isTimedTask && hasX && todo.position.x === DEFAULT_POSITION.x;
+  const x = defaultedToTimedColumn
+    ? defaultPosition.x
+    : hasX
+      ? todo.position.x
+      : defaultPosition.x;
+  const y = hasY ? todo.position.y : defaultPosition.y;
+  const mutated = defaultedToTimedColumn || !hasX || !hasY;
+  return { x, y, mutated };
 };
 
 const updateInlineToggleText = (toggleEl, textEl) => {
@@ -1197,11 +1227,19 @@ function isTodoInActiveView(todo) {
   return !todo.deleted && !todo.completed && hasTaskStarted(todo);
 }
 
-function getRenderedLayout(excludeId = null) {
+function getRenderedLayout(excludeId = null, predicate = null) {
   if (listEl.classList.contains("stacked-layout")) return [];
   return Array.from(listEl.querySelectorAll(".todo-item"))
     .filter((item) => item.dataset.id && item.dataset.id !== excludeId)
     .map((item) => {
+      const todo = todos.find((entry) => entry.id === item.dataset.id);
+      return { item, todo };
+    })
+    .filter(({ todo }) => {
+      if (!predicate) return true;
+      return predicate(todo);
+    })
+    .map(({ item }) => {
       const left = parseFloat(item.style.left) || 0;
       const top = parseFloat(item.style.top) || 0;
       const width = item.offsetWidth || parseFloat(item.style.width) || DEFAULT_CARD_WIDTH;
@@ -1219,8 +1257,12 @@ function getActiveLayoutFromState() {
     .filter((todo) => isTodoInActiveView(todo))
     .map((todo) => ({
       id: todo.id,
-      x: todo.position?.x ?? DEFAULT_POSITION.x,
-      y: todo.position?.y ?? DEFAULT_POSITION.y,
+      x: Number.isFinite(todo.position?.x)
+        ? todo.position.x
+        : getDefaultPosition(hasValidEndTime(todo)).x,
+      y: Number.isFinite(todo.position?.y)
+        ? todo.position.y
+        : getDefaultPosition(hasValidEndTime(todo)).y,
       width: todo.size?.width ?? DEFAULT_CARD_WIDTH,
       height:
         Number.isFinite(todo.size?.height) && todo.size.height > 0
@@ -1229,24 +1271,32 @@ function getActiveLayoutFromState() {
     }));
 }
 
-function computeStackedPosition(layout = [], gap = CARD_VERTICAL_GAP) {
+function computeStackedPosition(layout = [], gap = CARD_VERTICAL_GAP, baseX = DEFAULT_POSITION.x) {
   if (!layout.length) {
-    return { ...DEFAULT_POSITION };
+    return { x: baseX, y: DEFAULT_POSITION.y };
   }
+  const anchorX = layout.find((item) => Number.isFinite(item.x))?.x ?? baseX;
   const maxBottom = layout.reduce(
     (max, item) => Math.max(max, (item.y ?? DEFAULT_POSITION.y) + Math.max(item.height ?? 0, 0)),
     DEFAULT_POSITION.y
   );
-  return { x: DEFAULT_POSITION.x, y: maxBottom + gap };
+  return { x: anchorX, y: maxBottom + gap };
 }
 
-function getInitialNewTodoPosition() {
-  const renderedLayout = getRenderedLayout();
+function getInitialNewTodoPosition(todo = null) {
+  const isTimedTask = hasValidEndTime(todo);
+  const renderedLayout = getRenderedLayout(todo?.id ?? null, (entry) => {
+    return hasValidEndTime(entry) === isTimedTask;
+  });
+  const columnX = getDefaultPosition(isTimedTask).x;
   if (renderedLayout.length) {
-    return computeStackedPosition(renderedLayout);
+    return computeStackedPosition(renderedLayout, CARD_VERTICAL_GAP, columnX);
   }
-  const activeLayout = getActiveLayoutFromState();
-  return computeStackedPosition(activeLayout);
+  const activeLayout = getActiveLayoutFromState().filter((item) => {
+    const target = todos.find((entry) => entry.id === item.id);
+    return hasValidEndTime(target) === isTimedTask;
+  });
+  return computeStackedPosition(activeLayout, CARD_VERTICAL_GAP, columnX);
 }
 
 function applyPositionToElement(element, position) {
@@ -1332,19 +1382,21 @@ function autoPlaceTodoItem(item, todo) {
     ESTIMATED_CARD_HEIGHT;
   const autoShiftEnabled =
     options.autoShiftExisting && filter === "active" && hasValidEndTime(todo);
+  const isTimedTask = hasValidEndTime(todo);
+  const columnX = getDefaultPosition(isTimedTask).x;
 
   let mutated = false;
   if (autoShiftEnabled) {
     const offset = measuredHeight + AUTO_SHIFT_VERTICAL_GAP;
     const insertionY = getAutoShiftInsertionY(AUTO_SHIFT_VERTICAL_GAP);
     const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
-    const nextPosition = { ...DEFAULT_POSITION, y: insertionY };
+    const nextPosition = { x: columnX, y: insertionY };
     applyPositionToElement(item, nextPosition);
     item.classList.remove("is-new");
     mutated = updateTodoPosition(todo.id, nextPosition, true) || shifted;
   } else {
-    const layout = getRenderedLayout(todo.id);
-    const nextPosition = computeStackedPosition(layout, CARD_VERTICAL_GAP);
+    const layout = getRenderedLayout(todo.id, (entry) => hasValidEndTime(entry) === isTimedTask);
+    const nextPosition = computeStackedPosition(layout, CARD_VERTICAL_GAP, columnX);
     applyPositionToElement(item, nextPosition);
     item.classList.remove("is-new");
     mutated = updateTodoPosition(todo.id, nextPosition, true);
@@ -1377,7 +1429,11 @@ function maybeAutoShiftNewTodo(todo) {
   const offset = getEstimatedTodoHeight(todo) + AUTO_SHIFT_VERTICAL_GAP;
   const insertionY = getAutoShiftInsertionY(AUTO_SHIFT_VERTICAL_GAP);
   const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
-  const repositioned = updateTodoPosition(todo.id, { ...DEFAULT_POSITION, y: insertionY }, true);
+  const repositioned = updateTodoPosition(
+    todo.id,
+    { x: getDefaultPosition(true).x, y: insertionY },
+    true
+  );
   return shifted || repositioned;
 }
 
@@ -1400,7 +1456,9 @@ function applyAutoShiftLayout(sortedTimedTodos) {
 
   sortedTimedTodos.forEach((todo) => {
     nextPositions.set(todo.id, {
-      x: todo.position?.x ?? DEFAULT_POSITION.x,
+      x: Number.isFinite(todo.position?.x)
+        ? todo.position.x
+        : getDefaultPosition(true).x,
       y: currentY,
     });
     currentY += getEstimatedTodoHeight(todo) + AUTO_SHIFT_VERTICAL_GAP;
@@ -1470,6 +1528,14 @@ function renderTodos() {
     (filter === "active" && options.autoShiftExisting);
 
   listEl.classList.toggle("stacked-layout", stackedLayout);
+  const useSplitLayout = !stackedLayout && filter === "active";
+  listEl.classList.toggle("two-column-layout", useSplitLayout);
+  if (useSplitLayout) {
+    const dividerX = Math.max(0, getDefaultPosition(false).x - CARD_VERTICAL_GAP);
+    listEl.style.setProperty("--floating-column-x", `${dividerX}px`);
+  } else {
+    listEl.style.removeProperty("--floating-column-x");
+  }
 
   const filtered = applyAutoShiftSorting(baseFiltered);
 
@@ -1547,7 +1613,11 @@ function renderTodos() {
       item.classList.add("is-new");
     }
     item.dataset.id = todo.id;
-    const basePosition = todo.position ?? DEFAULT_POSITION;
+    const normalizedPosition = normalizePositionForTodo(todo);
+    const basePosition = { x: normalizedPosition.x, y: normalizedPosition.y };
+    if (!stackedLayout && normalizedPosition.mutated) {
+      layoutMutated = updateTodoPosition(todo.id, basePosition, true) || layoutMutated;
+    }
     if (stackedLayout) {
       item.style.left = "";
       item.style.top = "";
@@ -1555,8 +1625,9 @@ function renderTodos() {
       item.style.height = "";
     } else {
       applyPositionToElement(item, basePosition);
-      item.style.width = `${todo.size.width}px`;
-      if (todo.size.height) {
+      const width = Number.isFinite(todo.size?.width) ? todo.size.width : DEFAULT_CARD_WIDTH;
+      item.style.width = `${width}px`;
+      if (todo.size?.height) {
         item.style.height = `${todo.size.height}px`;
       }
     }
@@ -2309,7 +2380,7 @@ function addTodo(
   const cleanedComments = comments.trim();
   const cleanedCategory = (category ?? "").trim();
   const id = crypto.randomUUID();
-  const position = getInitialNewTodoPosition();
+  const position = getInitialNewTodoPosition({ endTime });
   const newTodo = {
     id,
     text: trimmed,
