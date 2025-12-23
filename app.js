@@ -115,6 +115,7 @@ const DEFAULT_CARD_WIDTH = 260;
 const DEFAULT_AUTO_WIDTH = true;
 const DEFAULT_POSITION = { x: 12, y: 12 };
 const CARD_VERTICAL_GAP = 6;
+const AUTO_SHIFT_VERTICAL_GAP = 1;
 const ESTIMATED_CARD_HEIGHT = 110;
 const DEFAULT_COLOR = "#38bdf8";
 const CATEGORY_COLOR_PALETTE = [
@@ -1261,7 +1262,7 @@ function updateTodoPosition(id, position, clearNeedsPositioning = false) {
   return mutated;
 }
 
-function getAutoShiftInsertionY() {
+function getAutoShiftInsertionY(gap = CARD_VERTICAL_GAP) {
   const anchorBottom = todos
     .filter((todo) => isTodoInActiveView(todo) && !hasValidEndTime(todo))
     .reduce((max, todo) => {
@@ -1275,7 +1276,7 @@ function getAutoShiftInsertionY() {
     return DEFAULT_POSITION.y;
   }
 
-  return anchorBottom + CARD_VERTICAL_GAP;
+  return anchorBottom + gap;
 }
 
 function shiftActiveTodosDown(offset, excludeId = null, minY = DEFAULT_POSITION.y) {
@@ -1329,8 +1330,8 @@ function autoPlaceTodoItem(item, todo) {
 
   let mutated = false;
   if (autoShiftEnabled) {
-    const offset = measuredHeight + CARD_VERTICAL_GAP;
-    const insertionY = getAutoShiftInsertionY();
+    const offset = measuredHeight + AUTO_SHIFT_VERTICAL_GAP;
+    const insertionY = getAutoShiftInsertionY(AUTO_SHIFT_VERTICAL_GAP);
     const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
     const nextPosition = { ...DEFAULT_POSITION, y: insertionY };
     applyPositionToElement(item, nextPosition);
@@ -1364,8 +1365,8 @@ function getEstimatedTodoHeight(todo) {
 function maybeAutoShiftNewTodo(todo) {
   if (!options.autoShiftExisting || filter === "active") return false;
   if (!isTodoInActiveView(todo) || !hasValidEndTime(todo)) return false;
-  const offset = getEstimatedTodoHeight(todo) + CARD_VERTICAL_GAP;
-  const insertionY = getAutoShiftInsertionY();
+  const offset = getEstimatedTodoHeight(todo) + AUTO_SHIFT_VERTICAL_GAP;
+  const insertionY = getAutoShiftInsertionY(AUTO_SHIFT_VERTICAL_GAP);
   const shifted = shiftActiveTodosDown(offset, todo.id, insertionY);
   const repositioned = updateTodoPosition(todo.id, { ...DEFAULT_POSITION, y: insertionY }, true);
   return shifted || repositioned;
@@ -1386,14 +1387,14 @@ function applyAutoShiftLayout(sortedTimedTodos) {
   if (!sortedTimedTodos.length) return;
 
   const nextPositions = new Map();
-  let currentY = getAutoShiftInsertionY();
+  let currentY = getAutoShiftInsertionY(AUTO_SHIFT_VERTICAL_GAP);
 
   sortedTimedTodos.forEach((todo) => {
     nextPositions.set(todo.id, {
       x: todo.position?.x ?? DEFAULT_POSITION.x,
       y: currentY,
     });
-    currentY += getEstimatedTodoHeight(todo) + CARD_VERTICAL_GAP;
+    currentY += getEstimatedTodoHeight(todo) + AUTO_SHIFT_VERTICAL_GAP;
   });
 
   let mutated = false;
