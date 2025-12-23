@@ -993,10 +993,10 @@ button.danger:hover {
   cursor: pointer;
   flex: 1 1 auto;
   min-width: 0;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  word-break: break-word;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .completion-duration {
