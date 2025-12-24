@@ -1867,7 +1867,7 @@ function renderTodos() {
         timeLeftMeta.classList.add("overdue-text");
       }
     } else {
-      timeLeftMeta.innerHTML = `<strong>Dead-line time:</strong> 00 days 00 hours 00 mins`;
+      timeLeftMeta.innerHTML = `<strong>Deadline time:</strong> 00 days 00 hours 00 mins`;
     }
     const completedMeta = document.createElement("div");
     if (todo.completed && !todo.deleted) {
