@@ -1558,15 +1558,12 @@ function renderTodos() {
       return true;
     });
 
-  const hasTimedTasksInActiveView =
-    filter === "active" && baseFiltered.some((todo) => hasValidEndTime(todo));
-
   const stackedLayout =
     showingDeleted ||
     filter === "completed" ||
     filter === "all" ||
     isCategoryView ||
-    (filter === "active" && (options.autoShiftExisting || hasTimedTasksInActiveView));
+    (filter === "active" && options.autoShiftExisting);
 
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const useSplitLayout = !stackedLayout && filter === "active";
