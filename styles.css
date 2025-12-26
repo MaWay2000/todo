@@ -502,6 +502,10 @@ button.danger:hover {
   font-size: 0.9rem;
 }
 
+.duration-label-row .field-label {
+  font-size: 1rem;
+}
+
 .delay-toggle {
   display: inline-flex;
   align-items: center;
