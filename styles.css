@@ -433,6 +433,10 @@ button.danger:hover {
   display: none;
 }
 
+.start-date-field.is-disabled input {
+  display: none;
+}
+
 .start-date-field input[data-start-now="true"]:placeholder-shown:not(:focus) {
   color: transparent;
 }

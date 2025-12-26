@@ -592,9 +592,13 @@ function setStartOffsetEnabled(enabled) {
 
 function setFinishDateFieldVisibility(enabled) {
   if (!finishDateFieldEl) return;
-  finishDateFieldEl.classList.toggle("is-hidden", !enabled);
-  finishDateFieldEl.hidden = !enabled;
-  if (endEl) endEl.disabled = !enabled;
+  finishDateFieldEl.hidden = false;
+  finishDateFieldEl.classList.remove("is-hidden");
+  finishDateFieldEl.classList.toggle("is-disabled", !enabled);
+  if (endEl) {
+    endEl.hidden = !enabled;
+    endEl.disabled = !enabled;
+  }
 }
 
 function isFinishDurationEnabled() {
