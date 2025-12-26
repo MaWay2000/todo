@@ -30,6 +30,7 @@ const endDurationToggleEl = document.getElementById("todo-end-duration-toggle");
 const endDurationToggleLabelEl = document.getElementById("todo-end-duration-toggle-label");
 const endDurationGroupEl = document.getElementById("finish-duration-group");
 const durationLabelEl = document.getElementById("duration-label");
+const durationLabelDefaultText = durationLabelEl?.textContent?.trim() || "Time";
 const endDurationInputsEl = endDurationGroupEl?.querySelector(".duration-inputs");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
 const startDateFieldEl = startEl?.closest(".start-date-field");
@@ -89,6 +90,7 @@ const dailyEditEndDurationToggleLabelEl = document.getElementById(
 );
 const dailyEditDurationGroupEl = document.getElementById("daily-edit-duration-group");
 const dailyDurationLabelEl = document.getElementById("daily-duration-label");
+const dailyDurationLabelDefaultText = dailyDurationLabelEl?.textContent?.trim() || "Time";
 const dailyEditDurationInputsEl = dailyEditDurationGroupEl?.querySelector(".duration-inputs");
 const dailyEditFinishDateFieldEl =
   dailyEditEndEl?.closest(".start-date-field") ?? dailyEditEndEl;
@@ -613,6 +615,12 @@ function syncFinishDurationInputsFromRange() {
   endMinsEl.value = duration?.mins ?? "";
 }
 
+function syncDurationLabel(labelEl, enabled, defaultText) {
+  if (!labelEl) return;
+  labelEl.hidden = false;
+  labelEl.textContent = enabled ? defaultText : "Deadline";
+}
+
 function setFinishDurationEnabled(enabled) {
   [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
     if (!input) return;
@@ -637,9 +645,7 @@ function setFinishDurationEnabled(enabled) {
   if (endDurationToggleEl) {
     endDurationToggleEl.checked = enabled;
   }
-  if (durationLabelEl) {
-    durationLabelEl.hidden = !enabled;
-  }
+  syncDurationLabel(durationLabelEl, enabled, durationLabelDefaultText);
   setFinishDateFieldVisibility(enabled);
   syncEndDurationToggleLabel();
   if (enabled) {
@@ -686,9 +692,7 @@ function setDailyEditDurationEnabled(enabled) {
   if (dailyEditEndDurationToggleEl) {
     dailyEditEndDurationToggleEl.checked = enabled;
   }
-  if (dailyDurationLabelEl) {
-    dailyDurationLabelEl.hidden = !enabled;
-  }
+  syncDurationLabel(dailyDurationLabelEl, enabled, dailyDurationLabelDefaultText);
   if (dailyEditFinishDateFieldEl) {
     dailyEditFinishDateFieldEl.classList.toggle("is-hidden", !enabled);
     dailyEditFinishDateFieldEl.hidden = !enabled;
