@@ -29,6 +29,8 @@ const endMinsEl = document.getElementById("todo-end-mins");
 const endDurationToggleEl = document.getElementById("todo-end-duration-toggle");
 const endDurationToggleLabelEl = document.getElementById("todo-end-duration-toggle-label");
 const endDurationGroupEl = document.getElementById("finish-duration-group");
+const durationLabelEl = document.getElementById("duration-label");
+const endDurationInputsEl = endDurationGroupEl?.querySelector(".duration-inputs");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
 const startDateFieldEl = startEl?.closest(".start-date-field");
 const finishDateFieldEl = endEl?.closest(".start-date-field") ?? endEl;
@@ -86,6 +88,8 @@ const dailyEditEndDurationToggleLabelEl = document.getElementById(
   "daily-edit-end-duration-toggle-label"
 );
 const dailyEditDurationGroupEl = document.getElementById("daily-edit-duration-group");
+const dailyDurationLabelEl = document.getElementById("daily-duration-label");
+const dailyEditDurationInputsEl = dailyEditDurationGroupEl?.querySelector(".duration-inputs");
 const dailyEditFinishDateFieldEl =
   dailyEditEndEl?.closest(".start-date-field") ?? dailyEditEndEl;
 const dailyEditColorEl = document.getElementById("daily-edit-color");
@@ -586,8 +590,8 @@ function setStartOffsetEnabled(enabled) {
 
 function setFinishDateFieldVisibility(enabled) {
   if (!finishDateFieldEl) return;
-  finishDateFieldEl.classList.remove("is-hidden");
-  finishDateFieldEl.hidden = false;
+  finishDateFieldEl.classList.toggle("is-hidden", !enabled);
+  finishDateFieldEl.hidden = !enabled;
   if (endEl) endEl.disabled = !enabled;
 }
 
@@ -614,6 +618,9 @@ function setFinishDurationEnabled(enabled) {
     if (!input) return;
     input.disabled = !enabled;
   });
+  if (endDurationInputsEl) {
+    endDurationInputsEl.hidden = !enabled;
+  }
   if (!enabled) {
     [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
       if (!input) return;
@@ -629,6 +636,9 @@ function setFinishDurationEnabled(enabled) {
   }
   if (endDurationToggleEl) {
     endDurationToggleEl.checked = enabled;
+  }
+  if (durationLabelEl) {
+    durationLabelEl.hidden = !enabled;
   }
   setFinishDateFieldVisibility(enabled);
   syncEndDurationToggleLabel();
@@ -664,6 +674,9 @@ function setDailyEditDurationEnabled(enabled) {
     if (!input) return;
     input.disabled = !enabled;
   });
+  if (dailyEditDurationInputsEl) {
+    dailyEditDurationInputsEl.hidden = !enabled;
+  }
   if (dailyEditEndEl) {
     dailyEditEndEl.disabled = !enabled;
   }
@@ -673,9 +686,12 @@ function setDailyEditDurationEnabled(enabled) {
   if (dailyEditEndDurationToggleEl) {
     dailyEditEndDurationToggleEl.checked = enabled;
   }
+  if (dailyDurationLabelEl) {
+    dailyDurationLabelEl.hidden = !enabled;
+  }
   if (dailyEditFinishDateFieldEl) {
-    dailyEditFinishDateFieldEl.classList.remove("is-hidden");
-    dailyEditFinishDateFieldEl.hidden = false;
+    dailyEditFinishDateFieldEl.classList.toggle("is-hidden", !enabled);
+    dailyEditFinishDateFieldEl.hidden = !enabled;
   }
   syncDailyEditDurationToggleLabel();
   if (enabled) {
