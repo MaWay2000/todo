@@ -159,6 +159,7 @@ const formatDateTime = (value) =>
   new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
+    hourCycle: "h23",
   }).format(new Date(value));
 const formatTime = (value) => {
   if (!value) return "";
@@ -166,6 +167,7 @@ const formatTime = (value) => {
   if (!Number.isFinite(date.getTime())) return "";
   return new Intl.DateTimeFormat(undefined, {
     timeStyle: "short",
+    hourCycle: "h23",
   }).format(date);
 };
 
