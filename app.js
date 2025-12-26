@@ -618,7 +618,7 @@ function syncFinishDurationInputsFromRange() {
 function syncDurationLabel(labelEl, enabled, defaultText) {
   if (!labelEl) return;
   labelEl.hidden = false;
-  labelEl.textContent = enabled ? defaultText : "Deadline";
+  labelEl.textContent = enabled ? defaultText : "End";
 }
 
 function setFinishDurationEnabled(enabled) {
@@ -1887,7 +1887,7 @@ function renderTodos() {
         timeLeftMeta.classList.add("overdue-text");
       }
     } else {
-      timeLeftMeta.innerHTML = `<strong>Deadline time:</strong> 00 days 00 hours 00 mins`;
+      timeLeftMeta.innerHTML = `<strong>End time:</strong> 00 days 00 hours 00 mins`;
     }
     const completedMeta = document.createElement("div");
     if (todo.completed && !todo.deleted) {
