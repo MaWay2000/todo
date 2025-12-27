@@ -426,7 +426,7 @@ button.danger:hover {
 
 .start-row .start-date-field,
 .start-row .duration-group.start-offset {
-  flex: 1 1 280px;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
