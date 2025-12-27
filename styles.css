@@ -470,7 +470,7 @@ button.danger:hover {
 }
 
 .start-date-field input {
-  width: clamp(150px, 22vw, 200px);
+  width: clamp(220px, 34vw, 320px);
 }
 
 .start-date-field.is-start-now input {
@@ -482,6 +482,12 @@ button.danger:hover {
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
+  flex: 1 1 240px;
+}
+
+.date-time-inputs input[type="datetime-local"] {
+  width: 100%;
+  min-width: 220px;
 }
 
 .field-label {
