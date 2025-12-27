@@ -481,6 +481,13 @@ button.danger:hover {
   display: none;
 }
 
+.date-time-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .field-label {
   color: var(--muted);
   font-weight: 600;
