@@ -419,6 +419,31 @@ button.danger:hover {
   flex-wrap: wrap;
 }
 
+.start-row {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.start-row .start-date-field,
+.start-row .duration-group.start-offset {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.start-row .duration-group.start-offset .duration-label-row {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 720px) {
+  .start-row {
+    flex-wrap: wrap;
+  }
+
+  .start-row .duration-group.start-offset .duration-label-row {
+    flex-wrap: wrap;
+  }
+}
+
 .select-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
