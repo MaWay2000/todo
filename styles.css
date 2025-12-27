@@ -410,18 +410,13 @@ button.danger:hover {
   cursor: not-allowed;
 }
 
-.start-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 0.9rem;
-}
-
+.start-row,
 .finish-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.9rem;
+  flex-wrap: nowrap;
 }
 
 .select-row {
@@ -439,6 +434,7 @@ button.danger:hover {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  flex: 0 1 auto;
 }
 
 .start-date-field.is-hidden {
@@ -474,7 +470,7 @@ button.danger:hover {
 }
 
 .start-date-field input {
-  width: clamp(180px, 30vw, 220px);
+  width: clamp(150px, 22vw, 200px);
 }
 
 .start-date-field.is-start-now input {
@@ -483,9 +479,9 @@ button.danger:hover {
 
 .date-time-inputs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .field-label {
