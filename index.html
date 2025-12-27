@@ -82,7 +82,7 @@
           <div class="start-date-field">
             <label class="field-label" for="todo-start">Start</label>
             <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
-            <input id="todo-start" name="start" type="datetime-local" />
+            <input id="todo-start" name="start" type="datetime-local" lang="en-GB" />
           </div>
           <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
             <div class="duration-label-row">
@@ -149,7 +149,7 @@
         <div class="finish-row">
           <div class="start-date-field">
             <label class="field-label" for="todo-end">End</label>
-            <input id="todo-end" name="end" type="datetime-local" />
+            <input id="todo-end" name="end" type="datetime-local" lang="en-GB" />
           </div>
           <div
             id="finish-duration-group"
@@ -323,9 +323,9 @@
           />
         </div>
         <label class="sr-only" for="edit-start">Start time</label>
-        <input id="edit-start" name="edit-start" type="datetime-local" />
+        <input id="edit-start" name="edit-start" type="datetime-local" lang="en-GB" />
         <label class="sr-only" for="edit-end">End time</label>
-        <input id="edit-end" name="edit-end" type="datetime-local" />
+        <input id="edit-end" name="edit-end" type="datetime-local" lang="en-GB" />
         <select id="edit-category" name="edit-category" aria-label="Task category">
           <option value="">No category</option>
         </select>
@@ -405,9 +405,19 @@
           <option value="">No category</option>
         </select>
         <label class="sr-only" for="daily-edit-start">Start time</label>
-        <input id="daily-edit-start" name="daily-edit-start" type="datetime-local" />
+        <input
+          id="daily-edit-start"
+          name="daily-edit-start"
+          type="datetime-local"
+          lang="en-GB"
+        />
         <label class="sr-only" for="daily-edit-end">End time</label>
-        <input id="daily-edit-end" name="daily-edit-end" type="datetime-local" />
+        <input
+          id="daily-edit-end"
+          name="daily-edit-end"
+          type="datetime-local"
+          lang="en-GB"
+        />
         <div
           id="daily-edit-duration-group"
           class="duration-group"
