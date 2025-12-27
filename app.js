@@ -15,8 +15,10 @@ const commentEl = document.getElementById("todo-comment");
 const commentToggleEl = document.getElementById("todo-comment-toggle");
 const commentToggleTextEl = document.getElementById("todo-comment-toggle-text");
 const commentFieldEl = commentEl?.closest(".comment-field");
-const startEl = document.getElementById("todo-start");
-const endEl = document.getElementById("todo-end");
+const startEl = document.getElementById("todo-start-date");
+const startTimeEl = document.getElementById("todo-start-time");
+const endEl = document.getElementById("todo-end-date");
+const endTimeEl = document.getElementById("todo-end-time");
 const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
 const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
 const startOffsetMinsEl = document.getElementById("todo-start-offset-mins");
@@ -62,8 +64,10 @@ const editCommentEl = document.getElementById("edit-comment");
 const editCommentToggleEl = document.getElementById("edit-comment-toggle");
 const editCommentToggleTextEl = document.getElementById("edit-comment-toggle-text");
 const editCommentFieldEl = editCommentEl?.closest(".comment-field");
-const editStartEl = document.getElementById("edit-start");
-const editEndEl = document.getElementById("edit-end");
+const editStartEl = document.getElementById("edit-start-date");
+const editStartTimeEl = document.getElementById("edit-start-time");
+const editEndEl = document.getElementById("edit-end-date");
+const editEndTimeEl = document.getElementById("edit-end-time");
 const editColorEl = document.getElementById("edit-color");
 const editColorTriggerEl = document.querySelector(
   "[data-color-trigger='edit-color']"
@@ -79,8 +83,10 @@ const dailyEditCommentEl = document.getElementById("daily-edit-comment");
 const dailyEditCommentToggleEl = document.getElementById("daily-edit-comment-toggle");
 const dailyEditCommentToggleTextEl = document.getElementById("daily-edit-comment-toggle-text");
 const dailyEditCommentFieldEl = dailyEditCommentEl?.closest(".comment-field");
-const dailyEditStartEl = document.getElementById("daily-edit-start");
-const dailyEditEndEl = document.getElementById("daily-edit-end");
+const dailyEditStartEl = document.getElementById("daily-edit-start-date");
+const dailyEditStartTimeEl = document.getElementById("daily-edit-start-time");
+const dailyEditEndEl = document.getElementById("daily-edit-end-date");
+const dailyEditEndTimeEl = document.getElementById("daily-edit-end-time");
 const dailyEditEndDaysEl = document.getElementById("daily-edit-end-days");
 const dailyEditEndHoursEl = document.getElementById("daily-edit-end-hours");
 const dailyEditEndMinsEl = document.getElementById("daily-edit-end-mins");
@@ -297,7 +303,74 @@ const getTimeLeftInfo = (end, referenceDate = null) => {
   };
 };
 
-function parseDateInput(value) {
+const TIME_INPUT_PATTERN = /^(\d{2}):(\d{2})$/;
+
+function parseTimeString(value) {
+  if (!value) return null;
+  const match = TIME_INPUT_PATTERN.exec(value.trim());
+  if (!match) return null;
+  const hours = Number.parseInt(match[1], 10);
+  const minutes = Number.parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return null;
+  return { hours, minutes };
+}
+
+function formatDateForInput(value) {
+  if (!value) return { date: "", time: "" };
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return { date: "", time: "" };
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  const iso = local.toISOString();
+  return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
+}
+
+function combineDateAndTime(dateValue, timeValue) {
+  const datePart = dateValue?.trim();
+  const timePart = timeValue?.trim();
+  if (!datePart && !timePart) return null;
+  if (!datePart || !timePart) return null;
+
+  const time = parseTimeString(timePart);
+  if (!time) return null;
+
+  const [year, month, day] = datePart.split("-").map((part) => Number.parseInt(part, 10));
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+
+  const date = new Date(year, month - 1, day, time.hours, time.minutes);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.toISOString();
+}
+
+function setDateTimeInputs(dateEl, timeEl, value) {
+  const formatted = formatDateForInput(value);
+  if (dateEl) {
+    dateEl.value = formatted.date;
+  }
+  if (timeEl) {
+    timeEl.value = formatted.time;
+  }
+}
+
+function validateDateTimeInputs(dateEl, timeEl) {
+  const hasAnyValue = Boolean(dateEl?.value || timeEl?.value);
+  const parsed = parseDateInput(dateEl?.value, timeEl?.value);
+  const isValid = !hasAnyValue || Boolean(parsed);
+  const message = "Enter a valid date and 24-hour time (HH:MM)";
+
+  if (dateEl) {
+    dateEl.setCustomValidity(isValid ? "" : message);
+  }
+  if (timeEl) {
+    timeEl.setCustomValidity(isValid ? "" : message);
+  }
+
+  return { value: parsed, valid: isValid };
+}
+
+function parseDateInput(value, timeValue = undefined) {
+  if (typeof timeValue === "string") {
+    return combineDateAndTime(value, timeValue);
+  }
   if (!value) return null;
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return null;
@@ -432,14 +505,6 @@ function attachColorPickerTrigger(trigger, input, toggle) {
   });
 }
 
-function formatDateForInput(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
-
 function isStartNow(value, reference = null) {
   if (!value) return false;
   const date = new Date(value);
@@ -509,7 +574,7 @@ function updateStartNowIndicator() {
   const delayEnabled = startOffsetToggleEl?.checked ?? false;
   const isNow =
     startEl.dataset.startNow === "true" ||
-    isStartNow(parseDateInput(startEl.value));
+    isStartNow(parseDateInput(startEl.value, startTimeEl?.value));
   const showNow = Boolean(isNow && !delayEnabled);
   startNowChipEl.hidden = !showNow;
   if (startDateFieldEl) {
@@ -521,7 +586,7 @@ function revealStartInputFromNow() {
   if (!startEl || startEl.dataset.startNow !== "true") return;
   const stored =
     parseDateInput(startEl.dataset.startNowValue) ?? new Date().toISOString();
-  startEl.value = formatDateForInput(stored);
+  setDateTimeInputs(startEl, startTimeEl, stored);
   startEl.dataset.startNow = "false";
   startEl.dataset.startNowValue = "";
   startEl.placeholder = "";
@@ -538,11 +603,12 @@ function setStartInputValue(value, displayAsNow = false) {
   if (shouldShowNow) {
     const resolved = parsed ?? new Date().toISOString();
     startEl.value = "";
+    if (startTimeEl) startTimeEl.value = "";
     startEl.placeholder = "Now";
     startEl.dataset.startNow = "true";
     startEl.dataset.startNowValue = resolved;
   } else if (parsed) {
-    startEl.value = formatDateForInput(parsed);
+    setDateTimeInputs(startEl, startTimeEl, parsed);
     startEl.placeholder = "";
     startEl.dataset.startNow = "false";
     startEl.dataset.startNowValue = "";
@@ -551,6 +617,7 @@ function setStartInputValue(value, displayAsNow = false) {
     startEl.dataset.startNow = "false";
     startEl.dataset.startNowValue = "";
   }
+  validateDateTimeInputs(startEl, startTimeEl);
   updateStartNowIndicator();
 }
 
@@ -560,7 +627,7 @@ function getStartTimeValue() {
     const stored = parseDateInput(startEl.dataset.startNowValue);
     return stored ?? new Date().toISOString();
   }
-  return parseDateInput(startEl.value);
+  return parseDateInput(startEl.value, startTimeEl?.value);
 }
 
 function syncToggleLabel(toggleEl, labelEl) {
@@ -604,6 +671,10 @@ function setFinishDateFieldVisibility(enabled) {
     endEl.hidden = !enabled;
     endEl.disabled = !enabled;
   }
+  if (endTimeEl) {
+    endTimeEl.hidden = !enabled;
+    endTimeEl.disabled = !enabled;
+  }
 }
 
 function isFinishDurationEnabled() {
@@ -617,7 +688,7 @@ function syncEndDurationToggleLabel() {
 function syncFinishDurationInputsFromRange() {
   if (!startEl || !endEl) return;
   const startValue = getStartTimeValue();
-  const endValue = parseDateInput(endEl.value);
+  const endValue = parseDateInput(endEl.value, endTimeEl?.value);
   const duration = deriveDurationFromRange(startValue, endValue);
   endDaysEl.value = duration?.days ?? "";
   endHoursEl.value = duration?.hours ?? "";
@@ -645,6 +716,7 @@ function setFinishDurationEnabled(enabled) {
     });
     if (endEl) {
       endEl.value = "";
+      if (endTimeEl) endTimeEl.value = "";
       endEl.dataset.synced = "false";
     }
   }
@@ -676,8 +748,8 @@ function syncDailyEditDurationToggleLabel() {
 
 function syncDailyEditDurationFromRange() {
   if (!dailyEditStartEl || !dailyEditEndEl) return;
-  const startValue = parseDateInput(dailyEditStartEl.value);
-  const endValue = parseDateInput(dailyEditEndEl.value);
+  const startValue = parseDateInput(dailyEditStartEl.value, dailyEditStartTimeEl?.value);
+  const endValue = parseDateInput(dailyEditEndEl.value, dailyEditEndTimeEl?.value);
   const duration = deriveDurationFromRange(startValue, endValue);
   dailyEditEndDaysEl.value = duration?.days ?? "";
   dailyEditEndHoursEl.value = duration?.hours ?? "";
@@ -694,6 +766,9 @@ function setDailyEditDurationEnabled(enabled) {
   }
   if (dailyEditEndEl) {
     dailyEditEndEl.disabled = !enabled;
+  }
+  if (dailyEditEndTimeEl) {
+    dailyEditEndTimeEl.disabled = !enabled;
   }
   if (dailyEditDurationGroupEl) {
     dailyEditDurationGroupEl.classList.toggle("is-disabled", !enabled);
@@ -775,13 +850,15 @@ function syncEndTimeWithStart() {
   );
 
   if (derivedEnd) {
-    endEl.value = formatDateForInput(derivedEnd);
+    setDateTimeInputs(endEl, endTimeEl, derivedEnd);
     endEl.dataset.synced = "true";
+    validateDateTimeInputs(endEl, endTimeEl);
     return;
   }
 
   if (endEl.dataset.synced === "true") {
-    endEl.value = formatDateForInput(startValue);
+    setDateTimeInputs(endEl, endTimeEl, startValue);
+    validateDateTimeInputs(endEl, endTimeEl);
   }
 }
 
@@ -1997,10 +2074,11 @@ function editDailyTask(id) {
     dailyEditCommentEl,
     dailyEditCommentToggleTextEl
   );
-  dailyEditStartEl.value = formatDateForInput(task.startTime);
+  setDateTimeInputs(dailyEditStartEl, dailyEditStartTimeEl, task.startTime);
   if (dailyEditEndEl) {
-    dailyEditEndEl.value = formatDateForInput(task.endTime);
+    setDateTimeInputs(dailyEditEndEl, dailyEditEndTimeEl, task.endTime);
   }
+  validateDailyEditDateInputs();
   const durationEnabled = dailyEditEndDurationToggleEl
     ? Boolean(options.showTimeToFinish)
     : true;
@@ -2741,8 +2819,9 @@ function editTodo(id) {
   activeEditId = id;
   editInputEl.value = todo.text;
   editCommentEl.value = todo.comments ?? "";
-  editStartEl.value = formatDateForInput(todo.startTime);
-  editEndEl.value = formatDateForInput(todo.endTime);
+  setDateTimeInputs(editStartEl, editStartTimeEl, todo.startTime);
+  setDateTimeInputs(editEndEl, editEndTimeEl, todo.endTime);
+  validateEditDateInputs();
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
   syncColorToggleSwatch(editColorToggleEl, editColorEl);
   if (editCommentToggleEl) {
@@ -3040,9 +3119,28 @@ formEl.addEventListener("submit", (event) => {
         startOffsetMinsEl.value
       )
     : null;
-  const startTime = offsetStartTime ?? getStartTimeValue() ?? new Date().toISOString();
+  const startNowValue = startEl?.dataset.startNow === "true"
+    ? parseDateInput(startEl.dataset.startNowValue) ?? new Date().toISOString()
+    : null;
+  const startValidation = startEl?.dataset.startNow === "true"
+    ? { value: startNowValue, valid: true }
+    : validateDateTimeInputs(startEl, startTimeEl);
+  if (!startValidation.valid) {
+    startEl?.reportValidity();
+    startTimeEl?.reportValidity();
+    return;
+  }
+  const startTime = offsetStartTime ?? startValidation.value ?? startNowValue ?? new Date().toISOString();
   const finishDurationEnabled = isFinishDurationEnabled();
-  const explicitEndTime = finishDurationEnabled ? parseDateInput(endEl?.value) : null;
+  const endValidation = finishDurationEnabled
+    ? validateDateTimeInputs(endEl, endTimeEl)
+    : { value: null, valid: true };
+  if (finishDurationEnabled && !endValidation.valid) {
+    endEl?.reportValidity();
+    endTimeEl?.reportValidity();
+    return;
+  }
+  const explicitEndTime = finishDurationEnabled ? endValidation.value : null;
   const endTime = finishDurationEnabled
     ? explicitEndTime ??
       computeEndFromDuration(startTime, endDaysEl.value, endHoursEl.value, endMinsEl.value)
@@ -3091,10 +3189,11 @@ formEl.addEventListener("submit", (event) => {
     setStartOffsetEnabled(false);
     if (endEl) {
       if (isFinishDurationEnabled()) {
-        endEl.value = formatDateForInput(nowValue);
+        setDateTimeInputs(endEl, endTimeEl, nowValue);
         endEl.dataset.synced = "true";
       } else {
         endEl.value = "";
+        if (endTimeEl) endTimeEl.value = "";
         endEl.dataset.synced = "false";
       }
     }
@@ -3132,10 +3231,11 @@ openAddEl.addEventListener("click", () => {
   setStartInputValue(startValue, true);
   if (endEl) {
     if (isFinishDurationEnabled()) {
-      endEl.value = formatDateForInput(startValue);
+      setDateTimeInputs(endEl, endTimeEl, startValue);
       endEl.dataset.synced = "true";
     } else {
       endEl.value = "";
+      if (endTimeEl) endTimeEl.value = "";
       endEl.dataset.synced = "false";
     }
   }
@@ -3200,15 +3300,23 @@ const handleStartInputInteraction = () => {
     startEl.dataset.startNowValue = "";
     startEl.placeholder = "";
   }
+  if (startTimeEl?.value) {
+    startEl.dataset.startNow = "false";
+    startEl.dataset.startNowValue = "";
+    startEl.placeholder = "";
+  }
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
   }
+  validateDateTimeInputs(startEl, startTimeEl);
   syncEndTimeWithStart();
   updateStartNowIndicator();
 };
 
 startEl?.addEventListener("input", handleStartInputInteraction);
 startEl?.addEventListener("change", handleStartInputInteraction);
+startTimeEl?.addEventListener("input", handleStartInputInteraction);
+startTimeEl?.addEventListener("change", handleStartInputInteraction);
 
 [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
   input?.addEventListener("input", () => {
@@ -3219,9 +3327,16 @@ startEl?.addEventListener("change", handleStartInputInteraction);
   });
 });
 
-endEl?.addEventListener("input", () => {
+const handleEndInputInteraction = () => {
+  if (!endEl) return;
   endEl.dataset.synced = "false";
-});
+  validateDateTimeInputs(endEl, endTimeEl);
+};
+
+endEl?.addEventListener("input", handleEndInputInteraction);
+endEl?.addEventListener("change", handleEndInputInteraction);
+endTimeEl?.addEventListener("input", handleEndInputInteraction);
+endTimeEl?.addEventListener("change", handleEndInputInteraction);
 
 commentToggleEl?.addEventListener("change", () =>
   setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl)
@@ -3434,16 +3549,50 @@ editInputEl?.addEventListener("input", () => {
   updateColorTriggerLabel(editColorTriggerEl, editInputEl.value);
 });
 
+const validateEditDateInputs = () => {
+  validateDateTimeInputs(editStartEl, editStartTimeEl);
+  validateDateTimeInputs(editEndEl, editEndTimeEl);
+};
+
+[editStartEl, editStartTimeEl, editEndEl, editEndTimeEl].forEach((input) => {
+  input?.addEventListener("input", validateEditDateInputs);
+  input?.addEventListener("change", validateEditDateInputs);
+});
+
 dailyEditInputEl?.addEventListener("input", () => {
   updateColorTriggerLabel(dailyEditColorTriggerEl, dailyEditInputEl.value);
+});
+
+const validateDailyEditDateInputs = () => {
+  validateDateTimeInputs(dailyEditStartEl, dailyEditStartTimeEl);
+  validateDateTimeInputs(dailyEditEndEl, dailyEditEndTimeEl);
+};
+
+[
+  dailyEditStartEl,
+  dailyEditStartTimeEl,
+  dailyEditEndEl,
+  dailyEditEndTimeEl,
+].forEach((input) => {
+  input?.addEventListener("input", validateDailyEditDateInputs);
+  input?.addEventListener("change", validateDailyEditDateInputs);
 });
 
   editFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = editInputEl.value.trim();
     const comments = getCleanedComment(editCommentToggleEl, editCommentEl);
-    const startTime = parseDateInput(editStartEl.value);
-    const endTime = parseDateInput(editEndEl.value);
+    const startValidation = validateDateTimeInputs(editStartEl, editStartTimeEl);
+    const endValidation = validateDateTimeInputs(editEndEl, editEndTimeEl);
+    if (!startValidation.valid || !endValidation.valid) {
+      editStartEl?.reportValidity();
+      editStartTimeEl?.reportValidity();
+      editEndEl?.reportValidity();
+      editEndTimeEl?.reportValidity();
+      return;
+    }
+    const startTime = startValidation.value;
+    const endTime = endValidation.value;
     const currentTodo = todos.find((todo) => todo.id === activeEditId);
     const category = editCategoryEl.value.trim();
     const colorEnabled = editColorToggleEl?.checked ?? true;
@@ -3498,9 +3647,18 @@ dailyEditFormEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = dailyEditInputEl.value.trim();
   const comments = getCleanedComment(dailyEditCommentToggleEl, dailyEditCommentEl);
-  const startTime = parseDateInput(dailyEditStartEl.value);
+  const startValidation = validateDateTimeInputs(dailyEditStartEl, dailyEditStartTimeEl);
+  const endValidation = validateDateTimeInputs(dailyEditEndEl, dailyEditEndTimeEl);
+  if (!startValidation.valid || !endValidation.valid) {
+    dailyEditStartEl?.reportValidity();
+    dailyEditStartTimeEl?.reportValidity();
+    dailyEditEndEl?.reportValidity();
+    dailyEditEndTimeEl?.reportValidity();
+    return;
+  }
+  const startTime = startValidation.value;
   const finishDurationEnabled = isDailyEditDurationEnabled();
-  const explicitEndTime = finishDurationEnabled ? parseDateInput(dailyEditEndEl?.value) : null;
+  const explicitEndTime = finishDurationEnabled ? endValidation.value : null;
   const currentTask = dailyTasks.find((task) => task.id === activeDailyEditId);
   const endTime = finishDurationEnabled
     ? explicitEndTime ??

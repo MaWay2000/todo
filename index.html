@@ -82,7 +82,17 @@
           <div class="start-date-field">
             <label class="field-label" for="todo-start">Start</label>
             <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
-            <input id="todo-start" name="start" type="datetime-local" lang="en-GB" />
+            <div class="date-time-inputs">
+              <input id="todo-start-date" name="start-date" type="date" lang="en-GB" />
+              <input
+                id="todo-start-time"
+                name="start-time"
+                type="time"
+                inputmode="numeric"
+                pattern="\d{2}:\d{2}"
+                lang="en-GB"
+              />
+            </div>
           </div>
           <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
             <div class="duration-label-row">
@@ -149,7 +159,17 @@
         <div class="finish-row">
           <div class="start-date-field">
             <label class="field-label" for="todo-end">End</label>
-            <input id="todo-end" name="end" type="datetime-local" lang="en-GB" />
+            <div class="date-time-inputs">
+              <input id="todo-end-date" name="end-date" type="date" lang="en-GB" />
+              <input
+                id="todo-end-time"
+                name="end-time"
+                type="time"
+                inputmode="numeric"
+                pattern="\d{2}:\d{2}"
+                lang="en-GB"
+              />
+            </div>
           </div>
           <div
             id="finish-duration-group"
@@ -322,10 +342,30 @@
             aria-label="Task color"
           />
         </div>
-        <label class="sr-only" for="edit-start">Start time</label>
-        <input id="edit-start" name="edit-start" type="datetime-local" lang="en-GB" />
-        <label class="sr-only" for="edit-end">End time</label>
-        <input id="edit-end" name="edit-end" type="datetime-local" lang="en-GB" />
+        <label class="sr-only" for="edit-start-date">Start time</label>
+        <div class="date-time-inputs">
+          <input id="edit-start-date" name="edit-start-date" type="date" lang="en-GB" />
+          <input
+            id="edit-start-time"
+            name="edit-start-time"
+            type="time"
+            inputmode="numeric"
+            pattern="\d{2}:\d{2}"
+            lang="en-GB"
+          />
+        </div>
+        <label class="sr-only" for="edit-end-date">End time</label>
+        <div class="date-time-inputs">
+          <input id="edit-end-date" name="edit-end-date" type="date" lang="en-GB" />
+          <input
+            id="edit-end-time"
+            name="edit-end-time"
+            type="time"
+            inputmode="numeric"
+            pattern="\d{2}:\d{2}"
+            lang="en-GB"
+          />
+        </div>
         <select id="edit-category" name="edit-category" aria-label="Task category">
           <option value="">No category</option>
         </select>
@@ -404,20 +444,40 @@
         >
           <option value="">No category</option>
         </select>
-        <label class="sr-only" for="daily-edit-start">Start time</label>
-        <input
-          id="daily-edit-start"
-          name="daily-edit-start"
-          type="datetime-local"
-          lang="en-GB"
-        />
-        <label class="sr-only" for="daily-edit-end">End time</label>
-        <input
-          id="daily-edit-end"
-          name="daily-edit-end"
-          type="datetime-local"
-          lang="en-GB"
-        />
+        <label class="sr-only" for="daily-edit-start-date">Start time</label>
+        <div class="date-time-inputs">
+          <input
+            id="daily-edit-start-date"
+            name="daily-edit-start-date"
+            type="date"
+            lang="en-GB"
+          />
+          <input
+            id="daily-edit-start-time"
+            name="daily-edit-start-time"
+            type="time"
+            inputmode="numeric"
+            pattern="\d{2}:\d{2}"
+            lang="en-GB"
+          />
+        </div>
+        <label class="sr-only" for="daily-edit-end-date">End time</label>
+        <div class="date-time-inputs">
+          <input
+            id="daily-edit-end-date"
+            name="daily-edit-end-date"
+            type="date"
+            lang="en-GB"
+          />
+          <input
+            id="daily-edit-end-time"
+            name="daily-edit-end-time"
+            type="time"
+            inputmode="numeric"
+            pattern="\d{2}:\d{2}"
+            lang="en-GB"
+          />
+        </div>
         <div
           id="daily-edit-duration-group"
           class="duration-group"
