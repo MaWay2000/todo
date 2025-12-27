@@ -534,6 +534,7 @@ button.danger:hover {
 .delay-toggle {
   display: inline-flex;
   align-items: center;
+  flex-direction: row-reverse;
   gap: 0.5rem;
   color: var(--text);
   font-weight: 600;
