@@ -155,22 +155,23 @@ let addFormTimeRefreshHandle = null;
 let manualPositionCache = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-const formatDateTime = (value) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: false,
-    hourCycle: "h23",
-  }).format(new Date(value));
+const toDate = (value) => (value instanceof Date ? value : new Date(value));
 const formatTime = (value) => {
   if (!value) return "";
-  const date = new Date(value);
+  const date = toDate(value);
   if (!Number.isFinite(date.getTime())) return "";
-  return new Intl.DateTimeFormat(undefined, {
-    timeStyle: "short",
-    hour12: false,
-    hourCycle: "h23",
-  }).format(date);
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+const formatDateTime = (value) => {
+  const date = toDate(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const datePart = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date
+  );
+  const timePart = formatTime(date);
+  return timePart ? `${datePart}, ${timePart}` : datePart;
 };
 
 const formatDuration = (start, end) => {
