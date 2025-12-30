@@ -54,7 +54,6 @@ const dailyIntervalDaysEl = document.getElementById("daily-interval-days");
 const previewCardEl = document.getElementById("todo-preview-card");
 const previewTitleEl = document.getElementById("todo-preview-title");
 const previewColorEl = document.getElementById("todo-preview-color");
-const previewCategoryPillEl = document.getElementById("todo-preview-category");
 const previewTimeEl = document.getElementById("todo-preview-time");
 const previewRangeEl = document.getElementById("todo-preview-range");
 const previewLeftEl = document.getElementById("todo-preview-left");
@@ -477,26 +476,7 @@ function renderTodoPreview() {
     }
   }
 
-  const categoryName = categoryEl?.value?.trim() ?? "";
-  const categoryColor = getCategoryColor(categoryName);
-  if (previewCategoryPillEl) {
-    const hasCategory = Boolean(categoryName);
-    previewCategoryPillEl.dataset.empty = hasCategory ? "false" : "true";
-    previewCategoryPillEl.hidden = !hasCategory;
-    if (hasCategory) {
-      previewCategoryPillEl.textContent = categoryName;
-      previewCategoryPillEl.classList.toggle("has-color", Boolean(categoryColor));
-      if (categoryColor) {
-        previewCategoryPillEl.style.setProperty("--category-color", categoryColor);
-      } else {
-        previewCategoryPillEl.style.removeProperty("--category-color");
-      }
-    } else {
-      previewCategoryPillEl.textContent = "";
-      previewCategoryPillEl.classList.remove("has-color");
-      previewCategoryPillEl.style.removeProperty("--category-color");
-    }
-  }
+  updateCategoryPreview(categoryEl, categoryPreviewEl);
 
   const { startTime, endTime } = getFormPreviewTimes();
   const hasExplicitStart = Boolean(startEl?.value) && startEl.dataset.startNow !== "true";
