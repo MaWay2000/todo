@@ -750,7 +750,7 @@ button.danger:hover {
 .interval-field {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
   color: var(--muted);
