@@ -252,6 +252,58 @@ textarea {
   gap: 0.25rem;
 }
 
+.preview-row {
+  margin: 0.35rem 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.preview-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.todo-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.65rem 0.8rem 0.75rem;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+.todo-preview-card.has-color {
+  border-color: var(--task-color, var(--accent));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.32);
+}
+
+.todo-preview-card .todo-shell {
+  cursor: default;
+  min-width: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.todo-preview-card .todo-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo-preview-card .category-pill {
+  margin-left: auto;
+}
+
+.todo-preview-card .time-meta {
+  flex-wrap: wrap;
+}
+
 #category-color {
   padding: 0.35rem;
   width: 3.25rem;

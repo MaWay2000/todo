@@ -77,6 +77,26 @@
             aria-label="Task color"
           />
         </div>
+        <div class="preview-row" aria-live="polite">
+          <p class="field-label preview-label">Preview</p>
+          <div id="todo-preview-card" class="todo-preview-card">
+            <div class="todo-shell">
+              <span id="todo-preview-color" class="color-dot"></span>
+              <span id="todo-preview-title" class="todo-title">Task name</span>
+              <span
+                id="todo-preview-category"
+                class="category-pill"
+                data-empty="true"
+              >
+                Uncategorized
+              </span>
+            </div>
+            <div id="todo-preview-time" class="time-meta" hidden>
+              <span id="todo-preview-range" class="time-range-chip"></span>
+              <span id="todo-preview-left" class="meta-chip accent"></span>
+            </div>
+          </div>
+        </div>
         <label class="sr-only" for="todo-start">Start time</label>
         <div class="start-row">
           <div class="start-date-field">
