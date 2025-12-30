@@ -58,10 +58,20 @@
           ></textarea>
         </div>
         <div class="color-toggle">
-          <label class="toggle">
+          <label class="inline-toggle color-toggle-switch" for="todo-color-toggle">
+            <span class="inline-toggle-label">Select color</span>
             <input id="todo-color-toggle" type="checkbox" aria-label="Enable task color" checked />
-            <span class="color-picker-trigger" data-color-trigger="todo-color">Color</span>
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="todo-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
           </label>
+          <span class="color-picker-trigger" data-color-trigger="todo-color">Select color</span>
         </div>
         <div class="color-input-row">
           <input
@@ -332,14 +342,24 @@
           ></textarea>
         </div>
         <div class="color-toggle">
-          <label class="toggle">
+          <label class="inline-toggle color-toggle-switch" for="edit-color-toggle">
+            <span class="inline-toggle-label">Select color</span>
             <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
-            <span class="color-picker-trigger" data-color-trigger="edit-color">Color</span>
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="edit-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
           </label>
           <span id="edit-preview-category" class="category-pill preview-category" hidden>
             <span class="category-color-dot" aria-hidden="true"></span>
             <span class="category-pill-label"></span>
           </span>
+          <span class="color-picker-trigger" data-color-trigger="edit-color">Select color</span>
         </div>
         <div class="color-input-row">
           <input
@@ -418,19 +438,29 @@
           ></textarea>
         </div>
         <div class="color-toggle">
-          <label class="toggle">
+          <label class="inline-toggle color-toggle-switch" for="daily-edit-color-toggle">
+            <span class="inline-toggle-label">Select color</span>
             <input
               id="daily-edit-color-toggle"
               type="checkbox"
               aria-label="Enable daily task color"
               checked
             />
-            <span class="color-picker-trigger" data-color-trigger="daily-edit-color">Color</span>
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="daily-edit-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >On</span>
           </label>
           <span id="daily-edit-preview-category" class="category-pill preview-category" hidden>
             <span class="category-color-dot" aria-hidden="true"></span>
             <span class="category-pill-label"></span>
           </span>
+          <span class="color-picker-trigger" data-color-trigger="daily-edit-color">Select color</span>
         </div>
         <div class="color-input-row">
           <input
