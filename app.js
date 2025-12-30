@@ -623,7 +623,7 @@ function revealStartInputFromNow() {
   startEl.focus({ preventScroll: true });
 }
 
-function setStartInputValue(value, displayAsNow = false) {
+function setStartInputValue(value, displayAsNow = false, markAsAuto = null) {
   if (!startEl) return;
   const parsed = parseDateInput(value);
   const isDelayEnabled = startOffsetToggleEl?.checked ?? false;
@@ -643,6 +643,9 @@ function setStartInputValue(value, displayAsNow = false) {
     startEl.placeholder = "";
     startEl.dataset.startNow = "false";
     startEl.dataset.startNowValue = "";
+  }
+  if (markAsAuto !== null) {
+    startEl.dataset.startAuto = markAsAuto ? "true" : "false";
   }
   validateDateTimeInput(startEl);
   updateStartNowIndicator();
@@ -684,7 +687,7 @@ function setStartOffsetEnabled(enabled) {
     if (startOffsetDaysEl) startOffsetDaysEl.value = "";
     if (startOffsetHoursEl) startOffsetHoursEl.value = "";
     if (startOffsetMinsEl) startOffsetMinsEl.value = "";
-    setStartInputValue(new Date().toISOString(), true);
+    setStartInputValue(new Date().toISOString(), true, true);
     syncEndTimeWithStart();
   }
 }
@@ -814,9 +817,10 @@ function updateTimeToFinishPreference(enabled) {
 }
 
 function updateStartFromOffsetPreview() {
+  const isAutoUpdatingStart = startEl?.dataset.startAuto === "true";
   if (startOffsetToggleEl && !startOffsetToggleEl.checked) {
-    if (startEl?.dataset.startNow === "true" || !startEl?.value) {
-      setStartInputValue(new Date().toISOString(), true);
+    if (isAutoUpdatingStart || startEl?.dataset.startNow === "true" || !startEl?.value) {
+      setStartInputValue(new Date().toISOString(), true, isAutoUpdatingStart);
     }
     syncEndTimeWithStart();
     updateStartNowIndicator();
@@ -831,9 +835,9 @@ function updateStartFromOffsetPreview() {
   );
 
   if (offsetStart) {
-    setStartInputValue(offsetStart);
+    setStartInputValue(offsetStart, false, true);
   } else {
-    setStartInputValue(new Date().toISOString(), true);
+    setStartInputValue(new Date().toISOString(), true, true);
   }
 
   syncEndTimeWithStart();
@@ -3207,7 +3211,7 @@ formEl.addEventListener("submit", (event) => {
     }
     setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
     const nowValue = new Date().toISOString();
-    setStartInputValue(nowValue, true);
+    setStartInputValue(nowValue, true, true);
     startOffsetDaysEl.value = "";
     startOffsetHoursEl.value = "";
     startOffsetMinsEl.value = "";
@@ -3256,7 +3260,7 @@ openAddEl.addEventListener("click", () => {
   }
   setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl);
   const startValue = new Date().toISOString();
-  setStartInputValue(startValue, true);
+  setStartInputValue(startValue, true, true);
   if (endEl) {
     if (isFinishDurationEnabled()) {
       setDateTimeInput(endEl, startValue);
@@ -3328,6 +3332,7 @@ const handleStartInputInteraction = () => {
     startEl.dataset.startNowValue = "";
     startEl.placeholder = "";
   }
+  startEl.dataset.startAuto = "false";
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
   }
