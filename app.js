@@ -491,7 +491,8 @@ function renderTodoPreview() {
   }
 
   const { startTime, endTime } = getFormPreviewTimes();
-  const startLabel = formatTime(startTime);
+  const hasExplicitStart = Boolean(startEl?.value) && startEl.dataset.startNow !== "true";
+  const startLabel = hasExplicitStart ? formatTime(startTime) : "";
   const endLabel = formatTime(endTime);
   const showRange = Boolean(startLabel || endLabel);
   if (previewRangeEl) {
