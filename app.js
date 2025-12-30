@@ -131,6 +131,7 @@ const CARD_VERTICAL_GAP = 6;
 const AUTO_SHIFT_VERTICAL_GAP = 1;
 const ESTIMATED_CARD_HEIGHT = 110;
 const DEFAULT_COLOR = "#38bdf8";
+const COLOR_TRIGGER_PLACEHOLDER = "Select color";
 const CATEGORY_COLOR_PALETTE = [
   "#f59e0b",
   "#38bdf8",
@@ -385,15 +386,18 @@ function setColorEnabled(toggle, input) {
   input.disabled = !enabled;
   const row = input.closest(".color-input-row");
   row?.classList.toggle("is-disabled", !enabled);
+  const textEl = toggle?.closest(".inline-toggle")?.querySelector(".inline-toggle-text");
+  updateInlineToggleText(toggle, textEl);
 }
 
 function syncColorToggleSwatch(toggle, input) {
   if (!toggle) return;
   const color = input?.value?.trim() || DEFAULT_COLOR;
-  toggle.style.setProperty("--color-swatch", color);
+  const host = toggle.closest?.(".inline-toggle") || toggle;
+  host.style.setProperty("--color-swatch", color);
 }
 
-function updateColorTriggerLabel(trigger, name, fallback = DEFAULT_TASK_PLACEHOLDER) {
+function updateColorTriggerLabel(trigger, name, fallback = COLOR_TRIGGER_PLACEHOLDER) {
   if (!trigger) return;
   const label = name?.trim();
   trigger.textContent = label || fallback;
