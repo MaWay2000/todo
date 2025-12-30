@@ -267,7 +267,8 @@ textarea {
 
 .todo-preview-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 0.35rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -290,6 +291,7 @@ textarea {
 }
 
 .todo-preview-card .todo-title {
+  flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -297,11 +299,16 @@ textarea {
 }
 
 .todo-preview-card .category-pill {
-  margin-left: auto;
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .todo-preview-card .time-meta {
-  flex-wrap: wrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 #category-color {

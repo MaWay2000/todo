@@ -480,12 +480,20 @@ function renderTodoPreview() {
   const categoryName = categoryEl?.value?.trim() ?? "";
   const categoryColor = getCategoryColor(categoryName);
   if (previewCategoryPillEl) {
-    previewCategoryPillEl.dataset.empty = categoryName ? "false" : "true";
-    previewCategoryPillEl.textContent = categoryName || UNCATEGORIZED_LABEL;
-    previewCategoryPillEl.classList.toggle("has-color", Boolean(categoryColor));
-    if (categoryColor) {
-      previewCategoryPillEl.style.setProperty("--category-color", categoryColor);
+    const hasCategory = Boolean(categoryName);
+    previewCategoryPillEl.dataset.empty = hasCategory ? "false" : "true";
+    previewCategoryPillEl.hidden = !hasCategory;
+    if (hasCategory) {
+      previewCategoryPillEl.textContent = categoryName;
+      previewCategoryPillEl.classList.toggle("has-color", Boolean(categoryColor));
+      if (categoryColor) {
+        previewCategoryPillEl.style.setProperty("--category-color", categoryColor);
+      } else {
+        previewCategoryPillEl.style.removeProperty("--category-color");
+      }
     } else {
+      previewCategoryPillEl.textContent = "";
+      previewCategoryPillEl.classList.remove("has-color");
       previewCategoryPillEl.style.removeProperty("--category-color");
     }
   }
