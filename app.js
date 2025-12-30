@@ -51,6 +51,13 @@ const dailyWeekdayInputs = document.querySelectorAll(
 );
 const dailyIntervalToggleEl = document.getElementById("daily-interval-enabled");
 const dailyIntervalDaysEl = document.getElementById("daily-interval-days");
+const previewCardEl = document.getElementById("todo-preview-card");
+const previewTitleEl = document.getElementById("todo-preview-title");
+const previewColorEl = document.getElementById("todo-preview-color");
+const previewCategoryPillEl = document.getElementById("todo-preview-category");
+const previewTimeEl = document.getElementById("todo-preview-time");
+const previewRangeEl = document.getElementById("todo-preview-range");
+const previewLeftEl = document.getElementById("todo-preview-left");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
@@ -429,6 +436,86 @@ function updateAllCategoryPreviews() {
   updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
 }
 
+function getFormPreviewTimes() {
+  const startTime = getStartTimeValue();
+  const finishEnabled = isFinishDurationEnabled();
+  if (!finishEnabled) {
+    return { startTime, endTime: null };
+  }
+
+  const explicitEnd = parseDateInput(endEl?.value);
+  const derivedEnd = computeEndFromDuration(
+    startTime,
+    endDaysEl.value,
+    endHoursEl.value,
+    endMinsEl.value
+  );
+
+  return { startTime, endTime: explicitEnd ?? derivedEnd };
+}
+
+function renderTodoPreview() {
+  if (!previewCardEl) return;
+
+  const title = inputEl?.value?.trim() || DEFAULT_TASK_PLACEHOLDER;
+  if (previewTitleEl) {
+    previewTitleEl.textContent = title;
+  }
+
+  const colorEnabled = colorToggleEl?.checked ?? true;
+  const colorValue = colorEnabled ? colorEl?.value?.trim() : null;
+  previewCardEl.classList.toggle("has-color", Boolean(colorValue));
+  if (colorValue) {
+    previewCardEl.style.setProperty("--task-color", colorValue);
+  } else {
+    previewCardEl.style.removeProperty("--task-color");
+  }
+  if (previewColorEl) {
+    previewColorEl.hidden = !colorValue;
+    if (colorValue) {
+      previewColorEl.style.backgroundColor = colorValue;
+    }
+  }
+
+  const categoryName = categoryEl?.value?.trim() ?? "";
+  const categoryColor = getCategoryColor(categoryName);
+  if (previewCategoryPillEl) {
+    previewCategoryPillEl.dataset.empty = categoryName ? "false" : "true";
+    previewCategoryPillEl.textContent = categoryName || UNCATEGORIZED_LABEL;
+    previewCategoryPillEl.classList.toggle("has-color", Boolean(categoryColor));
+    if (categoryColor) {
+      previewCategoryPillEl.style.setProperty("--category-color", categoryColor);
+    } else {
+      previewCategoryPillEl.style.removeProperty("--category-color");
+    }
+  }
+
+  const { startTime, endTime } = getFormPreviewTimes();
+  const startLabel = formatTime(startTime);
+  const endLabel = formatTime(endTime);
+  const showRange = Boolean(startLabel || endLabel);
+  if (previewRangeEl) {
+    previewRangeEl.hidden = !showRange;
+    if (showRange) {
+      previewRangeEl.textContent = `${startLabel || "—"} - ${endLabel || "—"}`;
+    }
+  }
+
+  const timeLeftInfo = endTime ? getTimeLeftInfo(endTime) : null;
+  if (previewLeftEl) {
+    previewLeftEl.hidden = !timeLeftInfo;
+    previewLeftEl.classList.toggle("danger", Boolean(timeLeftInfo?.isPast));
+    if (timeLeftInfo) {
+      previewLeftEl.textContent = timeLeftInfo.text;
+    }
+  }
+
+  if (previewTimeEl) {
+    const hasTimeMeta = showRange || Boolean(timeLeftInfo);
+    previewTimeEl.hidden = !hasTimeMeta;
+  }
+}
+
 function getCategoryPreviewForSelect(select) {
   if (select === categoryEl) return categoryPreviewEl;
   if (select === editCategoryEl) return editCategoryPreviewEl;
@@ -743,6 +830,7 @@ function updateStartFromOffsetPreview() {
     }
     syncEndTimeWithStart();
     updateStartNowIndicator();
+    renderTodoPreview();
     return;
   }
 
@@ -760,6 +848,7 @@ function updateStartFromOffsetPreview() {
 
   syncEndTimeWithStart();
   updateStartNowIndicator();
+  renderTodoPreview();
 }
 
 function stopAddFormTimeRefresh() {
@@ -778,11 +867,20 @@ function startAddFormTimeRefresh() {
 }
 
 function syncEndTimeWithStart() {
-  if (!startEl || !endEl) return;
-  if (!isFinishDurationEnabled()) return;
+  if (!startEl || !endEl) {
+    renderTodoPreview();
+    return;
+  }
+  if (!isFinishDurationEnabled()) {
+    renderTodoPreview();
+    return;
+  }
 
   const startValue = getStartTimeValue();
-  if (!startValue) return;
+  if (!startValue) {
+    renderTodoPreview();
+    return;
+  }
 
   const derivedEnd = computeEndFromDuration(
     startValue,
@@ -795,6 +893,7 @@ function syncEndTimeWithStart() {
     setDateTimeInput(endEl, derivedEnd);
     endEl.dataset.synced = "true";
     validateDateTimeInput(endEl);
+    renderTodoPreview();
     return;
   }
 
@@ -802,6 +901,8 @@ function syncEndTimeWithStart() {
     setDateTimeInput(endEl, startValue);
     validateDateTimeInput(endEl);
   }
+
+  renderTodoPreview();
 }
 
 function deriveDurationFromRange(start, end) {
@@ -3155,6 +3256,7 @@ formEl.addEventListener("submit", (event) => {
     setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
     dailyIntervalDaysEl.value = "1";
     updateDailyOptionsVisibility();
+    renderTodoPreview();
     dialogEl.close();
   }
 });
@@ -3203,6 +3305,7 @@ openAddEl.addEventListener("click", () => {
   setIntervalEnabled(dailyIntervalToggleEl, dailyIntervalDaysEl, true);
   dailyIntervalDaysEl.value = "1";
   updateDailyOptionsVisibility();
+  renderTodoPreview();
   dialogEl.showModal();
   inputEl.focus();
   startAddFormTimeRefresh();
@@ -3412,6 +3515,27 @@ setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
 syncColorToggleSwatch(colorToggleEl, colorEl);
 syncColorToggleSwatch(editColorToggleEl, editColorEl);
 syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
+
+[
+  inputEl,
+  colorEl,
+  colorToggleEl,
+  categoryEl,
+  typeSelectEl,
+  startEl,
+  endEl,
+  startOffsetDaysEl,
+  startOffsetHoursEl,
+  startOffsetMinsEl,
+  startOffsetToggleEl,
+  endDaysEl,
+  endHoursEl,
+  endMinsEl,
+  endDurationToggleEl,
+].forEach((input) => {
+  input?.addEventListener("input", renderTodoPreview);
+  input?.addEventListener("change", renderTodoPreview);
+});
 
 attachColorPickerTrigger(colorTriggerEl, colorEl, colorToggleEl);
 attachColorPickerTrigger(editColorTriggerEl, editColorEl, editColorToggleEl);
@@ -3701,6 +3825,7 @@ syncOptionsUI();
 syncCategoriesFromTodos();
 renderCategoryOptions();
 updateAllCategoryPreviews();
+renderTodoPreview();
 maybeAutoTriggerDailyTasks();
 setFilter(filter);
 
