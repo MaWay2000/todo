@@ -1859,34 +1859,21 @@ function renderTodos() {
       shell.appendChild(categoryBadge);
     }
 
-    const startLabel = formatTime(todo.startTime);
-    const endLabel = formatTime(todo.endTime);
-    const hasRange = Boolean(startLabel || endLabel);
-    const hasSchedule = hasRange || Boolean(todo.endTime);
-    if (hasSchedule) {
+    if (todo.endTime) {
       const schedule = document.createElement("div");
       schedule.className = "time-meta";
 
-      if (hasRange) {
-        const timeRangeChip = document.createElement("span");
-        timeRangeChip.className = "time-range-chip";
-        timeRangeChip.textContent = `${startLabel || "—"} - ${endLabel || "—"}`;
-        schedule.appendChild(timeRangeChip);
-      }
-
-      if (todo.endTime) {
-        const timeLeftReference =
-          todo.completed && todo.completedAt ? todo.completedAt : null;
-        const timeLeftInfo = getTimeLeftInfo(todo.endTime, timeLeftReference);
-        if (timeLeftInfo) {
-          const timeLeftChip = document.createElement("span");
-          timeLeftChip.className = "meta-chip accent";
-          timeLeftChip.textContent = timeLeftInfo.text;
-          if (timeLeftInfo.isPast) {
-            timeLeftChip.classList.add("danger");
-          }
-          schedule.appendChild(timeLeftChip);
+      const timeLeftReference =
+        todo.completed && todo.completedAt ? todo.completedAt : null;
+      const timeLeftInfo = getTimeLeftInfo(todo.endTime, timeLeftReference);
+      if (timeLeftInfo) {
+        const timeLeftChip = document.createElement("span");
+        timeLeftChip.className = "meta-chip accent";
+        timeLeftChip.textContent = timeLeftInfo.text;
+        if (timeLeftInfo.isPast) {
+          timeLeftChip.classList.add("danger");
         }
+        schedule.appendChild(timeLeftChip);
       }
 
       if (schedule.childElementCount > 0) {
@@ -2217,17 +2204,17 @@ function renderDailyTasks() {
     shell.appendChild(status);
     shell.appendChild(title);
 
-    const startLabel = formatTime(task.startTime);
-    const endLabel = formatTime(task.endTime);
-    const hasStartTime = Boolean(startLabel);
-    const hasEndTime = Boolean(endLabel);
-    if (hasStartTime || hasEndTime) {
-      const timeChip = document.createElement("span");
-      timeChip.className = "time-range-chip";
-      const formattedStart = hasStartTime ? startLabel : "—";
-      const formattedEnd = hasEndTime ? endLabel : "—";
-      timeChip.textContent = `${formattedStart} - ${formattedEnd}`;
-      shell.appendChild(timeChip);
+    if (task.endTime) {
+      const timeLeftInfo = getTimeLeftInfo(task.endTime, null);
+      if (timeLeftInfo) {
+        const timeLeftChip = document.createElement("span");
+        timeLeftChip.className = "meta-chip accent";
+        timeLeftChip.textContent = timeLeftInfo.text;
+        if (timeLeftInfo.isPast) {
+          timeLeftChip.classList.add("danger");
+        }
+        shell.appendChild(timeLeftChip);
+      }
     }
 
     const meta = document.createElement("div");
