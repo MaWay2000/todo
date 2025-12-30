@@ -1859,10 +1859,20 @@ function renderTodos() {
       shell.appendChild(categoryBadge);
     }
 
-    const hasSchedule = Boolean(todo.endTime);
+    const startLabel = formatTime(todo.startTime);
+    const endLabel = formatTime(todo.endTime);
+    const hasRange = Boolean(startLabel || endLabel);
+    const hasSchedule = hasRange || Boolean(todo.endTime);
     if (hasSchedule) {
       const schedule = document.createElement("div");
       schedule.className = "time-meta";
+
+      if (hasRange) {
+        const timeRangeChip = document.createElement("span");
+        timeRangeChip.className = "time-range-chip";
+        timeRangeChip.textContent = `${startLabel || "—"} - ${endLabel || "—"}`;
+        schedule.appendChild(timeRangeChip);
+      }
 
       if (todo.endTime) {
         const timeLeftReference =
