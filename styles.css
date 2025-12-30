@@ -241,7 +241,7 @@ textarea {
 }
 
 .preview-category {
-  margin-left: auto;
+  margin-left: 0;
   gap: 0.3rem;
   padding: 0.15rem 0.5rem;
 }
@@ -270,6 +270,8 @@ textarea {
   flex-direction: row;
   align-items: center;
   gap: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -286,7 +288,7 @@ textarea {
 .todo-preview-card .todo-shell {
   cursor: default;
   min-width: 0;
-  width: 100%;
+  width: auto;
   flex-wrap: nowrap;
 }
 
@@ -307,7 +309,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-left: auto;
+  margin-left: 0;
   white-space: nowrap;
 }
 
