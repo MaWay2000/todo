@@ -493,12 +493,13 @@ function renderTodoPreview() {
   const { startTime, endTime } = getFormPreviewTimes();
   const hasExplicitStart = Boolean(startEl?.value) && startEl.dataset.startNow !== "true";
   const startLabel = hasExplicitStart ? formatTime(startTime) : "";
-  const endLabel = formatTime(endTime);
-  const showRange = Boolean(startLabel || endLabel);
+  const endLabel = startLabel ? formatTime(endTime) : "";
+  const showRange = Boolean(startLabel);
   if (previewRangeEl) {
     previewRangeEl.hidden = !showRange;
     if (showRange) {
-      previewRangeEl.textContent = `${startLabel || "—"} - ${endLabel || "—"}`;
+      const rangeText = endLabel ? `${startLabel} - ${endLabel}` : startLabel;
+      previewRangeEl.textContent = rangeText || "—";
     }
   }
 
