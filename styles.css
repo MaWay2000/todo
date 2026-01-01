@@ -819,10 +819,10 @@ button.danger:hover {
   gap: 1rem;
   flex-wrap: wrap;
   color: var(--muted);
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: rgba(17, 24, 39, 0.4);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .interval-title {
