@@ -240,8 +240,28 @@
         </div>
         <label class="sr-only" for="todo-end">End time</label>
         <div class="finish-row">
-          <div class="start-date-field">
-            <label class="field-label" for="todo-end">End</label>
+          <div class="start-date-field end-date-field">
+            <div class="field-label-with-toggle">
+              <label class="field-label" for="todo-end">End</label>
+              <label class="delay-toggle end-duration-toggle" for="todo-end-duration-toggle">
+                <input
+                  id="todo-end-duration-toggle"
+                  name="end-duration-enabled"
+                  type="checkbox"
+                  aria-label="Toggle time inputs"
+                  checked
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="todo-end-duration-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >On</span>
+              </label>
+            </div>
             <div class="date-time-inputs">
               <input
                 id="todo-end-datetime"
@@ -254,70 +274,52 @@
           </div>
           <div
             id="finish-duration-group"
-          class="duration-group start-offset"
-          role="group"
-          aria-labelledby="duration-label"
-        >
-          <div class="duration-label-row">
-            <span id="duration-label" class="field-label sr-only">Duration</span>
-            <label class="delay-toggle" for="todo-end-duration-toggle">
-              <input
-                id="todo-end-duration-toggle"
-                name="end-duration-enabled"
-                type="checkbox"
-                aria-label="Toggle time inputs"
-                checked
-              />
-              <span class="delay-toggle-track" aria-hidden="true">
-                <span class="delay-toggle-thumb"></span>
-              </span>
-              <span
-                id="todo-end-duration-toggle-label"
-                class="delay-toggle-text"
-                data-on="On"
-                data-off="Off"
-              >On</span>
-            </label>
-            <div class="duration-inputs">
-              <label class="duration-input" for="todo-end-days">
-                <input
-                  id="todo-end-days"
-                  name="end-days"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  maxlength="5"
-                  placeholder="0"
-                />
-                <span class="duration-input-label">Days</span>
-              </label>
-              <label class="duration-input" for="todo-end-hours">
-                <input
-                  id="todo-end-hours"
-                  name="end-hours"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  maxlength="5"
-                  placeholder="00"
-                />
-                <span class="duration-input-label">Hours</span>
-              </label>
-              <label class="duration-input" for="todo-end-mins">
-                <input
-                  id="todo-end-mins"
-                  name="end-mins"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  maxlength="5"
-                  placeholder="00"
-                />
-                <span class="duration-input-label">Mins</span>
-              </label>
+            class="duration-group start-offset"
+            role="group"
+            aria-labelledby="duration-label"
+          >
+            <div class="duration-label-row">
+              <span id="duration-label" class="field-label sr-only">Duration</span>
+              <div class="duration-inputs">
+                <label class="duration-input" for="todo-end-days">
+                  <input
+                    id="todo-end-days"
+                    name="end-days"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="0"
+                  />
+                  <span class="duration-input-label">Days</span>
+                </label>
+                <label class="duration-input" for="todo-end-hours">
+                  <input
+                    id="todo-end-hours"
+                    name="end-hours"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Hours</span>
+                </label>
+                <label class="duration-input" for="todo-end-mins">
+                  <input
+                    id="todo-end-mins"
+                    name="end-mins"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Mins</span>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
         </div>
         <div class="select-row">
           <div>
