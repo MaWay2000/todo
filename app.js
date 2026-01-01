@@ -822,10 +822,19 @@ function updateTimeToFinishPreference(enabled) {
 
 function updateStartFromOffsetPreview() {
   const isAutoUpdatingStart = startEl?.dataset.startAuto === "true";
-  if (startOffsetToggleEl && !startOffsetToggleEl.checked) {
+  const isOffsetEnabled = startOffsetToggleEl?.checked ?? false;
+
+  if (!isOffsetEnabled) {
     if (isAutoUpdatingStart || startEl?.dataset.startNow === "true" || !startEl?.value) {
       setStartInputValue(new Date().toISOString(), true, isAutoUpdatingStart);
     }
+    syncEndTimeWithStart();
+    updateStartNowIndicator();
+    renderTodoPreview();
+    return;
+  }
+
+  if (!isAutoUpdatingStart) {
     syncEndTimeWithStart();
     updateStartNowIndicator();
     renderTodoPreview();
