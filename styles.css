@@ -528,6 +528,20 @@ button.danger:hover {
   flex: 0 1 auto;
 }
 
+.end-date-field {
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.field-label-with-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .start-date-field.is-hidden {
   display: none;
 }
