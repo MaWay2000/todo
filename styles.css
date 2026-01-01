@@ -944,6 +944,7 @@ button.danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  z-index: 1;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -958,6 +959,15 @@ button.danger:hover {
   border-color: var(--task-color, var(--accent));
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.todo-item.actions-visible,
+.todo-item.details-open,
+.todo-item.dragging,
+.todo-item.resizing,
+.todo-item:focus-within,
+.todo-item:hover {
+  z-index: 10;
 }
 
 .todo-list.stacked-layout .todo-item {
