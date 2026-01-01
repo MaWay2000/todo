@@ -189,6 +189,18 @@ textarea {
   border: 0;
 }
 
+.color-toggle-row {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0.35rem;
+}
+
+.color-toggle-row .color-toggle {
+  margin: 0;
+}
+
 .color-toggle {
   display: flex;
   align-items: center;

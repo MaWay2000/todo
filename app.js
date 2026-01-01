@@ -175,7 +175,7 @@ const ESTIMATED_CARD_HEIGHT = 110;
 const DEFAULT_COLOR = "#38bdf8";
 const DEFAULT_TEXT_COLOR = "#e5e7eb";
 const DEFAULT_BACKGROUND_COLOR = "#111827";
-const COLOR_TRIGGER_PLACEHOLDER = "Select color";
+const COLOR_TRIGGER_PLACEHOLDER = "Dot color";
 const CATEGORY_COLOR_PALETTE = [
   "#f59e0b",
   "#38bdf8",
