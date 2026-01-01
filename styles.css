@@ -249,8 +249,9 @@ textarea {
 .preview-row {
   margin: 0.35rem 0 0.75rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .preview-label {
