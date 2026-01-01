@@ -251,7 +251,11 @@ textarea {
   gap: 0.35rem;
   width: fit-content;
   max-width: 100%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  color: var(--task-text-color, var(--text));
+  background: var(
+    --task-background-color,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01))
+  );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 0.65rem 0.8rem 0.75rem;
@@ -262,6 +266,10 @@ textarea {
   border-color: var(--task-color, var(--accent));
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(0, 0, 0, 0.32);
+}
+
+.todo-preview-card.has-background:not(.has-color) {
+  border-color: color-mix(in srgb, var(--task-background-color, var(--border)) 65%, var(--border));
 }
 
 .todo-preview-card .todo-shell {
@@ -945,7 +953,11 @@ button.danger:hover {
   flex-direction: column;
   gap: 0.35rem;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  color: var(--task-text-color, var(--text));
+  background: var(
+    --task-background-color,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01))
+  );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 0.5rem 0.65rem 0.65rem;
@@ -959,6 +971,10 @@ button.danger:hover {
   border-color: var(--task-color, var(--accent));
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.todo-item.has-background:not(.has-color) {
+  border-color: color-mix(in srgb, var(--task-background-color, var(--border)) 65%, var(--border));
 }
 
 .todo-item.actions-visible,
