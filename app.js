@@ -821,6 +821,11 @@ function setFinishDurationEnabled(enabled) {
   setFinishDateFieldVisibility(enabled);
   syncEndDurationToggleLabel();
   if (enabled) {
+    if (endEl && !endEl.value) {
+      setDateTimeInput(endEl, new Date());
+      endEl.dataset.synced = "true";
+      validateDateTimeInput(endEl);
+    }
     if (endEl && !endEl.dataset.synced) {
       endEl.dataset.synced = "true";
     }
