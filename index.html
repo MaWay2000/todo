@@ -335,16 +335,6 @@
         </div>
         <div id="daily-options" class="daily-options" hidden>
           <p class="field-label">Daily schedule</p>
-          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
-            <legend class="sr-only">Weekdays</legend>
-            <label><input type="checkbox" name="daily-weekday" value="1" />Mon</label>
-            <label><input type="checkbox" name="daily-weekday" value="2" />Tue</label>
-            <label><input type="checkbox" name="daily-weekday" value="3" />Wed</label>
-            <label><input type="checkbox" name="daily-weekday" value="4" />Thu</label>
-            <label><input type="checkbox" name="daily-weekday" value="5" />Fri</label>
-            <label><input type="checkbox" name="daily-weekday" value="6" />Sat</label>
-            <label><input type="checkbox" name="daily-weekday" value="0" />Sun</label>
-          </fieldset>
           <div class="interval-field" role="group" aria-labelledby="daily-interval-label">
             <label class="interval-toggle" id="daily-interval-label">
               <input type="checkbox" id="daily-interval-enabled" name="daily-interval-enabled" checked />
@@ -364,6 +354,16 @@
               <span class="interval-unit" aria-hidden="true">days</span>
             </div>
           </div>
+          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
+            <legend class="sr-only">Weekdays</legend>
+            <label><input type="checkbox" name="daily-weekday" value="1" />Mon</label>
+            <label><input type="checkbox" name="daily-weekday" value="2" />Tue</label>
+            <label><input type="checkbox" name="daily-weekday" value="3" />Wed</label>
+            <label><input type="checkbox" name="daily-weekday" value="4" />Thu</label>
+            <label><input type="checkbox" name="daily-weekday" value="5" />Fri</label>
+            <label><input type="checkbox" name="daily-weekday" value="6" />Sat</label>
+            <label><input type="checkbox" name="daily-weekday" value="0" />Sun</label>
+          </fieldset>
         </div>
         <div class="modal-actions">
           <button id="cancel-add" class="secondary" type="button">Cancel</button>
@@ -749,16 +749,6 @@
         </div>
         <div class="daily-options">
           <p class="field-label">Daily schedule</p>
-          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
-            <legend class="sr-only">Weekdays</legend>
-            <label><input type="checkbox" name="daily-edit-weekday" value="1" />Mon</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="2" />Tue</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="3" />Wed</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="4" />Thu</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="5" />Fri</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="6" />Sat</label>
-            <label><input type="checkbox" name="daily-edit-weekday" value="0" />Sun</label>
-          </fieldset>
           <div class="interval-field" role="group" aria-labelledby="daily-edit-interval-label">
             <label class="interval-toggle" id="daily-edit-interval-label">
               <input
@@ -783,6 +773,16 @@
               <span class="interval-unit" aria-hidden="true">days</span>
             </div>
           </div>
+          <fieldset class="weekday-selector" aria-label="Choose weekdays to trigger">
+            <legend class="sr-only">Weekdays</legend>
+            <label><input type="checkbox" name="daily-edit-weekday" value="1" />Mon</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="2" />Tue</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="3" />Wed</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="4" />Thu</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="5" />Fri</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="6" />Sat</label>
+            <label><input type="checkbox" name="daily-edit-weekday" value="0" />Sun</label>
+          </fieldset>
         </div>
         <div class="modal-actions">
           <button id="cancel-daily-edit" class="secondary" type="button">Cancel</button>
