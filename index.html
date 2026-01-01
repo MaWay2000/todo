@@ -83,6 +83,66 @@
             aria-label="Task color"
           />
         </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="todo-text-color">Select text color</span>
+          <label class="inline-toggle color-toggle-switch" for="todo-text-color-toggle">
+            <span class="sr-only">Task text color toggle</span>
+            <input
+              id="todo-text-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom text color"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="todo-text-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="todo-text-color"
+            class="color-picker-input"
+            name="text-color"
+            type="color"
+            value="#e5e7eb"
+            aria-label="Task text color"
+          />
+        </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="todo-background-color">Select background color</span>
+          <label class="inline-toggle color-toggle-switch" for="todo-background-color-toggle">
+            <span class="sr-only">Task background color toggle</span>
+            <input
+              id="todo-background-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom background color"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="todo-background-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="todo-background-color"
+            class="color-picker-input"
+            name="background-color"
+            type="color"
+            value="#111827"
+            aria-label="Task background color"
+          />
+        </div>
         <div class="preview-row" aria-live="polite">
           <p class="field-label preview-label">Preview</p>
           <div id="todo-preview-card" class="todo-preview-card">
@@ -371,6 +431,66 @@
             aria-label="Task color"
           />
         </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="edit-text-color">Select text color</span>
+          <label class="inline-toggle color-toggle-switch" for="edit-text-color-toggle">
+            <span class="sr-only">Task text color toggle</span>
+            <input
+              id="edit-text-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom text color for this task"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="edit-text-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="edit-text-color"
+            class="color-picker-input"
+            name="edit-text-color"
+            type="color"
+            value="#e5e7eb"
+            aria-label="Task text color"
+          />
+        </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="edit-background-color">Select background color</span>
+          <label class="inline-toggle color-toggle-switch" for="edit-background-color-toggle">
+            <span class="sr-only">Task background color toggle</span>
+            <input
+              id="edit-background-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom background color for this task"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="edit-background-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="edit-background-color"
+            class="color-picker-input"
+            name="edit-background-color"
+            type="color"
+            value="#111827"
+            aria-label="Task background color"
+          />
+        </div>
         <label class="sr-only" for="edit-start-datetime">Start time</label>
         <div class="date-time-inputs">
           <input
@@ -470,6 +590,66 @@
             type="color"
             value="#38bdf8"
             aria-label="Daily task color"
+          />
+        </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="daily-edit-text-color">Select text color</span>
+          <label class="inline-toggle color-toggle-switch" for="daily-edit-text-color-toggle">
+            <span class="sr-only">Daily task text color toggle</span>
+            <input
+              id="daily-edit-text-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom text color for this daily task"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="daily-edit-text-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="daily-edit-text-color"
+            class="color-picker-input"
+            name="daily-edit-text-color"
+            type="color"
+            value="#e5e7eb"
+            aria-label="Daily task text color"
+          />
+        </div>
+        <div class="color-toggle">
+          <span class="color-picker-trigger" data-color-trigger="daily-edit-background-color">Select background color</span>
+          <label class="inline-toggle color-toggle-switch" for="daily-edit-background-color-toggle">
+            <span class="sr-only">Daily task background color toggle</span>
+            <input
+              id="daily-edit-background-color-toggle"
+              type="checkbox"
+              aria-label="Enable custom background color for this daily task"
+            />
+            <span class="inline-toggle-track" aria-hidden="true">
+              <span class="inline-toggle-thumb"></span>
+            </span>
+            <span
+              id="daily-edit-background-color-toggle-text"
+              class="inline-toggle-text"
+              data-on="On"
+              data-off="Off"
+            >Off</span>
+          </label>
+        </div>
+        <div class="color-input-row">
+          <input
+            id="daily-edit-background-color"
+            class="color-picker-input"
+            name="daily-edit-background-color"
+            type="color"
+            value="#111827"
+            aria-label="Daily task background color"
           />
         </div>
         <select

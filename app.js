@@ -42,6 +42,16 @@ if (endEl) {
 const colorEl = document.getElementById("todo-color");
 const colorTriggerEl = document.querySelector("[data-color-trigger='todo-color']");
 const colorToggleEl = document.getElementById("todo-color-toggle");
+const textColorEl = document.getElementById("todo-text-color");
+const textColorTriggerEl = document.querySelector("[data-color-trigger='todo-text-color']");
+const textColorToggleEl = document.getElementById("todo-text-color-toggle");
+const textColorToggleTextEl = document.getElementById("todo-text-color-toggle-text");
+const backgroundColorEl = document.getElementById("todo-background-color");
+const backgroundColorTriggerEl = document.querySelector(
+  "[data-color-trigger='todo-background-color']"
+);
+const backgroundColorToggleEl = document.getElementById("todo-background-color-toggle");
+const backgroundColorToggleTextEl = document.getElementById("todo-background-color-toggle-text");
 const categoryEl = document.getElementById("todo-category");
 const categoryPreviewEl = document.getElementById("todo-preview-category");
 const typeSelectEl = document.getElementById("todo-type");
@@ -75,6 +85,20 @@ const editColorTriggerEl = document.querySelector(
   "[data-color-trigger='edit-color']"
 );
 const editColorToggleEl = document.getElementById("edit-color-toggle");
+const editTextColorEl = document.getElementById("edit-text-color");
+const editTextColorTriggerEl = document.querySelector(
+  "[data-color-trigger='edit-text-color']"
+);
+const editTextColorToggleEl = document.getElementById("edit-text-color-toggle");
+const editTextColorToggleTextEl = document.getElementById("edit-text-color-toggle-text");
+const editBackgroundColorEl = document.getElementById("edit-background-color");
+const editBackgroundColorTriggerEl = document.querySelector(
+  "[data-color-trigger='edit-background-color']"
+);
+const editBackgroundColorToggleEl = document.getElementById("edit-background-color-toggle");
+const editBackgroundColorToggleTextEl = document.getElementById(
+  "edit-background-color-toggle-text"
+);
 const editCategoryEl = document.getElementById("edit-category");
 const editCategoryPreviewEl = document.getElementById("edit-preview-category");
 const cancelEditEl = document.getElementById("cancel-edit");
@@ -105,6 +129,24 @@ const dailyEditColorTriggerEl = document.querySelector(
   "[data-color-trigger='daily-edit-color']"
 );
 const dailyEditColorToggleEl = document.getElementById("daily-edit-color-toggle");
+const dailyEditTextColorEl = document.getElementById("daily-edit-text-color");
+const dailyEditTextColorTriggerEl = document.querySelector(
+  "[data-color-trigger='daily-edit-text-color']"
+);
+const dailyEditTextColorToggleEl = document.getElementById("daily-edit-text-color-toggle");
+const dailyEditTextColorToggleTextEl = document.getElementById(
+  "daily-edit-text-color-toggle-text"
+);
+const dailyEditBackgroundColorEl = document.getElementById("daily-edit-background-color");
+const dailyEditBackgroundColorTriggerEl = document.querySelector(
+  "[data-color-trigger='daily-edit-background-color']"
+);
+const dailyEditBackgroundColorToggleEl = document.getElementById(
+  "daily-edit-background-color-toggle"
+);
+const dailyEditBackgroundColorToggleTextEl = document.getElementById(
+  "daily-edit-background-color-toggle-text"
+);
 const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditCategoryPreviewEl = document.getElementById("daily-edit-preview-category");
 const dailyEditWeekdayInputs = document.querySelectorAll(
@@ -131,6 +173,8 @@ const CARD_VERTICAL_GAP = 6;
 const AUTO_SHIFT_VERTICAL_GAP = 1;
 const ESTIMATED_CARD_HEIGHT = 110;
 const DEFAULT_COLOR = "#38bdf8";
+const DEFAULT_TEXT_COLOR = "#e5e7eb";
+const DEFAULT_BACKGROUND_COLOR = "#111827";
 const COLOR_TRIGGER_PLACEHOLDER = "Select color";
 const CATEGORY_COLOR_PALETTE = [
   "#f59e0b",
@@ -390,6 +434,19 @@ function setColorEnabled(toggle, input) {
   updateInlineToggleText(toggle, textEl);
 }
 
+const getEnabledColorValue = (toggle, input) => {
+  const enabled = toggle?.checked ?? true;
+  return enabled ? input?.value?.trim() || null : null;
+};
+
+const resolveEditedColorValue = (toggle, input, currentValue = null) => {
+  const enabled = toggle?.checked ?? true;
+  if (!enabled) return null;
+  if (!input) return currentValue;
+  const raw = input.value?.trim() || null;
+  return input.dataset.touched === "true" ? raw : currentValue ?? raw;
+};
+
 function syncColorToggleSwatch(toggle, input) {
   if (!toggle) return;
   const color = input?.value?.trim() || DEFAULT_COLOR;
@@ -467,11 +524,28 @@ function renderTodoPreview() {
 
   const colorEnabled = colorToggleEl?.checked ?? true;
   const colorValue = colorEnabled ? colorEl?.value?.trim() : null;
+  const textColorValue = getEnabledColorValue(textColorToggleEl, textColorEl);
+  const backgroundColorValue = getEnabledColorValue(
+    backgroundColorToggleEl,
+    backgroundColorEl
+  );
   previewCardEl.classList.toggle("has-color", Boolean(colorValue));
+  previewCardEl.classList.toggle("has-text-color", Boolean(textColorValue));
+  previewCardEl.classList.toggle("has-background", Boolean(backgroundColorValue));
   if (colorValue) {
     previewCardEl.style.setProperty("--task-color", colorValue);
   } else {
     previewCardEl.style.removeProperty("--task-color");
+  }
+  if (textColorValue) {
+    previewCardEl.style.setProperty("--task-text-color", textColorValue);
+  } else {
+    previewCardEl.style.removeProperty("--task-text-color");
+  }
+  if (backgroundColorValue) {
+    previewCardEl.style.setProperty("--task-background-color", backgroundColorValue);
+  } else {
+    previewCardEl.style.removeProperty("--task-background-color");
   }
   if (previewColorEl) {
     previewColorEl.hidden = !colorValue;
@@ -1786,10 +1860,22 @@ function renderTodos() {
       (todo.deleted ? " deleted" : "") +
       (isFresh ? " is-fresh" : "");
     item.classList.toggle("has-color", Boolean(todo.color));
+    item.classList.toggle("has-text-color", Boolean(todo.textColor));
+    item.classList.toggle("has-background", Boolean(todo.backgroundColor));
     if (todo.color) {
       item.style.setProperty("--task-color", todo.color);
     } else {
       item.style.removeProperty("--task-color");
+    }
+    if (todo.textColor) {
+      item.style.setProperty("--task-text-color", todo.textColor);
+    } else {
+      item.style.removeProperty("--task-text-color");
+    }
+    if (todo.backgroundColor) {
+      item.style.setProperty("--task-background-color", todo.backgroundColor);
+    } else {
+      item.style.removeProperty("--task-background-color");
     }
     if (todo.needsPositioning) {
       item.classList.add("is-new");
@@ -2137,6 +2223,16 @@ function editDailyTask(id) {
     dailyEditColorToggleEl.checked = Boolean(task.color);
     setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
   }
+  dailyEditTextColorEl.value = task.textColor ?? DEFAULT_TEXT_COLOR;
+  if (dailyEditTextColorToggleEl) {
+    dailyEditTextColorToggleEl.checked = Boolean(task.textColor);
+    setColorEnabled(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+  }
+  dailyEditBackgroundColorEl.value = task.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
+  if (dailyEditBackgroundColorToggleEl) {
+    dailyEditBackgroundColorToggleEl.checked = Boolean(task.backgroundColor);
+    setColorEnabled(dailyEditBackgroundColorToggleEl, dailyEditBackgroundColorEl);
+  }
   if (dailyEditCategoryEl) {
     dailyEditCategoryEl.value = task.category ?? "";
   }
@@ -2148,6 +2244,8 @@ function editDailyTask(id) {
   dailyEditIntervalDaysEl.value = hasInterval ? task.intervalDays : "1";
   handleDailyEditWeekdayChange();
   dailyEditColorEl.dataset.touched = "false";
+  dailyEditTextColorEl.dataset.touched = "false";
+  dailyEditBackgroundColorEl.dataset.touched = "false";
   updateColorTriggerLabel(dailyEditColorTriggerEl, task.text);
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
@@ -2175,6 +2273,14 @@ function renderDailyTasks() {
     if (task.color) {
       item.classList.add("has-color");
       item.style.setProperty("--task-color", task.color);
+    }
+    if (task.textColor) {
+      item.classList.add("has-text-color");
+      item.style.setProperty("--task-text-color", task.textColor);
+    }
+    if (task.backgroundColor) {
+      item.classList.add("has-background");
+      item.style.setProperty("--task-background-color", task.backgroundColor);
     }
 
     const shell = document.createElement("div");
@@ -2553,7 +2659,9 @@ function addTodo(
   startTime = null,
   endTime = null,
   color = null,
-  category = ""
+  category = "",
+  textColor = null,
+  backgroundColor = null
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -2575,6 +2683,8 @@ function addTodo(
     comments: cleanedComments,
     color,
     category: cleanedCategory,
+    textColor,
+    backgroundColor,
     showActions: false,
     deleted: false,
     needsPositioning: true,
@@ -2595,7 +2705,9 @@ function addDailyTask(
   color = null,
   category = "",
   triggerDays = [],
-  intervalDays = null
+  intervalDays = null,
+  textColor = null,
+  backgroundColor = null
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -2609,6 +2721,8 @@ function addDailyTask(
     endTime,
     color,
     category: cleanedCategory,
+    textColor,
+    backgroundColor,
     triggerDays: triggerDays ?? [],
     intervalDays: intervalDays ?? null,
     createdAt: new Date().toISOString(),
@@ -2761,7 +2875,9 @@ function triggerDailyTask(id) {
     startTime,
     endTime,
     template.color ?? null,
-    template.category ?? ""
+    template.category ?? "",
+    template.textColor ?? null,
+    template.backgroundColor ?? null
   );
   if (!created) return;
 
@@ -2859,6 +2975,8 @@ function editTodo(id) {
   validateEditDateInputs();
   editColorEl.value = todo.color ?? DEFAULT_COLOR;
   syncColorToggleSwatch(editColorToggleEl, editColorEl);
+  editTextColorEl.value = todo.textColor ?? DEFAULT_TEXT_COLOR;
+  editBackgroundColorEl.value = todo.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
   if (editCommentToggleEl) {
     editCommentToggleEl.checked = Boolean((todo.comments ?? "").trim());
   }
@@ -2872,9 +2990,19 @@ function editTodo(id) {
     editColorToggleEl.checked = Boolean(todo.color);
     setColorEnabled(editColorToggleEl, editColorEl);
   }
+  if (editTextColorToggleEl) {
+    editTextColorToggleEl.checked = Boolean(todo.textColor);
+    setColorEnabled(editTextColorToggleEl, editTextColorEl);
+  }
+  if (editBackgroundColorToggleEl) {
+    editBackgroundColorToggleEl.checked = Boolean(todo.backgroundColor);
+    setColorEnabled(editBackgroundColorToggleEl, editBackgroundColorEl);
+  }
   editCategoryEl.value = todo.category ?? "";
   updateCategoryPreview(editCategoryEl, editCategoryPreviewEl);
   editColorEl.dataset.touched = "false";
+  editTextColorEl.dataset.touched = "false";
+  editBackgroundColorEl.dataset.touched = "false";
   updateColorTriggerLabel(editColorTriggerEl, todo.text);
   editDialogEl.showModal();
   editInputEl.focus();
@@ -2883,6 +3011,8 @@ function editTodo(id) {
 function closeDailyEditDialog() {
   activeDailyEditId = null;
   dailyEditColorEl.dataset.touched = "false";
+  dailyEditTextColorEl.dataset.touched = "false";
+  dailyEditBackgroundColorEl.dataset.touched = "false";
   dailyEditDialogEl.close();
 }
 
@@ -3180,6 +3310,8 @@ formEl.addEventListener("submit", (event) => {
     : null;
   const colorEnabled = colorToggleEl?.checked ?? true;
   const color = colorEnabled ? colorEl.value?.trim() || null : null;
+  const textColor = getEnabledColorValue(textColorToggleEl, textColorEl);
+  const backgroundColor = getEnabledColorValue(backgroundColorToggleEl, backgroundColorEl);
   const category = categoryEl.value?.trim() ?? "";
   const triggerDays = taskType === "daily" ? parseSelectedWeekdays(dailyWeekdayInputs) : [];
   const intervalDays =
@@ -3194,7 +3326,9 @@ formEl.addEventListener("submit", (event) => {
           color,
           category,
           triggerDays,
-          intervalDays
+          intervalDays,
+          textColor,
+          backgroundColor
         )
       : addTodo(
           inputEl.value,
@@ -3202,7 +3336,9 @@ formEl.addEventListener("submit", (event) => {
           startTime,
           endTime,
           color,
-          category
+          category,
+          textColor,
+          backgroundColor
         );
   if (added) {
     inputEl.value = "";
@@ -3237,6 +3373,16 @@ formEl.addEventListener("submit", (event) => {
     if (colorToggleEl) {
       colorToggleEl.checked = true;
       setColorEnabled(colorToggleEl, colorEl);
+    }
+    textColorEl.value = DEFAULT_TEXT_COLOR;
+    if (textColorToggleEl) {
+      textColorToggleEl.checked = false;
+      setColorEnabled(textColorToggleEl, textColorEl);
+    }
+    backgroundColorEl.value = DEFAULT_BACKGROUND_COLOR;
+    if (backgroundColorToggleEl) {
+      backgroundColorToggleEl.checked = false;
+      setColorEnabled(backgroundColorToggleEl, backgroundColorEl);
     }
     updateColorTriggerLabel(colorTriggerEl, "");
     categoryEl.value = "";
@@ -3286,6 +3432,16 @@ openAddEl.addEventListener("click", () => {
   if (colorToggleEl) {
     colorToggleEl.checked = true;
     setColorEnabled(colorToggleEl, colorEl);
+  }
+  textColorEl.value = DEFAULT_TEXT_COLOR;
+  if (textColorToggleEl) {
+    textColorToggleEl.checked = false;
+    setColorEnabled(textColorToggleEl, textColorEl);
+  }
+  backgroundColorEl.value = DEFAULT_BACKGROUND_COLOR;
+  if (backgroundColorToggleEl) {
+    backgroundColorToggleEl.checked = false;
+    setColorEnabled(backgroundColorToggleEl, backgroundColorEl);
   }
   updateColorTriggerLabel(colorTriggerEl, inputEl.value);
   categoryEl.value = "";
@@ -3504,15 +3660,34 @@ setCommentFieldState(
 setColorEnabled(colorToggleEl, colorEl);
 setColorEnabled(editColorToggleEl, editColorEl);
 setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+setColorEnabled(textColorToggleEl, textColorEl);
+setColorEnabled(backgroundColorToggleEl, backgroundColorEl);
+setColorEnabled(editTextColorToggleEl, editTextColorEl);
+setColorEnabled(editBackgroundColorToggleEl, editBackgroundColorEl);
+setColorEnabled(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+setColorEnabled(dailyEditBackgroundColorToggleEl, dailyEditBackgroundColorEl);
 
 syncColorToggleSwatch(colorToggleEl, colorEl);
 syncColorToggleSwatch(editColorToggleEl, editColorEl);
 syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
+syncColorToggleSwatch(textColorToggleEl, textColorEl);
+syncColorToggleSwatch(backgroundColorToggleEl, backgroundColorEl);
+syncColorToggleSwatch(editTextColorToggleEl, editTextColorEl);
+syncColorToggleSwatch(editBackgroundColorToggleEl, editBackgroundColorEl);
+syncColorToggleSwatch(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+syncColorToggleSwatch(
+  dailyEditBackgroundColorToggleEl,
+  dailyEditBackgroundColorEl
+);
 
 [
   inputEl,
   colorEl,
   colorToggleEl,
+  textColorEl,
+  textColorToggleEl,
+  backgroundColorEl,
+  backgroundColorToggleEl,
   categoryEl,
   typeSelectEl,
   startEl,
@@ -3537,6 +3712,28 @@ attachColorPickerTrigger(
   dailyEditColorEl,
   dailyEditColorToggleEl
 );
+attachColorPickerTrigger(textColorTriggerEl, textColorEl, textColorToggleEl);
+attachColorPickerTrigger(
+  backgroundColorTriggerEl,
+  backgroundColorEl,
+  backgroundColorToggleEl
+);
+attachColorPickerTrigger(editTextColorTriggerEl, editTextColorEl, editTextColorToggleEl);
+attachColorPickerTrigger(
+  editBackgroundColorTriggerEl,
+  editBackgroundColorEl,
+  editBackgroundColorToggleEl
+);
+attachColorPickerTrigger(
+  dailyEditTextColorTriggerEl,
+  dailyEditTextColorEl,
+  dailyEditTextColorToggleEl
+);
+attachColorPickerTrigger(
+  dailyEditBackgroundColorTriggerEl,
+  dailyEditBackgroundColorEl,
+  dailyEditBackgroundColorToggleEl
+);
 
 colorToggleEl?.addEventListener("change", () => {
   setColorEnabled(colorToggleEl, colorEl);
@@ -3548,6 +3745,30 @@ editColorToggleEl?.addEventListener("change", () => {
 
 dailyEditColorToggleEl?.addEventListener("change", () => {
   setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+});
+
+textColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(textColorToggleEl, textColorEl);
+});
+
+backgroundColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(backgroundColorToggleEl, backgroundColorEl);
+});
+
+editTextColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(editTextColorToggleEl, editTextColorEl);
+});
+
+editBackgroundColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(editBackgroundColorToggleEl, editBackgroundColorEl);
+});
+
+dailyEditTextColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+});
+
+dailyEditBackgroundColorToggleEl?.addEventListener("change", () => {
+  setColorEnabled(dailyEditBackgroundColorToggleEl, dailyEditBackgroundColorEl);
 });
 
 colorEl?.addEventListener("input", () => {
@@ -3562,6 +3783,37 @@ editColorEl.addEventListener("input", () => {
 dailyEditColorEl.addEventListener("input", () => {
   dailyEditColorEl.dataset.touched = "true";
   syncColorToggleSwatch(dailyEditColorToggleEl, dailyEditColorEl);
+});
+
+textColorEl?.addEventListener("input", () => {
+  syncColorToggleSwatch(textColorToggleEl, textColorEl);
+});
+
+backgroundColorEl?.addEventListener("input", () => {
+  syncColorToggleSwatch(backgroundColorToggleEl, backgroundColorEl);
+});
+
+editTextColorEl.addEventListener("input", () => {
+  editTextColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(editTextColorToggleEl, editTextColorEl);
+});
+
+editBackgroundColorEl.addEventListener("input", () => {
+  editBackgroundColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(editBackgroundColorToggleEl, editBackgroundColorEl);
+});
+
+dailyEditTextColorEl.addEventListener("input", () => {
+  dailyEditTextColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+});
+
+dailyEditBackgroundColorEl.addEventListener("input", () => {
+  dailyEditBackgroundColorEl.dataset.touched = "true";
+  syncColorToggleSwatch(
+    dailyEditBackgroundColorToggleEl,
+    dailyEditBackgroundColorEl
+  );
 });
 
 endDurationToggleEl?.addEventListener("change", () => {
@@ -3640,6 +3892,16 @@ const validateDailyEditDateInputs = () => {
         ? editColorEl.value?.trim() || null
         : currentTodo?.color ?? (editColorEl.value?.trim() || null)
       : null;
+    const textColor = resolveEditedColorValue(
+      editTextColorToggleEl,
+      editTextColorEl,
+      currentTodo?.textColor ?? null
+    );
+    const backgroundColor = resolveEditedColorValue(
+      editBackgroundColorToggleEl,
+      editBackgroundColorEl,
+      currentTodo?.backgroundColor ?? null
+    );
 
   if (!activeEditId || !text) return;
 
@@ -3652,10 +3914,22 @@ const validateDailyEditDateInputs = () => {
       todo.startTime !== startTime ||
       todo.endTime !== endTime ||
       (todo.color ?? null) !== color ||
-      (todo.category ?? "") !== category
+      (todo.category ?? "") !== category ||
+      (todo.textColor ?? null) !== textColor ||
+      (todo.backgroundColor ?? null) !== backgroundColor
     ) {
       changed = true;
-      return { ...todo, text, comments, startTime, endTime, color, category };
+      return {
+        ...todo,
+        text,
+        comments,
+        startTime,
+        endTime,
+        color,
+        category,
+        textColor,
+        backgroundColor,
+      };
     }
     return todo;
   });
@@ -3672,13 +3946,19 @@ const validateDailyEditDateInputs = () => {
 cancelEditEl.addEventListener("click", () => {
   activeEditId = null;
   editColorEl.dataset.touched = "false";
+  editTextColorEl.dataset.touched = "false";
+  editBackgroundColorEl.dataset.touched = "false";
   editDialogEl.close();
 });
 
 editDialogEl.addEventListener("close", () => {
   activeEditId = null;
   editColorEl.dataset.touched = "false";
+  editTextColorEl.dataset.touched = "false";
+  editBackgroundColorEl.dataset.touched = "false";
   setColorEnabled(editColorToggleEl, editColorEl);
+  setColorEnabled(editTextColorToggleEl, editTextColorEl);
+  setColorEnabled(editBackgroundColorToggleEl, editBackgroundColorEl);
   updateCategoryPreview(editCategoryEl, editCategoryPreviewEl);
 });
 
@@ -3715,6 +3995,16 @@ dailyEditFormEl.addEventListener("submit", (event) => {
         ? dailyEditColorEl.value?.trim() || null
         : currentTask?.color ?? (dailyEditColorEl.value?.trim() || null)
       : null;
+  const textColor = resolveEditedColorValue(
+    dailyEditTextColorToggleEl,
+    dailyEditTextColorEl,
+    currentTask?.textColor ?? null
+  );
+  const backgroundColor = resolveEditedColorValue(
+    dailyEditBackgroundColorToggleEl,
+    dailyEditBackgroundColorEl,
+    currentTask?.backgroundColor ?? null
+  );
 
   if (!activeDailyEditId || !text) return;
 
@@ -3728,6 +4018,8 @@ dailyEditFormEl.addEventListener("submit", (event) => {
       task.endTime !== endTime ||
       (task.color ?? null) !== color ||
       (task.category ?? "") !== category ||
+      (task.textColor ?? null) !== textColor ||
+      (task.backgroundColor ?? null) !== backgroundColor ||
       JSON.stringify(task.triggerDays ?? []) !== JSON.stringify(triggerDays) ||
       (task.intervalDays ?? null) !== (intervalDays ?? null)
     ) {
@@ -3740,6 +4032,8 @@ dailyEditFormEl.addEventListener("submit", (event) => {
         endTime,
         color,
         category,
+        textColor,
+        backgroundColor,
         triggerDays,
         intervalDays,
       };
@@ -3763,7 +4057,11 @@ dailyEditDialogEl.addEventListener("close", () => {
   activeDailyEditId = null;
   dailyEditFormEl.reset();
   dailyEditColorEl.dataset.touched = "false";
+  dailyEditTextColorEl.dataset.touched = "false";
+  dailyEditBackgroundColorEl.dataset.touched = "false";
   setColorEnabled(dailyEditColorToggleEl, dailyEditColorEl);
+  setColorEnabled(dailyEditTextColorToggleEl, dailyEditTextColorEl);
+  setColorEnabled(dailyEditBackgroundColorToggleEl, dailyEditBackgroundColorEl);
   setIntervalEnabled(dailyEditIntervalToggleEl, dailyEditIntervalDaysEl, true);
   if (dailyEditIntervalToggleEl) dailyEditIntervalToggleEl.dataset.userDisabled = "false";
   if (dailyEditIntervalDaysEl) dailyEditIntervalDaysEl.value = "1";
