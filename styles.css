@@ -825,6 +825,11 @@ button.danger:hover {
   background: rgba(17, 24, 39, 0.4);
 }
 
+.interval-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .interval-input-group {
   display: inline-flex;
   align-items: center;
