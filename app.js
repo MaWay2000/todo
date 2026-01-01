@@ -482,31 +482,19 @@ function renderTodoPreview() {
 
   updateCategoryPreview(categoryEl, categoryPreviewEl);
 
-  const { startTime, endTime } = getFormPreviewTimes();
-  const hasExplicitStart = Boolean(startEl?.value) && startEl.dataset.startNow !== "true";
-  const startLabel = hasExplicitStart ? formatTime(startTime) : "";
-  const endLabel = startLabel ? formatTime(endTime) : "";
-  const showRange = Boolean(startLabel);
   if (previewRangeEl) {
-    previewRangeEl.hidden = !showRange;
-    if (showRange) {
-      const rangeText = endLabel ? `${startLabel} - ${endLabel}` : startLabel;
-      previewRangeEl.textContent = rangeText || "—";
-    }
+    previewRangeEl.hidden = true;
+    previewRangeEl.textContent = "";
   }
 
-  const timeLeftInfo = endTime ? getTimeLeftInfo(endTime) : null;
   if (previewLeftEl) {
-    previewLeftEl.hidden = !timeLeftInfo;
-    previewLeftEl.classList.toggle("danger", Boolean(timeLeftInfo?.isPast));
-    if (timeLeftInfo) {
-      previewLeftEl.textContent = timeLeftInfo.text;
-    }
+    previewLeftEl.hidden = true;
+    previewLeftEl.classList.remove("danger");
+    previewLeftEl.textContent = "";
   }
 
   if (previewTimeEl) {
-    const hasTimeMeta = showRange || Boolean(timeLeftInfo);
-    previewTimeEl.hidden = !hasTimeMeta;
+    previewTimeEl.hidden = true;
   }
 }
 
