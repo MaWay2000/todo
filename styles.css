@@ -485,7 +485,7 @@ button.danger:hover {
 
 .start-row {
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .start-row .start-date-field,
@@ -619,6 +619,10 @@ button.danger:hover {
 }
 
 .duration-group.start-offset {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
   background: none;
   border: none;
   border-radius: 0;
@@ -626,8 +630,8 @@ button.danger:hover {
 }
 
 .duration-group.start-offset .duration-label-row {
-  flex-wrap: wrap;
-  gap: 0.65rem 0.9rem;
+  flex-wrap: nowrap;
+  gap: 0.65rem;
 }
 
 .duration-label-row {
@@ -654,7 +658,7 @@ button.danger:hover {
 }
 
 .duration-group.start-offset .duration-inputs {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .delay-toggle input {
