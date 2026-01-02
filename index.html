@@ -240,38 +240,6 @@
         </div>
         <label class="sr-only" for="todo-end">End time</label>
         <div class="finish-row">
-          <div class="start-date-field end-date-field">
-            <div class="field-label-with-toggle">
-              <label class="field-label" for="todo-end">End</label>
-              <label class="delay-toggle end-duration-toggle" for="todo-end-duration-toggle">
-                <input
-                  id="todo-end-duration-toggle"
-                  name="end-duration-enabled"
-                  type="checkbox"
-                  aria-label="Toggle time inputs"
-                  checked
-                />
-                <span class="delay-toggle-track" aria-hidden="true">
-                  <span class="delay-toggle-thumb"></span>
-                </span>
-                <span
-                  id="todo-end-duration-toggle-label"
-                  class="delay-toggle-text"
-                  data-on="On"
-                  data-off="Off"
-                >On</span>
-              </label>
-            </div>
-            <div class="date-time-inputs">
-              <input
-                id="todo-end-datetime"
-                name="end-datetime"
-                type="datetime-local"
-                lang="en-GB"
-                inputmode="numeric"
-              />
-            </div>
-          </div>
           <div
             id="finish-duration-group"
             class="duration-group start-offset"
@@ -318,6 +286,38 @@
                   <span class="duration-input-label">Mins</span>
                 </label>
               </div>
+            </div>
+          </div>
+          <div class="start-date-field end-date-field">
+            <div class="field-label-with-toggle">
+              <label class="field-label" for="todo-end">End</label>
+              <label class="delay-toggle end-duration-toggle" for="todo-end-duration-toggle">
+                <input
+                  id="todo-end-duration-toggle"
+                  name="end-duration-enabled"
+                  type="checkbox"
+                  aria-label="Toggle time inputs"
+                  checked
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="todo-end-duration-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >On</span>
+              </label>
+            </div>
+            <div class="date-time-inputs">
+              <input
+                id="todo-end-datetime"
+                name="end-datetime"
+                type="datetime-local"
+                lang="en-GB"
+                inputmode="numeric"
+              />
             </div>
           </div>
         </div>
