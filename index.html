@@ -166,66 +166,6 @@
         <div class="start-row">
           <div class="start-date-field">
             <label class="field-label" for="todo-start">Start</label>
-            <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
-              <div class="duration-label-row">
-                <span id="start-offset-label" class="field-label">Delay</span>
-                <label class="delay-toggle" for="todo-start-offset-enabled">
-                  <input
-                    id="todo-start-offset-enabled"
-                    name="start-offset-enabled"
-                    type="checkbox"
-                    aria-label="Enable delay by duration"
-                  />
-                  <span class="delay-toggle-track" aria-hidden="true">
-                    <span class="delay-toggle-thumb"></span>
-                  </span>
-                  <span
-                    id="todo-start-offset-toggle-label"
-                    class="delay-toggle-text"
-                    data-on="On"
-                    data-off="Off"
-                  >Off</span>
-                </label>
-                <div class="duration-inputs">
-                  <label class="duration-input" for="todo-start-offset-days">
-                    <input
-                      id="todo-start-offset-days"
-                      name="start-offset-days"
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      maxlength="5"
-                      placeholder="0"
-                    />
-                    <span class="duration-input-label">Days</span>
-                  </label>
-                  <label class="duration-input" for="todo-start-offset-hours">
-                    <input
-                      id="todo-start-offset-hours"
-                      name="start-offset-hours"
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      maxlength="5"
-                      placeholder="00"
-                    />
-                    <span class="duration-input-label">Hours</span>
-                  </label>
-                  <label class="duration-input" for="todo-start-offset-mins">
-                    <input
-                      id="todo-start-offset-mins"
-                      name="start-offset-mins"
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      maxlength="5"
-                      placeholder="00"
-                    />
-                    <span class="duration-input-label">Mins</span>
-                  </label>
-                </div>
-              </div>
-            </div>
             <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
             <div class="date-time-inputs">
               <input
@@ -235,6 +175,66 @@
                 lang="en-GB"
                 inputmode="numeric"
               />
+            </div>
+          </div>
+          <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
+            <div class="duration-label-row">
+              <span id="start-offset-label" class="field-label">Delay</span>
+              <label class="delay-toggle" for="todo-start-offset-enabled">
+                <input
+                  id="todo-start-offset-enabled"
+                  name="start-offset-enabled"
+                  type="checkbox"
+                  aria-label="Enable delay by duration"
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="todo-start-offset-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >Off</span>
+              </label>
+              <div class="duration-inputs">
+                <label class="duration-input" for="todo-start-offset-days">
+                  <input
+                    id="todo-start-offset-days"
+                    name="start-offset-days"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="0"
+                  />
+                  <span class="duration-input-label">Days</span>
+                </label>
+                <label class="duration-input" for="todo-start-offset-hours">
+                  <input
+                    id="todo-start-offset-hours"
+                    name="start-offset-hours"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Hours</span>
+                </label>
+                <label class="duration-input" for="todo-start-offset-mins">
+                  <input
+                    id="todo-start-offset-mins"
+                    name="start-offset-mins"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Mins</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
