@@ -549,6 +549,15 @@ button.danger:hover {
   min-width: 0;
 }
 
+.finish-row .field-label-with-toggle {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.end-field-toggle {
+  gap: 0.75rem;
+}
+
 .start-date-field.is-hidden {
   display: none;
 }
