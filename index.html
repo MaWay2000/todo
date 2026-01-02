@@ -238,8 +238,29 @@
             </div>
           </div>
         </div>
-        <label class="sr-only" for="todo-end">End time</label>
+        <label class="sr-only" for="todo-end-datetime">End time</label>
         <div class="finish-row">
+          <div class="field-label-with-toggle end-field-toggle">
+            <label class="field-label" for="todo-end-datetime">End</label>
+            <label class="delay-toggle end-duration-toggle" for="todo-end-duration-toggle">
+              <input
+                id="todo-end-duration-toggle"
+                name="end-duration-enabled"
+                type="checkbox"
+                aria-label="Toggle time inputs"
+                checked
+              />
+              <span class="delay-toggle-track" aria-hidden="true">
+                <span class="delay-toggle-thumb"></span>
+              </span>
+              <span
+                id="todo-end-duration-toggle-label"
+                class="delay-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >On</span>
+            </label>
+          </div>
           <div
             id="finish-duration-group"
             class="duration-group start-offset"
@@ -289,27 +310,6 @@
             </div>
           </div>
           <div class="start-date-field end-date-field">
-            <div class="field-label-with-toggle">
-              <label class="field-label" for="todo-end">End</label>
-              <label class="delay-toggle end-duration-toggle" for="todo-end-duration-toggle">
-                <input
-                  id="todo-end-duration-toggle"
-                  name="end-duration-enabled"
-                  type="checkbox"
-                  aria-label="Toggle time inputs"
-                  checked
-                />
-                <span class="delay-toggle-track" aria-hidden="true">
-                  <span class="delay-toggle-thumb"></span>
-                </span>
-                <span
-                  id="todo-end-duration-toggle-label"
-                  class="delay-toggle-text"
-                  data-on="On"
-                  data-off="Off"
-                >On</span>
-              </label>
-            </div>
             <div class="date-time-inputs">
               <input
                 id="todo-end-datetime"
