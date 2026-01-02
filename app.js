@@ -2254,7 +2254,7 @@ function editDailyTask(id) {
   dailyEditColorEl.dataset.touched = "false";
   dailyEditTextColorEl.dataset.touched = "false";
   dailyEditBackgroundColorEl.dataset.touched = "false";
-  updateColorTriggerLabel(dailyEditColorTriggerEl, task.text);
+  updateColorTriggerLabel(dailyEditColorTriggerEl, "");
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
 }
@@ -3011,7 +3011,7 @@ function editTodo(id) {
   editColorEl.dataset.touched = "false";
   editTextColorEl.dataset.touched = "false";
   editBackgroundColorEl.dataset.touched = "false";
-  updateColorTriggerLabel(editColorTriggerEl, todo.text);
+  updateColorTriggerLabel(editColorTriggerEl, "");
   editDialogEl.showModal();
   editInputEl.focus();
 }
@@ -3451,7 +3451,7 @@ openAddEl.addEventListener("click", () => {
     backgroundColorToggleEl.checked = false;
     setColorEnabled(backgroundColorToggleEl, backgroundColorEl);
   }
-  updateColorTriggerLabel(colorTriggerEl, inputEl.value);
+  updateColorTriggerLabel(colorTriggerEl, "");
   categoryEl.value = "";
   updateCategoryPreview(categoryEl, categoryPreviewEl);
   typeSelectEl.value = "one-time";
@@ -3848,11 +3848,11 @@ autoShiftToggleEl?.addEventListener("change", () => {
 });
 
 inputEl?.addEventListener("input", () => {
-  updateColorTriggerLabel(colorTriggerEl, inputEl.value);
+  updateColorTriggerLabel(colorTriggerEl, "");
 });
 
 editInputEl?.addEventListener("input", () => {
-  updateColorTriggerLabel(editColorTriggerEl, editInputEl.value);
+  updateColorTriggerLabel(editColorTriggerEl, "");
 });
 
 const validateEditDateInputs = () => {
@@ -3866,7 +3866,7 @@ const validateEditDateInputs = () => {
 });
 
 dailyEditInputEl?.addEventListener("input", () => {
-  updateColorTriggerLabel(dailyEditColorTriggerEl, dailyEditInputEl.value);
+  updateColorTriggerLabel(dailyEditColorTriggerEl, "");
 });
 
 const validateDailyEditDateInputs = () => {
