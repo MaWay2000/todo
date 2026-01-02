@@ -551,7 +551,7 @@ button.danger:hover {
 
 .finish-row .field-label-with-toggle {
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .end-field-toggle {
