@@ -33,6 +33,7 @@ const durationLabelEl = document.getElementById("duration-label");
 const durationLabelDefaultText = durationLabelEl?.textContent?.trim() || "Time";
 const endDurationInputsEl = endDurationGroupEl?.querySelector(".duration-inputs");
 const startNowChipEl = document.getElementById("todo-start-now-chip");
+const startPickerButtonEl = document.getElementById("todo-start-picker-button");
 const startDateFieldEl = startEl?.closest(".start-date-field");
 const finishDateFieldEl = endEl?.closest(".start-date-field") ?? endEl;
 
@@ -3485,6 +3486,18 @@ startDateFieldEl?.addEventListener("click", (event) => {
   if (startEl?.dataset.startNow !== "true") return;
   event.preventDefault();
   revealStartInputFromNow();
+});
+
+startPickerButtonEl?.addEventListener("click", () => {
+  if (!startEl) return;
+  if (startEl.dataset.startNow === "true") {
+    revealStartInputFromNow();
+  }
+  if (typeof startEl.showPicker === "function") {
+    startEl.showPicker();
+  } else {
+    startEl.focus({ preventScroll: true });
+  }
 });
 
 const handleStartInputInteraction = () => {
