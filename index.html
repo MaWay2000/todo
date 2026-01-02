@@ -164,19 +164,6 @@
         </div>
         <label class="sr-only" for="todo-start">Start time</label>
         <div class="start-row">
-          <div class="start-date-field">
-            <label class="field-label" for="todo-start">Start</label>
-            <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
-            <div class="date-time-inputs">
-              <input
-                id="todo-start-datetime"
-                name="start-datetime"
-                type="datetime-local"
-                lang="en-GB"
-                inputmode="numeric"
-              />
-            </div>
-          </div>
           <div class="duration-group start-offset" role="group" aria-labelledby="start-offset-label">
             <div class="duration-label-row">
               <span id="start-offset-label" class="field-label">Delay</span>
@@ -196,8 +183,8 @@
                   data-on="On"
                   data-off="Off"
                 >Off</span>
-              </label>
-              <div class="duration-inputs">
+                </label>
+                <div class="duration-inputs">
                 <label class="duration-input" for="todo-start-offset-days">
                   <input
                     id="todo-start-offset-days"
@@ -235,6 +222,19 @@
                   <span class="duration-input-label">Mins</span>
                 </label>
               </div>
+            </div>
+          </div>
+          <div class="start-date-field">
+            <label class="field-label" for="todo-start">Start</label>
+            <span id="todo-start-now-chip" class="start-now-chip" hidden>Now</span>
+            <div class="date-time-inputs">
+              <input
+                id="todo-start-datetime"
+                name="start-datetime"
+                type="datetime-local"
+                lang="en-GB"
+                inputmode="numeric"
+              />
             </div>
           </div>
         </div>
