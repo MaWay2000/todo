@@ -562,6 +562,10 @@ button.danger:hover {
   display: none;
 }
 
+.start-date-field.is-delay-enabled .field-label {
+  display: none;
+}
+
 .start-date-field.is-disabled input {
   display: none;
 }

@@ -746,6 +746,9 @@ function setStartOffsetEnabled(enabled) {
   if (startOffsetGroupEl) {
     startOffsetGroupEl.classList.toggle("is-disabled", !enabled);
   }
+  if (startDateFieldEl) {
+    startDateFieldEl.classList.toggle("is-delay-enabled", enabled);
+  }
   syncStartOffsetToggleLabel();
   if (enabled) {
     updateStartFromOffsetPreview();
