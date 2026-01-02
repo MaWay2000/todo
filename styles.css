@@ -535,21 +535,6 @@ button.danger:hover {
   flex: 0 1 auto;
 }
 
-.start-picker-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0.45rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--muted);
-}
-
-.start-picker-button svg {
-  display: block;
-}
-
 .end-date-field {
   align-items: center;
   gap: 0.75rem;
