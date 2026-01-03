@@ -1266,6 +1266,10 @@ function ensureOptionsDefaults() {
   }
 }
 
+function syncAutoShiftClass() {
+  document.body.classList.toggle("auto-shift-enabled", Boolean(options.autoShiftExisting));
+}
+
 function syncOptionsUI() {
   if (autoShiftToggleEl) {
     autoShiftToggleEl.checked = Boolean(options.autoShiftExisting);
@@ -1276,6 +1280,8 @@ function syncOptionsUI() {
   if (dailyEditEndDurationToggleEl) {
     setDailyEditDurationEnabled(Boolean(options.showTimeToFinish));
   }
+
+  syncAutoShiftClass();
 }
 
 function loadTodos() {
@@ -3844,6 +3850,7 @@ autoShiftToggleEl?.addEventListener("change", () => {
 
   options = { ...options, autoShiftExisting: enabled };
   saveOptions();
+  syncAutoShiftClass();
   renderCurrentView();
 });
 
