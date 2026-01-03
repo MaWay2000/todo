@@ -1461,17 +1461,12 @@ function getCalendarHoursForTask(task, referenceDate = null) {
   const startDate = task.startTime ? new Date(task.startTime) : null;
   const endDate = task.endTime ? new Date(task.endTime) : null;
   const hasStart = Number.isFinite(startDate?.getTime()) && isSameDay(startDate, referenceDay);
+  if (hasStart) return [clamp(startDate.getHours(), 0, 23)];
+
   const hasEnd = Number.isFinite(endDate?.getTime()) && isSameDay(endDate, referenceDay);
+  if (hasEnd) return [clamp(endDate.getHours(), 0, 23)];
 
-  const startHour = hasStart ? startDate.getHours() : referenceDay.getHours();
-  const endHour = hasEnd ? endDate.getHours() : startHour;
-
-  if (hasStart && hasEnd && endDate < startDate) return [startHour];
-
-  const firstHour = clamp(Math.min(startHour, endHour), 0, 23);
-  const lastHour = clamp(Math.max(startHour, endHour), 0, 23);
-
-  return Array.from({ length: lastHour - firstHour + 1 }, (_, index) => firstHour + index);
+  return [];
 }
 
 function hasValidEndTime(task) {
