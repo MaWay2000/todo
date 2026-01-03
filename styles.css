@@ -1574,6 +1574,7 @@ button.danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  width: 100%;
 }
 
 .calendar-task {
@@ -1585,6 +1586,8 @@ button.danger:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  width: 100%;
+  justify-content: space-between;
 }
 
 .calendar-task .color-dot {
@@ -1598,11 +1601,13 @@ button.danger:hover {
 
 .calendar-task .task-title {
   font-weight: 600;
+  flex: 1;
 }
 
 .calendar-task .task-time {
   color: var(--muted);
   font-size: 0.9rem;
+  margin-left: auto;
 }
 
 .calendar-table td.empty::after {
