@@ -7,6 +7,7 @@ let dailyTasks = [];
 let categories = [];
 let options = {};
 let filter = "active";
+let calendarActive = false;
 
 const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
@@ -67,6 +68,7 @@ const previewColorEl = document.getElementById("todo-preview-color");
 const previewTimeEl = document.getElementById("todo-preview-time");
 const previewRangeEl = document.getElementById("todo-preview-range");
 const previewLeftEl = document.getElementById("todo-preview-left");
+const openCalendarEl = document.getElementById("open-calendar");
 const openAddEl = document.getElementById("open-add");
 const cancelAddEl = document.getElementById("cancel-add");
 const dialogEl = document.getElementById("add-dialog");
@@ -159,6 +161,8 @@ const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const dailyPanelEl = document.getElementById("daily-panel");
 const categoryPanelEl = document.getElementById("category-panel");
+const calendarPanelEl = document.getElementById("calendar-panel");
+const calendarTableBodyEl = document.getElementById("calendar-table-body");
 const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
 const categoryColorEl = document.getElementById("category-color");
@@ -207,6 +211,10 @@ let manualPositionCache = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const toDate = (value) => (value instanceof Date ? value : new Date(value));
+const isSameDay = (first, second) =>
+  first.getFullYear() === second.getFullYear() &&
+  first.getMonth() === second.getMonth() &&
+  first.getDate() === second.getDate();
 const formatTime = (value) => {
   if (!value) return "";
   const date = toDate(value);
@@ -1431,6 +1439,18 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   return reference >= start;
 }
 
+function getCalendarReferenceDate(task) {
+  if (task.startTime) {
+    const start = new Date(task.startTime);
+    if (Number.isFinite(start.getTime())) return start;
+  }
+  if (task.endTime) {
+    const end = new Date(task.endTime);
+    if (Number.isFinite(end.getTime())) return end;
+  }
+  return null;
+}
+
 function hasValidEndTime(task) {
   if (!task?.endTime) return false;
   const end = new Date(task.endTime);
@@ -2430,6 +2450,75 @@ function renderDailyTasks() {
   listEl.style.height = "";
 }
 
+function renderCalendarView() {
+  if (!calendarPanelEl || !calendarTableBodyEl) return;
+  calendarTableBodyEl.innerHTML = "";
+
+  const today = new Date();
+  const hours = Array.from({ length: 24 }, () => []);
+  const activeTodos = todos
+    .filter((todo) => isTodoInActiveView(todo))
+    .map((todo) => ({ todo, date: getCalendarReferenceDate(todo) }))
+    .filter(({ date }) => date && isSameDay(date, today));
+
+  activeTodos.forEach(({ todo, date }) => {
+    const hour = date.getHours();
+    hours[hour]?.push(todo);
+  });
+
+  for (let hour = 0; hour < 24; hour += 1) {
+    const row = document.createElement("tr");
+    const label = document.createElement("th");
+    label.scope = "row";
+    label.textContent = `${hour}:00`;
+
+    const cell = document.createElement("td");
+    const hourTasks = hours[hour] ?? [];
+    if (hourTasks.length) {
+      const list = document.createElement("ul");
+      list.className = "calendar-task-list";
+      hourTasks.forEach((task) => {
+        const item = document.createElement("li");
+        item.className = "calendar-task";
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        if (task.color) {
+          dot.style.setProperty("--accent", task.color);
+          item.style.setProperty("--accent", task.color);
+        } else {
+          item.style.removeProperty("--accent");
+        }
+        const title = document.createElement("span");
+        title.className = "task-title";
+        title.textContent = task.text || DEFAULT_TASK_PLACEHOLDER;
+
+        const startLabel = formatTime(task.startTime);
+        const endLabel = formatTime(task.endTime);
+        const timeLabel = startLabel
+          ? endLabel
+            ? `${startLabel} – ${endLabel}`
+            : startLabel
+          : endLabel;
+        const time = document.createElement("span");
+        time.className = "task-time";
+        time.textContent = timeLabel || "No time set";
+
+        item.appendChild(dot);
+        item.appendChild(title);
+        item.appendChild(time);
+        list.appendChild(item);
+      });
+      cell.appendChild(list);
+    } else {
+      cell.classList.add("empty");
+    }
+
+    row.appendChild(label);
+    row.appendChild(cell);
+    calendarTableBodyEl.appendChild(row);
+  }
+}
+
 function getCategoryUsageCount(name) {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return 0;
@@ -2652,14 +2741,22 @@ function renderCategories() {
 function renderCurrentView() {
   const isCategoryView = filter === "categories";
   const isDailyView = filter === "daily";
+  const showCalendarView = calendarActive;
   clearExpiredFreshness();
   if (categoryPanelEl) {
-    categoryPanelEl.hidden = !isCategoryView;
+    categoryPanelEl.hidden = showCalendarView || !isCategoryView;
   }
   if (dailyPanelEl) {
-    dailyPanelEl.hidden = !isDailyView;
+    dailyPanelEl.hidden = showCalendarView || !isDailyView;
   }
-  listEl.hidden = isCategoryView;
+  if (calendarPanelEl) {
+    calendarPanelEl.hidden = !showCalendarView;
+  }
+  listEl.hidden = isCategoryView || showCalendarView;
+  if (showCalendarView) {
+    renderCalendarView();
+    return;
+  }
   if (isCategoryView) {
     renderCategories();
     return;
@@ -3035,7 +3132,21 @@ function closeDailyEditDialog() {
   dailyEditDialogEl.close();
 }
 
-function setFilter(nextFilter) {
+function setCalendarActive(active, { skipRender = false } = {}) {
+  calendarActive = Boolean(active);
+  if (openCalendarEl) {
+    openCalendarEl.classList.toggle("active", calendarActive);
+    openCalendarEl.setAttribute("aria-pressed", calendarActive ? "true" : "false");
+  }
+  if (!skipRender) {
+    renderCurrentView();
+  }
+}
+
+function setFilter(nextFilter, { preserveCalendar = false } = {}) {
+  if (!preserveCalendar && calendarActive) {
+    setCalendarActive(false, { skipRender: true });
+  }
   filter = nextFilter;
 
   if (nextFilter === "completed") {
@@ -4089,6 +4200,14 @@ dailyEditDialogEl.addEventListener("close", () => {
   updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
 });
 
+openCalendarEl?.addEventListener("click", () => {
+  const nextActive = !calendarActive;
+  if (nextActive && filter !== "active") {
+    setFilter("active", { preserveCalendar: true });
+  }
+  setCalendarActive(nextActive);
+});
+
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
 });
@@ -4133,6 +4252,7 @@ loadCategories();
 loadOptions();
 ensureLayoutDefaults();
 ensureOptionsDefaults();
+setCalendarActive(false, { skipRender: true });
 syncOptionsUI();
 syncCategoriesFromTodos();
 renderCategoryOptions();
