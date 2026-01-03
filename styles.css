@@ -1028,6 +1028,10 @@ button.danger:hover {
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
 
+.auto-shift-enabled .todo-item {
+  max-width: 260px;
+}
+
 .todo-item.has-color {
   border-color: var(--task-color, var(--accent));
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28),
@@ -1189,6 +1193,13 @@ button.danger:hover {
   min-width: max-content;
   display: block;
   white-space: nowrap;
+}
+
+.auto-shift-enabled .todo-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .completion-duration {
