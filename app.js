@@ -1270,10 +1270,15 @@ function syncAutoShiftClass() {
   document.body.classList.toggle("auto-shift-enabled", Boolean(options.autoShiftExisting));
 }
 
+function setAutoShiftToggleState(enabled) {
+  if (!autoShiftToggleEl) return;
+  const pressed = Boolean(enabled);
+  autoShiftToggleEl.setAttribute("aria-pressed", String(pressed));
+  autoShiftToggleEl.classList.toggle("active", pressed);
+}
+
 function syncOptionsUI() {
-  if (autoShiftToggleEl) {
-    autoShiftToggleEl.checked = Boolean(options.autoShiftExisting);
-  }
+  setAutoShiftToggleState(options.autoShiftExisting);
   if (endDurationToggleEl) {
     setFinishDurationEnabled(Boolean(options.showTimeToFinish));
   }
@@ -3838,9 +3843,9 @@ dailyEditEndDurationToggleEl?.addEventListener("change", () => {
   updateTimeToFinishPreference(dailyEditEndDurationToggleEl.checked);
 });
 
-autoShiftToggleEl?.addEventListener("change", () => {
+autoShiftToggleEl?.addEventListener("click", () => {
   const previouslyEnabled = options.autoShiftExisting;
-  const enabled = autoShiftToggleEl.checked;
+  const enabled = !autoShiftToggleEl.classList.contains("active");
 
   if (enabled && !previouslyEnabled) {
     cacheManualPositions();
@@ -3848,6 +3853,7 @@ autoShiftToggleEl?.addEventListener("change", () => {
     restoreManualPositions();
   }
 
+  setAutoShiftToggleState(enabled);
   options = { ...options, autoShiftExisting: enabled };
   saveOptions();
   syncAutoShiftClass();

@@ -68,25 +68,29 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 0.4rem 0.65rem;
+  padding: 0.4rem 0.75rem;
   color: var(--muted);
   cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease,
+    box-shadow 150ms ease;
 }
 
-.auto-shift-toggle input[type="checkbox"] {
-  width: 1.05rem;
-  height: 1.05rem;
-  margin: 0;
-  border-radius: 8px;
-  border: 2px solid var(--border);
-  background: var(--card);
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.auto-shift-toggle input[type="checkbox"]:focus-visible {
+.auto-shift-toggle:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+
+.auto-shift-toggle:hover {
+  border-color: var(--muted);
+  color: #e5e7eb;
+}
+
+.auto-shift-toggle.active,
+.auto-shift-toggle[aria-pressed="true"] {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: var(--accent);
+  color: #e0f2fe;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
 }
 
 .auto-shift-label {
