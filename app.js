@@ -1451,6 +1451,29 @@ function getCalendarReferenceDate(task) {
   return null;
 }
 
+function getCalendarHoursForTask(task, referenceDate = null) {
+  const reference = referenceDate ?? getCalendarReferenceDate(task);
+  if (!reference) return [];
+
+  const referenceDay = toDate(reference);
+  if (!Number.isFinite(referenceDay.getTime())) return [];
+
+  const startDate = task.startTime ? new Date(task.startTime) : null;
+  const endDate = task.endTime ? new Date(task.endTime) : null;
+  const hasStart = Number.isFinite(startDate?.getTime()) && isSameDay(startDate, referenceDay);
+  const hasEnd = Number.isFinite(endDate?.getTime()) && isSameDay(endDate, referenceDay);
+
+  const startHour = hasStart ? startDate.getHours() : referenceDay.getHours();
+  const endHour = hasEnd ? endDate.getHours() : startHour;
+
+  if (hasStart && hasEnd && endDate < startDate) return [startHour];
+
+  const firstHour = clamp(Math.min(startHour, endHour), 0, 23);
+  const lastHour = clamp(Math.max(startHour, endHour), 0, 23);
+
+  return Array.from({ length: lastHour - firstHour + 1 }, (_, index) => firstHour + index);
+}
+
 function hasValidEndTime(task) {
   if (!task?.endTime) return false;
   const end = new Date(task.endTime);
@@ -2462,8 +2485,10 @@ function renderCalendarView() {
     .filter(({ date }) => date && isSameDay(date, today));
 
   activeTodos.forEach(({ todo, date }) => {
-    const hour = date.getHours();
-    hours[hour]?.push(todo);
+    const hoursForTask = getCalendarHoursForTask(todo, date);
+    hoursForTask.forEach((hour) => {
+      hours[hour]?.push(todo);
+    });
   });
 
   for (let hour = 0; hour < 24; hour += 1) {
