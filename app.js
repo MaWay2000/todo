@@ -1788,7 +1788,8 @@ function renderTodos() {
     showingDeleted ||
     filter === "completed" ||
     filter === "all" ||
-    isCategoryView;
+    isCategoryView ||
+    (filter === "active" && options.autoShiftExisting);
 
   listEl.classList.toggle("stacked-layout", stackedLayout);
   const useSplitLayout = !stackedLayout && filter === "active";
