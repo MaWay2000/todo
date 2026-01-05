@@ -2518,9 +2518,32 @@ function renderCalendarView() {
     .map((todo) => ({ todo, date: getCalendarReferenceDate(todo) }))
     .filter(({ date }) => date && isSameDay(date, today));
 
+  const scheduledDailyTasks = dailyTasks
+    .filter((task) => !task.lastTriggeredAt || !isToday(task.lastTriggeredAt))
+    .filter((task) => canTriggerDailyTaskToday(task, today))
+    .map((task) => {
+      const startTime = task.startTime
+        ? rebaseDateTimeToReference(task.startTime, today)
+        : null;
+      const endTime = computeRebasedEnd(task.startTime, task.endTime, startTime);
+      const referenceDate = startTime
+        ? new Date(startTime)
+        : endTime
+          ? new Date(endTime)
+          : today;
+
+      return {
+        todo: { ...task, startTime, endTime },
+        date: referenceDate,
+      };
+    })
+    .filter(({ date }) => date && isSameDay(date, today));
+
   const hourLabelFor = (hour) => `${`${hour}`.padStart(2, "0")}:00`;
 
-  const ranges = activeTodos.flatMap(({ todo, date }) => {
+  const calendarEntries = [...activeTodos, ...scheduledDailyTasks];
+
+  const ranges = calendarEntries.flatMap(({ todo, date }) => {
     const hoursForTask = [...new Set(getCalendarHoursForTask(todo, date))].sort(
       (a, b) => a - b
     );
