@@ -1460,11 +1460,34 @@ function getCalendarHoursForTask(task, referenceDate = null) {
 
   const startDate = task.startTime ? new Date(task.startTime) : null;
   const endDate = task.endTime ? new Date(task.endTime) : null;
-  const hasStart = Number.isFinite(startDate?.getTime()) && isSameDay(startDate, referenceDay);
-  if (hasStart) return [clamp(startDate.getHours(), 0, 23)];
+  const hasStart = Number.isFinite(startDate?.getTime());
+  const hasEnd = Number.isFinite(endDate?.getTime());
 
-  const hasEnd = Number.isFinite(endDate?.getTime()) && isSameDay(endDate, referenceDay);
-  if (hasEnd) return [clamp(endDate.getHours(), 0, 23)];
+  const startOnDay = hasStart && isSameDay(startDate, referenceDay);
+  const endOnDay = hasEnd && isSameDay(endDate, referenceDay);
+
+  if (hasStart && hasEnd) {
+    const dayStart = new Date(referenceDay);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(referenceDay);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    if (startDate > dayEnd || endDate < dayStart) return [];
+
+    const rangeStart = startOnDay ? startDate : dayStart;
+    const rangeEnd = endOnDay ? endDate : dayEnd;
+
+    if (rangeEnd < rangeStart) return [];
+
+    const startHour = clamp(rangeStart.getHours(), 0, 23);
+    const endHour = clamp(rangeEnd.getHours(), 0, 23);
+
+    return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
+  }
+
+  if (startOnDay) return [clamp(startDate.getHours(), 0, 23)];
+
+  if (endOnDay) return [clamp(endDate.getHours(), 0, 23)];
 
   return [];
 }
