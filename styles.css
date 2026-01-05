@@ -1590,6 +1590,17 @@ button.danger:hover {
   justify-content: space-between;
 }
 
+.calendar-task-continuation {
+  justify-content: flex-start;
+  gap: 0.4rem;
+}
+
+.calendar-task-continuation .task-continuation-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
 .calendar-task .color-dot {
   flex: 0 0 auto;
   width: 10px;

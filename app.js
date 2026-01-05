@@ -2509,6 +2509,8 @@ function renderCalendarView() {
     });
   });
 
+  const previousHourTaskIds = new Set();
+
   for (let hour = 0; hour < 24; hour += 1) {
     const row = document.createElement("tr");
     const label = document.createElement("th");
@@ -2517,12 +2519,19 @@ function renderCalendarView() {
 
     const cell = document.createElement("td");
     const hourTasks = hours[hour] ?? [];
+    const currentHourTaskIds = new Set();
     if (hourTasks.length) {
       const list = document.createElement("ul");
       list.className = "calendar-task-list";
       hourTasks.forEach((task) => {
+        const taskId = task.id ?? task.text ?? "";
+        currentHourTaskIds.add(taskId);
+        const isContinuation = previousHourTaskIds.has(taskId);
         const item = document.createElement("li");
         item.className = "calendar-task";
+        if (isContinuation) {
+          item.classList.add("calendar-task-continuation");
+        }
         const dot = document.createElement("span");
         dot.className = "color-dot";
         if (task.color) {
@@ -2531,24 +2540,38 @@ function renderCalendarView() {
         } else {
           item.style.removeProperty("--accent");
         }
-        const title = document.createElement("span");
-        title.className = "task-title";
-        title.textContent = task.text || DEFAULT_TASK_PLACEHOLDER;
-
-        const startLabel = formatTime(task.startTime);
-        const endLabel = formatTime(task.endTime);
-        const timeLabel = startLabel
-          ? endLabel
-            ? `${startLabel} – ${endLabel}`
-            : startLabel
-          : endLabel;
-        const time = document.createElement("span");
-        time.className = "task-time";
-        time.textContent = timeLabel || "No time set";
-
         item.appendChild(dot);
-        item.appendChild(title);
-        item.appendChild(time);
+
+        if (isContinuation) {
+          const continuationLabel = document.createElement("span");
+          continuationLabel.className = "task-continuation-label";
+          continuationLabel.textContent = "Continues";
+
+          const hiddenTitle = document.createElement("span");
+          hiddenTitle.className = "sr-only";
+          hiddenTitle.textContent = `${task.text || DEFAULT_TASK_PLACEHOLDER} continues`;
+
+          item.appendChild(continuationLabel);
+          item.appendChild(hiddenTitle);
+        } else {
+          const title = document.createElement("span");
+          title.className = "task-title";
+          title.textContent = task.text || DEFAULT_TASK_PLACEHOLDER;
+
+          const startLabel = formatTime(task.startTime);
+          const endLabel = formatTime(task.endTime);
+          const timeLabel = startLabel
+            ? endLabel
+              ? `${startLabel} – ${endLabel}`
+              : startLabel
+            : endLabel;
+          const time = document.createElement("span");
+          time.className = "task-time";
+          time.textContent = timeLabel || "No time set";
+
+          item.appendChild(title);
+          item.appendChild(time);
+        }
         list.appendChild(item);
       });
       cell.appendChild(list);
@@ -2559,6 +2582,9 @@ function renderCalendarView() {
     row.appendChild(label);
     row.appendChild(cell);
     calendarTableBodyEl.appendChild(row);
+
+    previousHourTaskIds.clear();
+    currentHourTaskIds.forEach((id) => previousHourTaskIds.add(id));
   }
 }
 
