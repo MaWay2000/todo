@@ -2496,95 +2496,113 @@ function renderCalendarView() {
   calendarTableBodyEl.innerHTML = "";
 
   const today = new Date();
-  const hours = Array.from({ length: 24 }, () => []);
   const activeTodos = todos
     .filter((todo) => isTodoInActiveView(todo))
     .map((todo) => ({ todo, date: getCalendarReferenceDate(todo) }))
     .filter(({ date }) => date && isSameDay(date, today));
 
-  activeTodos.forEach(({ todo, date }) => {
-    const hoursForTask = getCalendarHoursForTask(todo, date);
-    hoursForTask.forEach((hour) => {
-      hours[hour]?.push(todo);
-    });
+  const hourLabelFor = (hour) => `${`${hour}`.padStart(2, "0")}:00`;
+
+  const ranges = activeTodos.flatMap(({ todo, date }) => {
+    const hoursForTask = [...new Set(getCalendarHoursForTask(todo, date))].sort(
+      (a, b) => a - b
+    );
+    if (!hoursForTask.length) return [];
+
+    const segments = [];
+    let startHour = hoursForTask[0];
+    let previousHour = hoursForTask[0];
+
+    for (let index = 1; index < hoursForTask.length; index += 1) {
+      const hour = hoursForTask[index];
+      if (hour === previousHour + 1) {
+        previousHour = hour;
+        continue;
+      }
+      segments.push({ start: startHour, end: previousHour + 1 });
+      startHour = hour;
+      previousHour = hour;
+    }
+
+    segments.push({ start: startHour, end: previousHour + 1 });
+    return segments.map((segment) => ({ ...segment, task: todo }));
   });
 
-  const previousHourTaskIds = new Set();
+  const sortedRanges = ranges.sort((first, second) => {
+    if (first.start === second.start) return first.end - second.end;
+    return first.start - second.start;
+  });
 
-  for (let hour = 0; hour < 24; hour += 1) {
+  const columnEndTimes = [];
+  sortedRanges.forEach((range) => {
+    const availableIndex = columnEndTimes.findIndex((end) => end <= range.start);
+    const columnIndex = availableIndex === -1 ? columnEndTimes.length : availableIndex;
+    columnEndTimes[columnIndex] = range.end;
+    range.column = columnIndex;
+  });
+
+  const gridRow = document.createElement("tr");
+  const firstLabel = document.createElement("th");
+  firstLabel.scope = "row";
+  firstLabel.textContent = hourLabelFor(0);
+  gridRow.appendChild(firstLabel);
+
+  const gridCell = document.createElement("td");
+  gridCell.className = "calendar-grid-cell";
+  gridCell.rowSpan = 24;
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+  grid.style.setProperty("--calendar-columns", `${Math.max(columnEndTimes.length, 1)}`);
+  grid.setAttribute("role", "grid");
+
+  sortedRanges.forEach((range) => {
+    const item = document.createElement("div");
+    item.className = "calendar-block";
+    item.style.gridRow = `${range.start + 1} / ${range.end + 1}`;
+    item.style.gridColumn = `${(range.column ?? 0) + 1}`;
+
+    if (range.task.color) {
+      item.style.setProperty("--accent", range.task.color);
+    } else {
+      item.style.removeProperty("--accent");
+    }
+
+    const title = document.createElement("div");
+    title.className = "calendar-block-title";
+    title.textContent = range.task.text || DEFAULT_TASK_PLACEHOLDER;
+
+    const time = document.createElement("div");
+    time.className = "calendar-block-time";
+    const startLabel = formatTime(range.task.startTime) || hourLabelFor(range.start);
+    const explicitEndLabel = formatTime(range.task.endTime);
+    const endHourLabel = Math.min(range.end, 24);
+    const endLabel =
+      explicitEndLabel ||
+      (endHourLabel === 24 ? "24:00" : hourLabelFor(endHourLabel % 24));
+    time.textContent = `${startLabel} – ${endLabel}`;
+
+    item.setAttribute(
+      "aria-label",
+      `${title.textContent} from ${startLabel} to ${endLabel}`
+    );
+
+    item.appendChild(title);
+    item.appendChild(time);
+    grid.appendChild(item);
+  });
+
+  gridCell.appendChild(grid);
+  gridRow.appendChild(gridCell);
+  calendarTableBodyEl.appendChild(gridRow);
+
+  for (let hour = 1; hour < 24; hour += 1) {
     const row = document.createElement("tr");
     const label = document.createElement("th");
     label.scope = "row";
-    label.textContent = `${hour}:00`;
-
-    const cell = document.createElement("td");
-    const hourTasks = hours[hour] ?? [];
-    const currentHourTaskIds = new Set();
-    if (hourTasks.length) {
-      const list = document.createElement("ul");
-      list.className = "calendar-task-list";
-      hourTasks.forEach((task) => {
-        const taskId = task.id ?? task.text ?? "";
-        currentHourTaskIds.add(taskId);
-        const isContinuation = previousHourTaskIds.has(taskId);
-        const item = document.createElement("li");
-        item.className = "calendar-task";
-        if (isContinuation) {
-          item.classList.add("calendar-task-continuation");
-        }
-        const dot = document.createElement("span");
-        dot.className = "color-dot";
-        if (task.color) {
-          dot.style.setProperty("--accent", task.color);
-          item.style.setProperty("--accent", task.color);
-        } else {
-          item.style.removeProperty("--accent");
-        }
-        item.appendChild(dot);
-
-        if (isContinuation) {
-          const continuationLabel = document.createElement("span");
-          continuationLabel.className = "task-continuation-label";
-          continuationLabel.textContent = "Continues";
-
-          const hiddenTitle = document.createElement("span");
-          hiddenTitle.className = "sr-only";
-          hiddenTitle.textContent = `${task.text || DEFAULT_TASK_PLACEHOLDER} continues`;
-
-          item.appendChild(continuationLabel);
-          item.appendChild(hiddenTitle);
-        } else {
-          const title = document.createElement("span");
-          title.className = "task-title";
-          title.textContent = task.text || DEFAULT_TASK_PLACEHOLDER;
-
-          const startLabel = formatTime(task.startTime);
-          const endLabel = formatTime(task.endTime);
-          const timeLabel = startLabel
-            ? endLabel
-              ? `${startLabel} – ${endLabel}`
-              : startLabel
-            : endLabel;
-          const time = document.createElement("span");
-          time.className = "task-time";
-          time.textContent = timeLabel || "No time set";
-
-          item.appendChild(title);
-          item.appendChild(time);
-        }
-        list.appendChild(item);
-      });
-      cell.appendChild(list);
-    } else {
-      cell.classList.add("empty");
-    }
-
+    label.textContent = hourLabelFor(hour);
     row.appendChild(label);
-    row.appendChild(cell);
     calendarTableBodyEl.appendChild(row);
-
-    previousHourTaskIds.clear();
-    currentHourTaskIds.forEach((id) => previousHourTaskIds.add(id));
   }
 }
 

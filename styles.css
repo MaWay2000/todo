@@ -1537,6 +1537,10 @@ button.danger:hover {
   letter-spacing: 0.01em;
 }
 
+:root {
+  --calendar-hour-height: 56px;
+}
+
 .calendar-table {
   width: 100%;
   border-collapse: collapse;
@@ -1544,6 +1548,10 @@ button.danger:hover {
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
+}
+
+.calendar-table tr {
+  height: var(--calendar-hour-height);
 }
 
 .calendar-table tr + tr {
@@ -1558,73 +1566,90 @@ button.danger:hover {
 }
 
 .calendar-table th {
-  width: 80px;
+  width: 84px;
   color: var(--muted);
   font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
-.calendar-table td {
-  min-height: 32px;
-}
-
-.calendar-task-list {
-  list-style: none;
+.calendar-grid-cell {
   padding: 0;
-  margin: 0;
+  position: relative;
+}
+
+.calendar-grid {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(24, var(--calendar-hour-height));
+  grid-template-columns: repeat(var(--calendar-columns, 1), minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  min-height: calc(var(--calendar-hour-height) * 24);
+}
+
+.calendar-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent var(--calendar-hour-height)
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
+  pointer-events: none;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.calendar-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.calendar-block {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  width: 100%;
-}
-
-.calendar-task {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.55rem;
-  background: rgba(17, 24, 39, 0.85);
+  gap: 0.25rem;
+  padding: 0.6rem 0.7rem;
+  background: rgba(17, 24, 39, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
-  width: 100%;
-  justify-content: space-between;
+  border-radius: 12px;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  isolation: isolate;
 }
 
-.calendar-task-continuation {
-  justify-content: flex-start;
-  gap: 0.4rem;
-}
-
-.calendar-task-continuation .task-continuation-label {
-  color: var(--muted);
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.calendar-task .color-dot {
-  flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
-}
-
-.calendar-task .task-title {
-  font-weight: 600;
-  flex: 1;
-}
-
-.calendar-task .task-time {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-left: auto;
-}
-
-.calendar-table td.empty::after {
+.calendar-block::before {
   content: "";
-  display: block;
-  min-height: 0.5rem;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border-left: 5px solid var(--accent);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.calendar-block-title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  z-index: 1;
+}
+
+.calendar-block-time {
+  color: var(--muted);
+  font-size: 0.9rem;
+  z-index: 1;
 }
 
 .category-form {
