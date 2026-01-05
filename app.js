@@ -1498,6 +1498,16 @@ function hasValidEndTime(task) {
   return Number.isFinite(end.getTime());
 }
 
+function hasActiveEndTime(task, referenceDate = new Date()) {
+  if (!hasValidEndTime(task)) return false;
+  const end = new Date(task.endTime);
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(end.getTime()) || !Number.isFinite(reference.getTime())) {
+    return false;
+  }
+  return end >= reference;
+}
+
 function isTodoFresh(todo, referenceTime = Date.now()) {
   if (!Number.isFinite(todo?.freshUntil)) return false;
   return todo.freshUntil > referenceTime;
@@ -1851,7 +1861,14 @@ function renderTodos() {
     .filter((todo) => {
       if (filter === "active") return !todo.completed && hasTaskStarted(todo);
       if (filter === "completed") return todo.completed;
-      if (filter === "daily") return isToday(todo.createdAt);
+      if (filter === "daily") {
+        if (isToday(todo.createdAt)) return true;
+        return (
+          !todo.completed &&
+          hasTaskStarted(todo, renderTime) &&
+          hasActiveEndTime(todo, renderTime)
+        );
+      }
       if (filter === "categories") return true;
       return true;
     });
