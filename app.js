@@ -1451,6 +1451,31 @@ function getCalendarReferenceDate(task) {
   return null;
 }
 
+function isTaskOnDay(task, day) {
+  const targetDay = toDate(day);
+  if (!Number.isFinite(targetDay?.getTime())) return false;
+
+  const dayStart = new Date(targetDay);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(targetDay);
+  dayEnd.setHours(23, 59, 59, 999);
+
+  const startDate = task.startTime ? new Date(task.startTime) : null;
+  const endDate = task.endTime ? new Date(task.endTime) : null;
+  const hasStart = Number.isFinite(startDate?.getTime());
+  const hasEnd = Number.isFinite(endDate?.getTime());
+
+  if (hasStart && hasEnd) {
+    return startDate <= dayEnd && endDate >= dayStart;
+  }
+
+  if (hasStart) return isSameDay(startDate, dayStart);
+
+  if (hasEnd) return isSameDay(endDate, dayStart);
+
+  return false;
+}
+
 function getCalendarHoursForTask(task, referenceDate = null) {
   const reference = referenceDate ?? getCalendarReferenceDate(task);
   if (!reference) return [];
@@ -2515,8 +2540,8 @@ function renderCalendarView() {
   const today = new Date();
   const activeTodos = todos
     .filter((todo) => isTodoInActiveView(todo))
-    .map((todo) => ({ todo, date: getCalendarReferenceDate(todo) }))
-    .filter(({ date }) => date && isSameDay(date, today));
+    .filter((todo) => isTaskOnDay(todo, today))
+    .map((todo) => ({ todo, date: today }));
 
   const scheduledDailyTasks = dailyTasks
     .filter((task) => !task.lastTriggeredAt || !isToday(task.lastTriggeredAt))
