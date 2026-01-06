@@ -2569,7 +2569,7 @@ function renderCalendarView() {
   });
 
   const sortedRanges = ranges.sort((first, second) => {
-    if (first.start === second.start) return first.end - second.end;
+    if (first.start === second.start) return second.end - first.end;
     return first.start - second.start;
   });
 
