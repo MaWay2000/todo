@@ -2568,8 +2568,14 @@ function renderCalendarView() {
     return segments.map((segment) => ({ ...segment, task: todo }));
   });
 
+  const rangeDuration = (range) => range.end - range.start;
+
   const sortedRanges = ranges.sort((first, second) => {
-    if (first.start === second.start) return first.end - second.end;
+    if (first.start === second.start) {
+      const durationDifference = rangeDuration(first) - rangeDuration(second);
+      if (durationDifference !== 0) return durationDifference;
+      return first.end - second.end;
+    }
     return first.start - second.start;
   });
 
