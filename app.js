@@ -2574,6 +2574,18 @@ function renderCalendarView() {
     );
     if (!hoursForTask.length) return [];
 
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const startDate = todo.startTime ? new Date(todo.startTime) : null;
+    const endDate = todo.endTime ? new Date(todo.endTime) : null;
+    const spansMultipleDays =
+      (startDate && startDate < dayStart) ||
+      (endDate && endDate > dayEnd) ||
+      (startDate && endDate && endDate.getTime() - startDate.getTime() > 86400000);
+
     const segments = [];
     let startHour = hoursForTask[0];
     let previousHour = hoursForTask[0];
@@ -2590,12 +2602,13 @@ function renderCalendarView() {
     }
 
     segments.push({ start: startHour, end: previousHour + 1 });
-    return segments.map((segment) => ({ ...segment, task: todo }));
+    return segments.map((segment) => ({ ...segment, task: todo, isLong: spansMultipleDays }));
   });
 
   const rangeDuration = (range) => range.end - range.start;
 
   const sortedRanges = ranges.sort((first, second) => {
+    if (first.isLong !== second.isLong) return first.isLong ? 1 : -1;
     if (first.start === second.start) {
       const durationDifference = rangeDuration(first) - rangeDuration(second);
       if (durationDifference !== 0) return durationDifference;
