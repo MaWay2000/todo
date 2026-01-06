@@ -2520,7 +2520,7 @@ function renderCalendarView() {
 
   const scheduledDailyTasks = dailyTasks
     .filter((task) => !task.lastTriggeredAt || !isToday(task.lastTriggeredAt))
-    .filter((task) => canTriggerDailyTaskToday(task, today))
+    .filter((task) => canShowDailyTaskToday(task, today))
     .map((task) => {
       const startTime = task.startTime
         ? rebaseDateTimeToReference(task.startTime, today)
@@ -3066,6 +3066,10 @@ function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
     isIntervalEligible(task, referenceDate) &&
     isStartTimeEligible(task, referenceDate)
   );
+}
+
+function canShowDailyTaskToday(task, referenceDate = new Date()) {
+  return isWeekdayEligible(task, referenceDate) && isIntervalEligible(task, referenceDate);
 }
 
 function maybeAutoTriggerDailyTasks(referenceDate = new Date()) {
