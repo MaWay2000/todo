@@ -8,6 +8,7 @@ let categories = [];
 let options = {};
 let filter = "active";
 let calendarActive = false;
+let calendarSelectedDate = new Date();
 
 const listEl = document.getElementById("todo-list");
 const formEl = document.getElementById("todo-form");
@@ -163,6 +164,7 @@ const dailyPanelEl = document.getElementById("daily-panel");
 const categoryPanelEl = document.getElementById("category-panel");
 const calendarPanelEl = document.getElementById("calendar-panel");
 const calendarTableBodyEl = document.getElementById("calendar-table-body");
+const calendarDayPickerEl = document.getElementById("calendar-day-picker");
 const categoryFormEl = document.getElementById("category-form");
 const categoryNameEl = document.getElementById("category-name");
 const categoryColorEl = document.getElementById("category-color");
@@ -202,6 +204,7 @@ const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const CALENDAR_SNAP_MINUTES = 5;
 const CALENDAR_DEFAULT_DURATION_MINUTES = 60;
+const CALENDAR_DAY_WINDOW = 7;
 const MINUTES_IN_DAY = 1440;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
@@ -2787,36 +2790,45 @@ function attachCalendarMove(item, range, grid, timeEl) {
 function renderCalendarView() {
   if (!calendarPanelEl || !calendarTableBodyEl) return;
   calendarTableBodyEl.innerHTML = "";
+  renderCalendarDayPicker();
 
-  const today = new Date();
-  const nowMinutes = getMinutesFromDate(today);
-  const currentHour = Number.isFinite(nowMinutes) ? Math.floor(nowMinutes / 60) : null;
+  const referenceDate = getCalendarReferenceDate();
+  const now = new Date();
+  const isReferenceToday = isSameDay(referenceDate, now);
+  const nowMinutes = isReferenceToday ? getMinutesFromDate(now) : null;
+  const currentHour =
+    Number.isFinite(nowMinutes) && isReferenceToday ? Math.floor(nowMinutes / 60) : null;
   const activeTodos = todos
     .filter((todo) => isTodoInActiveView(todo))
-    .filter((todo) => isTaskOnDay(todo, today))
-    .map((todo) => ({ todo, date: today, source: "todo" }));
+    .filter((todo) => isTaskOnDay(todo, referenceDate))
+    .map((todo) => ({ todo, date: referenceDate, source: "todo" }));
 
   const scheduledDailyTasks = dailyTasks
-    .filter((task) => !task.lastTriggeredAt || !isToday(task.lastTriggeredAt))
-    .filter((task) => canShowDailyTaskToday(task, today))
+    .filter((task) => {
+      if (!task.lastTriggeredAt) return true;
+      const triggeredAt = new Date(task.lastTriggeredAt);
+      if (!Number.isFinite(triggeredAt.getTime())) return true;
+      return !isSameDay(triggeredAt, referenceDate);
+    })
+    .filter((task) => canShowDailyTaskToday(task, referenceDate))
     .map((task) => {
       const startTime = task.startTime
-        ? rebaseDateTimeToReference(task.startTime, today)
+        ? rebaseDateTimeToReference(task.startTime, referenceDate)
         : null;
       const endTime = computeRebasedEnd(task.startTime, task.endTime, startTime);
-      const referenceDate = startTime
+      const dayReference = startTime
         ? new Date(startTime)
         : endTime
           ? new Date(endTime)
-          : today;
+          : referenceDate;
 
       return {
         todo: { ...task, startTime, endTime },
-        date: referenceDate,
+        date: dayReference,
         source: "daily",
       };
     })
-    .filter(({ date }) => date && isSameDay(date, today));
+    .filter(({ date }) => date && isSameDay(date, referenceDate));
 
   const hourLabelFor = (hour) => `${`${hour}`.padStart(2, "0")}:00`;
 
@@ -2941,15 +2953,19 @@ function renderCalendarView() {
 
     if (range.source === "daily") {
       const alreadyTriggered =
-        range.task.lastTriggeredAt && isToday(range.task.lastTriggeredAt);
-      const canTrigger = canTriggerDailyTaskToday(range.task);
+        isReferenceToday &&
+        range.task.lastTriggeredAt &&
+        isSameDay(new Date(range.task.lastTriggeredAt), referenceDate);
+      const canTrigger = isReferenceToday && canTriggerDailyTaskToday(range.task, referenceDate);
       const triggerBtn = makeCalendarActionButton(
         "➕",
         alreadyTriggered
           ? "Already created today"
           : canTrigger
             ? "Create today's task"
-            : "Not scheduled today",
+            : isReferenceToday
+              ? "Not scheduled today"
+              : "Switch to today to create tasks",
         () => triggerDailyTask(range.task.id)
       );
       triggerBtn.disabled = alreadyTriggered || !canTrigger;
@@ -3396,6 +3412,69 @@ function getStartOfDay(date) {
   const copy = new Date(date);
   copy.setHours(0, 0, 0, 0);
   return copy;
+}
+
+function getCalendarReferenceDate() {
+  const base = calendarSelectedDate ?? new Date();
+  return getStartOfDay(base);
+}
+
+function formatCalendarDay(value, options) {
+  return new Intl.DateTimeFormat(undefined, options).format(value);
+}
+
+function renderCalendarDayPicker() {
+  if (!calendarDayPickerEl) return;
+  calendarDayPickerEl.innerHTML = "";
+  const start = getStartOfDay(new Date());
+
+  for (let index = 0; index < CALENDAR_DAY_WINDOW; index += 1) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    const isSelected =
+      calendarSelectedDate && isSameDay(getStartOfDay(day), calendarSelectedDate);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "calendar-day";
+    button.classList.toggle("active", isSelected);
+    button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    button.setAttribute(
+      "aria-label",
+      formatCalendarDay(day, { weekday: "long", month: "long", day: "numeric" })
+    );
+
+    const weekday = document.createElement("span");
+    weekday.className = "calendar-day-weekday";
+    weekday.textContent = formatCalendarDay(day, { weekday: "short" });
+
+    const number = document.createElement("span");
+    number.className = "calendar-day-number";
+    number.textContent = formatCalendarDay(day, { day: "2-digit" });
+
+    const month = document.createElement("span");
+    month.className = "calendar-day-month";
+    month.textContent = formatCalendarDay(day, { month: "short" });
+
+    button.appendChild(weekday);
+    button.appendChild(number);
+    button.appendChild(month);
+
+    button.addEventListener("click", () => {
+      setCalendarSelectedDate(day);
+    });
+
+    calendarDayPickerEl.appendChild(button);
+  }
+}
+
+function setCalendarSelectedDate(nextDate) {
+  if (!nextDate) return;
+  calendarSelectedDate = getStartOfDay(nextDate);
+  renderCalendarDayPicker();
+  if (calendarActive) {
+    renderCalendarView();
+  }
 }
 
 function isStartTimeEligible(task, referenceDate = new Date()) {
@@ -4754,6 +4833,7 @@ loadOptions();
 ensureLayoutDefaults();
 ensureOptionsDefaults();
 setCalendarActive(false, { skipRender: true });
+setCalendarSelectedDate(new Date());
 syncOptionsUI();
 syncCategoriesFromTodos();
 renderCategoryOptions();
