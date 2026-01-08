@@ -1630,6 +1630,16 @@ button.danger:hover {
   isolation: isolate;
 }
 
+.calendar-block--draggable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.calendar-block--draggable.is-dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+}
+
 .calendar-block::before {
   content: "";
   position: absolute;

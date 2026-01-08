@@ -200,6 +200,8 @@ const START_NOW_THRESHOLD_MS = 120000;
 const NEW_TASK_HIGHLIGHT_DURATION_MS = 5000;
 const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
+const CALENDAR_SNAP_MINUTES = 5;
+const MINUTES_IN_DAY = 1440;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
 let activeEditId = null;
@@ -222,6 +224,25 @@ const formatTime = (value) => {
   const hours = `${date.getHours()}`.padStart(2, "0");
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
   return `${hours}:${minutes}`;
+};
+const getMinutesFromDate = (value) => {
+  const date = toDate(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.getHours() * 60 + date.getMinutes();
+};
+const snapMinutes = (minutes) =>
+  Math.round(minutes / CALENDAR_SNAP_MINUTES) * CALENDAR_SNAP_MINUTES;
+const buildDateFromMinutes = (referenceDate, minutes, sourceDate = null) => {
+  const reference = toDate(referenceDate);
+  if (!Number.isFinite(reference.getTime())) return null;
+  const safeMinutes = clamp(minutes, 0, MINUTES_IN_DAY - 1);
+  const hours = Math.floor(safeMinutes / 60);
+  const mins = Math.floor(safeMinutes % 60);
+  const seconds = sourceDate ? sourceDate.getSeconds() : 0;
+  const milliseconds = sourceDate ? sourceDate.getMilliseconds() : 0;
+  const next = new Date(reference);
+  next.setHours(hours, mins, seconds, milliseconds);
+  return next;
 };
 const formatDateTime = (value) => {
   const date = toDate(value);
@@ -2533,6 +2554,155 @@ function renderDailyTasks() {
   listEl.style.height = "";
 }
 
+function updateTaskSchedule(id, source, updates) {
+  let updated = false;
+  if (source === "daily") {
+    dailyTasks = dailyTasks.map((task) => {
+      if (task.id !== id) return task;
+      const nextStart = updates.startTime ?? task.startTime ?? null;
+      const nextEnd = updates.endTime ?? task.endTime ?? null;
+      if (task.startTime === nextStart && task.endTime === nextEnd) return task;
+      updated = true;
+      return {
+        ...task,
+        startTime: nextStart,
+        endTime: nextEnd,
+      };
+    });
+    if (updated) {
+      saveDailyTasks();
+    }
+  } else {
+    todos = todos.map((todo) => {
+      if (todo.id !== id || todo.deleted) return todo;
+      const nextStart = updates.startTime ?? todo.startTime ?? null;
+      const nextEnd = updates.endTime ?? todo.endTime ?? null;
+      if (todo.startTime === nextStart && todo.endTime === nextEnd) return todo;
+      updated = true;
+      return {
+        ...todo,
+        startTime: nextStart,
+        endTime: nextEnd,
+      };
+    });
+    if (updated) {
+      saveTodos();
+    }
+  }
+
+  if (updated) {
+    renderCurrentView();
+  }
+}
+
+function attachCalendarMove(item, range, grid) {
+  if (!grid) return;
+  if (range.isLong) return;
+  const task = range.task;
+  const startDate = task.startTime ? new Date(task.startTime) : null;
+  const endDate = task.endTime ? new Date(task.endTime) : null;
+  const hasStart = Number.isFinite(startDate?.getTime());
+  const hasEnd = Number.isFinite(endDate?.getTime());
+  if (!hasStart && !hasEnd) return;
+
+  const anchorDate = hasStart ? startDate : endDate;
+  const anchorMinutes = getMinutesFromDate(anchorDate);
+  if (anchorMinutes === null) return;
+
+  let durationMinutes = null;
+  if (hasStart && hasEnd) {
+    const durationMs = endDate - startDate;
+    if (!Number.isFinite(durationMs) || durationMs <= 0) return;
+    durationMinutes = Math.max(1, Math.round(durationMs / 60000));
+    if (durationMinutes > MINUTES_IN_DAY) return;
+  }
+
+  item.classList.add("calendar-block--draggable");
+
+  const getHourHeight = () => {
+    const rect = grid.getBoundingClientRect();
+    const style = getComputedStyle(grid);
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+    const usableHeight = rect.height - paddingTop - paddingBottom;
+    return usableHeight / 24;
+  };
+
+  let startY = 0;
+  let currentMinutes = anchorMinutes;
+  let isDragging = false;
+  let hourHeight = 0;
+
+  const onMove = (event) => {
+    const deltaY = event.clientY - startY;
+    const deltaMinutes = snapMinutes((deltaY / hourHeight) * 60);
+    const maxStart = durationMinutes
+      ? MINUTES_IN_DAY - durationMinutes
+      : MINUTES_IN_DAY - 1;
+    const nextMinutes = clamp(anchorMinutes + deltaMinutes, 0, maxStart);
+    currentMinutes = nextMinutes;
+    const translateY = ((nextMinutes - anchorMinutes) / 60) * hourHeight;
+    item.style.transform = `translateY(${translateY}px)`;
+
+    if (!isDragging && Math.abs(nextMinutes - anchorMinutes) > 0) {
+      isDragging = true;
+      item.classList.add("is-dragging");
+    }
+  };
+
+  const onUp = (event) => {
+    item.releasePointerCapture(event.pointerId);
+    item.classList.remove("is-dragging");
+    item.style.transform = "";
+
+    if (isDragging) {
+      const referenceDate = range.referenceDate ?? new Date();
+      const updates = {};
+      if (hasStart) {
+        const nextStart = buildDateFromMinutes(referenceDate, currentMinutes, startDate);
+        if (nextStart) {
+          updates.startTime = nextStart.toISOString();
+          if (durationMinutes !== null) {
+            updates.endTime = new Date(
+              nextStart.getTime() + durationMinutes * 60000
+            ).toISOString();
+          }
+        }
+      } else if (hasEnd) {
+        const nextEnd = buildDateFromMinutes(referenceDate, currentMinutes, endDate);
+        if (nextEnd) {
+          updates.endTime = nextEnd.toISOString();
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateTaskSchedule(task.id, range.source, updates);
+      }
+    }
+
+    item.removeEventListener("pointermove", onMove);
+    item.removeEventListener("pointerup", onUp);
+    item.removeEventListener("pointercancel", onUp);
+  };
+
+  const onDown = (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    hourHeight = getHourHeight();
+    if (!Number.isFinite(hourHeight) || hourHeight <= 0) return;
+    startY = event.clientY;
+    currentMinutes = anchorMinutes;
+    isDragging = false;
+    item.setPointerCapture(event.pointerId);
+
+    item.addEventListener("pointermove", onMove);
+    item.addEventListener("pointerup", onUp);
+    item.addEventListener("pointercancel", onUp);
+  };
+
+  item.addEventListener("pointerdown", onDown);
+}
+
 function renderCalendarView() {
   if (!calendarPanelEl || !calendarTableBodyEl) return;
   calendarTableBodyEl.innerHTML = "";
@@ -2541,7 +2711,7 @@ function renderCalendarView() {
   const activeTodos = todos
     .filter((todo) => isTodoInActiveView(todo))
     .filter((todo) => isTaskOnDay(todo, today))
-    .map((todo) => ({ todo, date: today }));
+    .map((todo) => ({ todo, date: today, source: "todo" }));
 
   const scheduledDailyTasks = dailyTasks
     .filter((task) => !task.lastTriggeredAt || !isToday(task.lastTriggeredAt))
@@ -2560,6 +2730,7 @@ function renderCalendarView() {
       return {
         todo: { ...task, startTime, endTime },
         date: referenceDate,
+        source: "daily",
       };
     })
     .filter(({ date }) => date && isSameDay(date, today));
@@ -2568,7 +2739,7 @@ function renderCalendarView() {
 
   const calendarEntries = [...activeTodos, ...scheduledDailyTasks];
 
-  const ranges = calendarEntries.flatMap(({ todo, date }) => {
+  const ranges = calendarEntries.flatMap(({ todo, date, source }) => {
     const hoursForTask = [...new Set(getCalendarHoursForTask(todo, date))].sort(
       (a, b) => a - b
     );
@@ -2602,7 +2773,13 @@ function renderCalendarView() {
     }
 
     segments.push({ start: startHour, end: previousHour + 1 });
-    return segments.map((segment) => ({ ...segment, task: todo, isLong: spansMultipleDays }));
+    return segments.map((segment) => ({
+      ...segment,
+      task: todo,
+      isLong: spansMultipleDays,
+      source,
+      referenceDate: date,
+    }));
   });
 
   const rangeDuration = (range) => range.end - range.start;
@@ -2674,6 +2851,7 @@ function renderCalendarView() {
     item.appendChild(title);
     item.appendChild(time);
     grid.appendChild(item);
+    attachCalendarMove(item, range, grid);
   });
 
   gridCell.appendChild(grid);
