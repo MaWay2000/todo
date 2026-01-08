@@ -3764,9 +3764,9 @@ function formatCalendarDay(value, options) {
   return new Intl.DateTimeFormat(undefined, options).format(value);
 }
 
-function getEarliestPendingCalendarDay() {
+function getPendingCalendarDaysBeforeToday() {
   const today = getStartOfDay(new Date());
-  let earliest = null;
+  const pendingDays = new Set();
 
   todos.forEach((todo) => {
     if (todo.deleted || todo.completed) return;
@@ -3778,28 +3778,29 @@ function getEarliestPendingCalendarDay() {
     if (!Number.isFinite(reference?.getTime())) return;
     const day = getStartOfDay(reference);
     if (day >= today) return;
-    if (!earliest || day < earliest) {
-      earliest = day;
-    }
+    pendingDays.add(day.getTime());
   });
 
-  return earliest;
+  return Array.from(pendingDays)
+    .sort((a, b) => a - b)
+    .map((timestamp) => new Date(timestamp));
 }
 
 function renderCalendarDayPicker() {
   if (!calendarDayPickerEl) return;
   calendarDayPickerEl.innerHTML = "";
   const today = getStartOfDay(new Date());
-  const earliestPendingDay = getEarliestPendingCalendarDay();
-  const start = earliestPendingDay ?? today;
-  const diffDays = earliestPendingDay
-    ? Math.max(0, Math.floor((today - start) / 86400000))
-    : 0;
-  const totalDays = CALENDAR_DAY_WINDOW + diffDays;
+  const pendingPastDays = getPendingCalendarDaysBeforeToday();
+  const totalDays = CALENDAR_DAY_WINDOW;
+  const days = [...pendingPastDays];
 
   for (let index = 0; index < totalDays; index += 1) {
-    const day = new Date(start);
-    day.setDate(start.getDate() + index);
+    const day = new Date(today);
+    day.setDate(today.getDate() + index);
+    days.push(day);
+  }
+
+  days.forEach((day) => {
     const isSelected =
       calendarSelectedDate && isSameDay(getStartOfDay(day), calendarSelectedDate);
 
@@ -3834,7 +3835,7 @@ function renderCalendarDayPicker() {
     });
 
     calendarDayPickerEl.appendChild(button);
-  }
+  });
 }
 
 function setCalendarSelectedDate(nextDate) {
