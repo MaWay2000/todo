@@ -1223,7 +1223,7 @@ function ensureLayoutDefaults() {
     const comments = todo.comments ?? "";
     const category = todo.category ?? "";
     const color = todo.color ?? null;
-    const showActions = false;
+    const showActions = todo.showActions ?? false;
     const deleted = todo.deleted ?? false;
     const deletedAt = todo.deletedAt ?? (deleted ? createdAt : null);
     const needsPositioning = todo.needsPositioning ?? false;
@@ -1237,7 +1237,7 @@ function ensureLayoutDefaults() {
       todo.startTime === undefined ||
       todo.endTime === undefined ||
       todo.comments === undefined ||
-      todo.showActions !== false ||
+      todo.showActions === undefined ||
       todo.deleted === undefined ||
       todo.deletedAt === undefined ||
       todo.needsPositioning === undefined ||
@@ -2295,7 +2295,12 @@ function renderTodos() {
       sizeAdjusted = adjustItemSizeToContent(item, todo) || sizeAdjusted;
       layoutMutated = autoPlaceTodoItem(item, todo) || layoutMutated;
     }
-    attachDrag(item, item, todo.id);
+    attachDrag(item, item, todo.id, {
+      onTap: () => {
+        if (todo.deleted) return;
+        toggleActionsVisibility(todo.id);
+      },
+    });
     attachResize(resizeHandle, item, todo.id);
   });
 
@@ -3395,6 +3400,37 @@ function triggerDailyTask(id) {
     task.id === id ? { ...task, lastTriggeredAt: new Date().toISOString() } : task
   );
   saveDailyTasks();
+  renderCurrentView();
+}
+
+function toggleActionsVisibility(id) {
+  todos = todos.map((todo) => {
+    if (todo.id !== id || todo.deleted) return todo;
+    const sizeStates = todo.sizeStates ?? EMPTY_SIZE_STATES;
+    const nextShowActions = !todo.showActions;
+
+    if (nextShowActions) {
+      return {
+        ...todo,
+        showActions: true,
+        sizeStates: {
+          ...sizeStates,
+          compact: sizeStates.compact ?? todo.size,
+          expanded: sizeStates.expanded ?? todo.size,
+        },
+        size: sizeStates.expanded ?? todo.size,
+      };
+    }
+
+    const compactSize = sizeStates.compact ?? todo.size;
+    return {
+      ...todo,
+      showActions: false,
+      sizeStates: { ...sizeStates, expanded: todo.size },
+      size: compactSize,
+    };
+  });
+  saveTodos();
   renderCurrentView();
 }
 
