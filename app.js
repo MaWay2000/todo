@@ -2799,7 +2799,8 @@ function renderCalendarView() {
   const currentHour =
     Number.isFinite(nowMinutes) && isReferenceToday ? Math.floor(nowMinutes / 60) : null;
   const activeTodos = todos
-    .filter((todo) => isTodoInActiveView(todo))
+    .filter((todo) => !todo.deleted && !todo.completed)
+    .filter((todo) => hasTaskStarted(todo, referenceDate))
     .filter((todo) => isTaskOnDay(todo, referenceDate))
     .map((todo) => ({ todo, date: referenceDate, source: "todo" }));
 
