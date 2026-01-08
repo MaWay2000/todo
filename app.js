@@ -38,12 +38,6 @@ const startNowChipEl = document.getElementById("todo-start-now-chip");
 const startDateFieldEl = startEl?.closest(".start-date-field");
 const finishDateFieldEl = endEl?.closest(".start-date-field") ?? endEl;
 
-if (endEl) {
-  endEl.dataset.synced = "true";
-}
-if (editEndEl) {
-  editEndEl.dataset.synced = "true";
-}
 const colorEl = document.getElementById("todo-color");
 const colorTriggerEl = document.querySelector("[data-color-trigger='todo-color']");
 const colorToggleEl = document.getElementById("todo-color-toggle");
@@ -104,6 +98,12 @@ const editEndDurationInputsEl = editEndDurationGroupEl?.querySelector(".duration
 const editStartNowChipEl = document.getElementById("edit-start-now-chip");
 const editStartDateFieldEl = editStartEl?.closest(".start-date-field");
 const editFinishDateFieldEl = editEndEl?.closest(".start-date-field") ?? editEndEl;
+if (endEl) {
+  endEl.dataset.synced = "true";
+}
+if (editEndEl) {
+  editEndEl.dataset.synced = "true";
+}
 const editColorEl = document.getElementById("edit-color");
 const editColorTriggerEl = document.querySelector(
   "[data-color-trigger='edit-color']"
