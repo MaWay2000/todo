@@ -232,6 +232,13 @@ const getMinutesFromDate = (value) => {
 };
 const snapMinutes = (minutes) =>
   Math.round(minutes / CALENDAR_SNAP_MINUTES) * CALENDAR_SNAP_MINUTES;
+const formatMinutesLabel = (minutes) => {
+  const safeMinutes = clamp(minutes, 0, MINUTES_IN_DAY);
+  if (safeMinutes === MINUTES_IN_DAY) return "24:00";
+  const hours = `${Math.floor(safeMinutes / 60)}`.padStart(2, "0");
+  const mins = `${Math.floor(safeMinutes % 60)}`.padStart(2, "0");
+  return `${hours}:${mins}`;
+};
 const buildDateFromMinutes = (referenceDate, minutes, sourceDate = null) => {
   const reference = toDate(referenceDate);
   if (!Number.isFinite(reference.getTime())) return null;
@@ -2595,7 +2602,7 @@ function updateTaskSchedule(id, source, updates) {
   }
 }
 
-function attachCalendarMove(item, range, grid) {
+function attachCalendarMove(item, range, grid, timeEl) {
   if (!grid) return;
   if (range.isLong) return;
   const task = range.task;
@@ -2628,10 +2635,40 @@ function attachCalendarMove(item, range, grid) {
     return usableHeight / 24;
   };
 
+  const blockDurationMinutes = (range.end - range.start) * 60;
   let startY = 0;
   let currentMinutes = anchorMinutes;
   let isDragging = false;
   let hourHeight = 0;
+  let originalTimeText = timeEl?.textContent ?? "";
+  let originalAriaLabel = item.getAttribute("aria-label") ?? "";
+
+  const updateTimeText = (nextMinutes) => {
+    if (!timeEl) return;
+    let startLabel = formatTime(range.task.startTime) || formatMinutesLabel(range.start * 60);
+    let endLabel = formatTime(range.task.endTime) || formatMinutesLabel(range.end * 60);
+
+    if (hasStart) {
+      startLabel = formatMinutesLabel(nextMinutes);
+      if (durationMinutes !== null) {
+        endLabel = formatMinutesLabel(nextMinutes + durationMinutes);
+      } else {
+        endLabel = formatMinutesLabel(nextMinutes + blockDurationMinutes);
+      }
+    } else if (hasEnd) {
+      endLabel = formatMinutesLabel(nextMinutes);
+      startLabel = formatMinutesLabel(nextMinutes - blockDurationMinutes);
+    }
+
+    timeEl.textContent = `${startLabel} – ${endLabel}`;
+    if (originalAriaLabel) {
+      const titleText = range.task.text || DEFAULT_TASK_PLACEHOLDER;
+      item.setAttribute(
+        "aria-label",
+        `${titleText} from ${startLabel} to ${endLabel}`
+      );
+    }
+  };
 
   const onMove = (event) => {
     const deltaY = event.clientY - startY;
@@ -2643,6 +2680,7 @@ function attachCalendarMove(item, range, grid) {
     currentMinutes = nextMinutes;
     const translateY = ((nextMinutes - anchorMinutes) / 60) * hourHeight;
     item.style.transform = `translateY(${translateY}px)`;
+    updateTimeText(nextMinutes);
 
     if (!isDragging && Math.abs(nextMinutes - anchorMinutes) > 0) {
       isDragging = true;
@@ -2654,6 +2692,12 @@ function attachCalendarMove(item, range, grid) {
     item.releasePointerCapture(event.pointerId);
     item.classList.remove("is-dragging");
     item.style.transform = "";
+    if (timeEl) {
+      timeEl.textContent = originalTimeText;
+    }
+    if (originalAriaLabel) {
+      item.setAttribute("aria-label", originalAriaLabel);
+    }
 
     if (isDragging) {
       const referenceDate = range.referenceDate ?? new Date();
@@ -2693,6 +2737,8 @@ function attachCalendarMove(item, range, grid) {
     startY = event.clientY;
     currentMinutes = anchorMinutes;
     isDragging = false;
+    originalTimeText = timeEl?.textContent ?? "";
+    originalAriaLabel = item.getAttribute("aria-label") ?? "";
     item.setPointerCapture(event.pointerId);
 
     item.addEventListener("pointermove", onMove);
@@ -2851,7 +2897,7 @@ function renderCalendarView() {
     item.appendChild(title);
     item.appendChild(time);
     grid.appendChild(item);
-    attachCalendarMove(item, range, grid);
+    attachCalendarMove(item, range, grid, time);
   });
 
   gridCell.appendChild(grid);
