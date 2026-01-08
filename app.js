@@ -201,6 +201,7 @@ const NEW_TASK_HIGHLIGHT_DURATION_MS = 5000;
 const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const CALENDAR_SNAP_MINUTES = 5;
+const CALENDAR_DEFAULT_DURATION_MINUTES = 60;
 const MINUTES_IN_DAY = 1440;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
@@ -1504,12 +1505,12 @@ function isTaskOnDay(task, day) {
   return false;
 }
 
-function getCalendarHoursForTask(task, referenceDate = null) {
+function getCalendarRangeForTask(task, referenceDate = null) {
   const reference = referenceDate ?? getCalendarReferenceDate(task);
-  if (!reference) return [];
+  if (!reference) return null;
 
   const referenceDay = toDate(reference);
-  if (!Number.isFinite(referenceDay.getTime())) return [];
+  if (!Number.isFinite(referenceDay.getTime())) return null;
 
   const startDate = task.startTime ? new Date(task.startTime) : null;
   const endDate = task.endTime ? new Date(task.endTime) : null;
@@ -1525,24 +1526,42 @@ function getCalendarHoursForTask(task, referenceDate = null) {
     const dayEnd = new Date(referenceDay);
     dayEnd.setHours(23, 59, 59, 999);
 
-    if (startDate > dayEnd || endDate < dayStart) return [];
+    if (startDate > dayEnd || endDate < dayStart) return null;
 
     const rangeStart = startOnDay ? startDate : dayStart;
     const rangeEnd = endOnDay ? endDate : dayEnd;
 
-    if (rangeEnd < rangeStart) return [];
+    if (rangeEnd < rangeStart) return null;
 
-    const startHour = clamp(rangeStart.getHours(), 0, 23);
-    const endHour = clamp(rangeEnd.getHours(), 0, 23);
-
-    return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
+    const startMinutes = clamp(getMinutesFromDate(rangeStart), 0, MINUTES_IN_DAY);
+    let endMinutes = clamp(getMinutesFromDate(rangeEnd), 0, MINUTES_IN_DAY);
+    if (endMinutes <= startMinutes) {
+      endMinutes = Math.min(startMinutes + 1, MINUTES_IN_DAY);
+    }
+    return { start: startMinutes, end: endMinutes };
   }
 
-  if (startOnDay) return [clamp(startDate.getHours(), 0, 23)];
+  if (startOnDay) {
+    const startMinutes = clamp(getMinutesFromDate(startDate), 0, MINUTES_IN_DAY - 1);
+    const endMinutes = clamp(
+      startMinutes + CALENDAR_DEFAULT_DURATION_MINUTES,
+      1,
+      MINUTES_IN_DAY
+    );
+    return { start: startMinutes, end: endMinutes };
+  }
 
-  if (endOnDay) return [clamp(endDate.getHours(), 0, 23)];
+  if (endOnDay) {
+    const endMinutes = clamp(getMinutesFromDate(endDate), 1, MINUTES_IN_DAY);
+    const startMinutes = clamp(
+      endMinutes - CALENDAR_DEFAULT_DURATION_MINUTES,
+      0,
+      MINUTES_IN_DAY - 1
+    );
+    return { start: startMinutes, end: endMinutes };
+  }
 
-  return [];
+  return null;
 }
 
 function hasValidEndTime(task) {
@@ -2635,7 +2654,7 @@ function attachCalendarMove(item, range, grid, timeEl) {
     return usableHeight / 24;
   };
 
-  const blockDurationMinutes = (range.end - range.start) * 60;
+  const blockDurationMinutes = range.end - range.start;
   let startY = 0;
   let currentMinutes = anchorMinutes;
   let isDragging = false;
@@ -2645,8 +2664,8 @@ function attachCalendarMove(item, range, grid, timeEl) {
 
   const updateTimeText = (nextMinutes) => {
     if (!timeEl) return;
-    let startLabel = formatTime(range.task.startTime) || formatMinutesLabel(range.start * 60);
-    let endLabel = formatTime(range.task.endTime) || formatMinutesLabel(range.end * 60);
+    let startLabel = formatTime(range.task.startTime) || formatMinutesLabel(range.start);
+    let endLabel = formatTime(range.task.endTime) || formatMinutesLabel(range.end);
 
     if (hasStart) {
       startLabel = formatMinutesLabel(nextMinutes);
@@ -2787,10 +2806,8 @@ function renderCalendarView() {
   const calendarEntries = [...activeTodos, ...scheduledDailyTasks];
 
   const ranges = calendarEntries.flatMap(({ todo, date, source }) => {
-    const hoursForTask = [...new Set(getCalendarHoursForTask(todo, date))].sort(
-      (a, b) => a - b
-    );
-    if (!hoursForTask.length) return [];
+    const range = getCalendarRangeForTask(todo, date);
+    if (!range) return [];
 
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
@@ -2804,29 +2821,15 @@ function renderCalendarView() {
       (endDate && endDate > dayEnd) ||
       (startDate && endDate && endDate.getTime() - startDate.getTime() > 86400000);
 
-    const segments = [];
-    let startHour = hoursForTask[0];
-    let previousHour = hoursForTask[0];
-
-    for (let index = 1; index < hoursForTask.length; index += 1) {
-      const hour = hoursForTask[index];
-      if (hour === previousHour + 1) {
-        previousHour = hour;
-        continue;
-      }
-      segments.push({ start: startHour, end: previousHour + 1 });
-      startHour = hour;
-      previousHour = hour;
-    }
-
-    segments.push({ start: startHour, end: previousHour + 1 });
-    return segments.map((segment) => ({
-      ...segment,
-      task: todo,
-      isLong: spansMultipleDays,
-      source,
-      referenceDate: date,
-    }));
+    return [
+      {
+        ...range,
+        task: todo,
+        isLong: spansMultipleDays,
+        source,
+        referenceDate: date,
+      },
+    ];
   });
 
   const rangeDuration = (range) => range.end - range.start;
@@ -2882,12 +2885,9 @@ function renderCalendarView() {
 
     const time = document.createElement("div");
     time.className = "calendar-block-time";
-    const startLabel = formatTime(range.task.startTime) || hourLabelFor(range.start);
+    const startLabel = formatTime(range.task.startTime) || formatMinutesLabel(range.start);
     const explicitEndLabel = formatTime(range.task.endTime);
-    const endHourLabel = Math.min(range.end, 24);
-    const endLabel =
-      explicitEndLabel ||
-      (endHourLabel === 24 ? "24:00" : hourLabelFor(endHourLabel % 24));
+    const endLabel = explicitEndLabel || formatMinutesLabel(range.end);
     time.textContent = `${startLabel} – ${endLabel}`;
 
     item.setAttribute(
