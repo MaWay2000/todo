@@ -1391,6 +1391,11 @@ button.danger:hover {
   display: flex;
 }
 
+.todo-item:hover .action-row,
+.todo-item:focus-within .action-row {
+  display: flex;
+}
+
 .todo-item.deleted:hover .action-row,
 .todo-item.deleted:focus-within .action-row {
   display: flex;
