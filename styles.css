@@ -1066,7 +1066,7 @@ button.danger:hover {
   border-radius: 14px;
   padding: 0.5rem 0.65rem 0.65rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-  min-width: fit-content;
+  min-width: 0;
   cursor: default;
   transition: box-shadow 120ms ease, transform 120ms ease, border-color 150ms ease;
 }
@@ -1230,9 +1230,11 @@ button.danger:hover {
   font-size: 1rem;
   cursor: pointer;
   flex: 1 0 auto;
-  min-width: max-content;
+  min-width: 0;
   display: block;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .auto-shift-enabled .todo-title {
