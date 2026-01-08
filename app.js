@@ -2731,6 +2731,7 @@ function attachCalendarMove(item, range, grid, timeEl) {
 
   const onDown = (event) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (event.target.closest(".action-row")) return;
     event.preventDefault();
     hourHeight = getHourHeight();
     if (!Number.isFinite(hourHeight) || hourHeight <= 0) return;
