@@ -5045,7 +5045,9 @@ const validateDailyEditDateInputs = () => {
     event.preventDefault();
     const text = editInputEl.value.trim();
     const comments = getCleanedComment(editCommentToggleEl, editCommentEl);
-    const offsetStartTime = editStartOffsetToggleEl?.checked
+    const hasManualStartInput =
+      Boolean(editStartEl?.value) || editStartEl?.dataset.startNow === "true";
+    const offsetStartTime = editStartOffsetToggleEl?.checked && !hasManualStartInput
       ? computeStartFromOffset(
           editStartOffsetDaysEl.value,
           editStartOffsetHoursEl.value,
