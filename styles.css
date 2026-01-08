@@ -1581,9 +1581,10 @@ button.danger:hover {
 .calendar-grid {
   position: relative;
   display: grid;
-  grid-template-rows: repeat(24, var(--calendar-hour-height));
+  grid-template-rows: repeat(1440, calc(var(--calendar-hour-height) / 60));
   grid-template-columns: repeat(var(--calendar-columns, 1), minmax(0, 1fr));
-  gap: 0.45rem;
+  column-gap: 0.45rem;
+  row-gap: 0;
   padding: 0.55rem 0.65rem;
   min-height: calc(var(--calendar-hour-height) * 24);
 }
