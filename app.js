@@ -1125,6 +1125,20 @@ function updateAddDialogTitle() {
 }
 
 function getContentMinSize(item) {
+  const measureIntrinsicWidth = (element) => {
+    if (!element) return 0;
+    const previous = {
+      width: element.style.width,
+      maxWidth: element.style.maxWidth,
+    };
+    element.style.width = "max-content";
+    element.style.maxWidth = "none";
+    const width = element.scrollWidth || element.offsetWidth || 0;
+    element.style.width = previous.width;
+    element.style.maxWidth = previous.maxWidth;
+    return width;
+  };
+
   const style = window.getComputedStyle(item);
   const paddingX =
     parseFloat(style.paddingLeft || 0) + parseFloat(style.paddingRight || 0);
@@ -1135,10 +1149,10 @@ function getContentMinSize(item) {
   const actions = item.querySelector(".action-row");
   const details = item.querySelector(".todo-details");
 
-  const shellWidth = shell?.scrollWidth ?? 0;
-  const actionsWidth = actions?.scrollWidth ?? 0;
+  const shellWidth = measureIntrinsicWidth(shell);
+  const actionsWidth = measureIntrinsicWidth(actions);
   const detailsWidth = item.classList.contains("details-open")
-    ? details?.scrollWidth ?? 0
+    ? measureIntrinsicWidth(details)
     : 0;
 
   const shellHeight = shell?.offsetHeight ?? 0;
