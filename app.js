@@ -2894,8 +2894,72 @@ function renderCalendarView() {
       `${title.textContent} from ${startLabel} to ${endLabel}`
     );
 
+    const actions = document.createElement("div");
+    actions.className = "action-row";
+    const makeCalendarActionButton = (icon, label, handler, extraClass = "") => {
+      const button = makeActionButton(icon, label, handler, extraClass);
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      return button;
+    };
+
+    if (range.source === "daily") {
+      const alreadyTriggered =
+        range.task.lastTriggeredAt && isToday(range.task.lastTriggeredAt);
+      const canTrigger = canTriggerDailyTaskToday(range.task);
+      const triggerBtn = makeCalendarActionButton(
+        "➕",
+        alreadyTriggered
+          ? "Already created today"
+          : canTrigger
+            ? "Create today's task"
+            : "Not scheduled today",
+        () => triggerDailyTask(range.task.id)
+      );
+      triggerBtn.disabled = alreadyTriggered || !canTrigger;
+      const editBtn = makeCalendarActionButton(
+        "✏️",
+        "Edit daily task",
+        () => editDailyTask(range.task.id)
+      );
+      const deleteBtn = makeCalendarActionButton(
+        "🗑️",
+        "Delete daily task",
+        () => deleteDailyTask(range.task.id),
+        "danger"
+      );
+      actions.appendChild(triggerBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+    } else {
+      const editBtn = makeCalendarActionButton(
+        "✏️",
+        "Edit task",
+        () => editTodo(range.task.id)
+      );
+      const deleteBtn = makeCalendarActionButton(
+        "❌",
+        "Delete task",
+        () => deleteTodo(range.task.id)
+      );
+      const toggleBtn = makeCalendarActionButton(
+        "✅",
+        "Mark done",
+        () => toggleTodo(range.task.id)
+      );
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+      actions.appendChild(toggleBtn);
+    }
+
+    item.addEventListener("click", () => {
+      item.classList.toggle("actions-visible");
+    });
+
     item.appendChild(title);
     item.appendChild(time);
+    item.appendChild(actions);
     grid.appendChild(item);
     attachCalendarMove(item, range, grid, time);
   });
