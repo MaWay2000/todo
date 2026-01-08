@@ -2788,6 +2788,8 @@ function renderCalendarView() {
   calendarTableBodyEl.innerHTML = "";
 
   const today = new Date();
+  const nowMinutes = getMinutesFromDate(today);
+  const currentHour = Number.isFinite(nowMinutes) ? Math.floor(nowMinutes / 60) : null;
   const activeTodos = todos
     .filter((todo) => isTodoInActiveView(todo))
     .filter((todo) => isTaskOnDay(todo, today))
@@ -2870,6 +2872,9 @@ function renderCalendarView() {
   const firstLabel = document.createElement("th");
   firstLabel.scope = "row";
   firstLabel.textContent = hourLabelFor(0);
+  if (currentHour === 0) {
+    firstLabel.classList.add("calendar-hour-current");
+  }
   gridRow.appendChild(firstLabel);
 
   const gridCell = document.createElement("td");
@@ -2880,6 +2885,20 @@ function renderCalendarView() {
   grid.className = "calendar-grid";
   grid.style.setProperty("--calendar-columns", `${Math.max(columnEndTimes.length, 1)}`);
   grid.setAttribute("role", "grid");
+
+  if (Number.isFinite(nowMinutes)) {
+    const currentHourBlock = document.createElement("div");
+    currentHourBlock.className = "calendar-current-hour";
+    currentHourBlock.style.gridColumn = "1 / -1";
+    currentHourBlock.style.gridRow = `${currentHour * 60 + 1} / ${currentHour * 60 + 61}`;
+    grid.appendChild(currentHourBlock);
+
+    const nowLine = document.createElement("div");
+    nowLine.className = "calendar-now-line";
+    nowLine.style.gridColumn = "1 / -1";
+    nowLine.style.gridRow = `${nowMinutes + 1} / ${nowMinutes + 2}`;
+    grid.appendChild(nowLine);
+  }
 
   sortedRanges.forEach((range) => {
     const item = document.createElement("div");
@@ -2988,6 +3007,9 @@ function renderCalendarView() {
     const label = document.createElement("th");
     label.scope = "row";
     label.textContent = hourLabelFor(hour);
+    if (hour === currentHour) {
+      label.classList.add("calendar-hour-current");
+    }
     row.appendChild(label);
     calendarTableBodyEl.appendChild(row);
   }
