@@ -3764,12 +3764,40 @@ function formatCalendarDay(value, options) {
   return new Intl.DateTimeFormat(undefined, options).format(value);
 }
 
+function getEarliestPendingCalendarDay() {
+  const today = getStartOfDay(new Date());
+  let earliest = null;
+
+  todos.forEach((todo) => {
+    if (todo.deleted || todo.completed) return;
+    const reference = todo.startTime
+      ? new Date(todo.startTime)
+      : todo.endTime
+        ? new Date(todo.endTime)
+        : null;
+    if (!Number.isFinite(reference?.getTime())) return;
+    const day = getStartOfDay(reference);
+    if (day >= today) return;
+    if (!earliest || day < earliest) {
+      earliest = day;
+    }
+  });
+
+  return earliest;
+}
+
 function renderCalendarDayPicker() {
   if (!calendarDayPickerEl) return;
   calendarDayPickerEl.innerHTML = "";
-  const start = getStartOfDay(new Date());
+  const today = getStartOfDay(new Date());
+  const earliestPendingDay = getEarliestPendingCalendarDay();
+  const start = earliestPendingDay ?? today;
+  const diffDays = earliestPendingDay
+    ? Math.max(0, Math.floor((today - start) / 86400000))
+    : 0;
+  const totalDays = CALENDAR_DAY_WINDOW + diffDays;
 
-  for (let index = 0; index < CALENDAR_DAY_WINDOW; index += 1) {
+  for (let index = 0; index < totalDays; index += 1) {
     const day = new Date(start);
     day.setDate(start.getDate() + index);
     const isSelected =
