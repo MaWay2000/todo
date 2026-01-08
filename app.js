@@ -1219,11 +1219,7 @@ function updateEditStartFromOffsetPreview() {
   const isOffsetEnabled = editStartOffsetToggleEl?.checked ?? false;
 
   if (!isOffsetEnabled) {
-    if (
-      isAutoUpdatingStart ||
-      editStartEl?.dataset.startNow === "true" ||
-      !editStartEl?.value
-    ) {
+    if (isAutoUpdatingStart) {
       setEditStartInputValue(new Date().toISOString(), true, isAutoUpdatingStart);
     }
     syncEditEndTimeWithStart();
@@ -4004,7 +4000,7 @@ function editTodo(id) {
   activeEditId = id;
   editInputEl.value = todo.text;
   editCommentEl.value = todo.comments ?? "";
-  setEditStartInputValue(todo.startTime, false, true);
+  setEditStartInputValue(todo.startTime, false, false);
   if (editEndEl) {
     setDateTimeInput(editEndEl, todo.endTime);
   }
