@@ -1589,23 +1589,27 @@ button.danger:hover {
 }
 
 .calendar-hour-current {
-  color: #7dd3fc;
+  color: #bae6fd;
   font-weight: 700;
+  background: rgba(56, 189, 248, 0.12);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.45);
+  padding: 0.15rem 0.35rem;
 }
 
 .calendar-current-hour {
-  background: rgba(56, 189, 248, 0.08);
-  border-top: 1px solid rgba(56, 189, 248, 0.35);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.12);
+  border-top: 1px solid rgba(56, 189, 248, 0.55);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.55);
   border-radius: 10px;
   pointer-events: none;
   z-index: 0;
 }
 
 .calendar-now-line {
-  height: 2px;
+  height: 3px;
   background: #f87171;
-  box-shadow: 0 0 10px rgba(248, 113, 113, 0.7);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.85);
   border-radius: 999px;
   align-self: center;
   pointer-events: none;
