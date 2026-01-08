@@ -1662,6 +1662,18 @@ button.danger:hover {
   z-index: 1;
 }
 
+.calendar-block .action-row {
+  display: none;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+  z-index: 1;
+}
+
+.calendar-block.actions-visible .action-row {
+  display: flex;
+}
+
 .category-form {
   display: flex;
   gap: 0.65rem;
