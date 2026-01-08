@@ -1227,6 +1227,13 @@ function updateEditStartFromOffsetPreview() {
     return;
   }
 
+  if (!isAutoUpdatingStart) {
+    syncEditEndTimeWithStart();
+    updateEditStartNowIndicator();
+    renderEditTodoPreview();
+    return;
+  }
+
   const offsetStart = computeStartFromOffset(
     editStartOffsetDaysEl.value,
     editStartOffsetHoursEl.value,
