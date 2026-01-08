@@ -1479,7 +1479,8 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(reference.getTime())) {
     return true;
   }
-  return reference >= start;
+  if (reference >= start) return true;
+  return isSameDay(start, reference);
 }
 
 function getCalendarReferenceDate(task) {
