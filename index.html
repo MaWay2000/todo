@@ -409,25 +409,63 @@
             placeholder="Comments (optional)"
           ></textarea>
         </div>
-        <div class="color-toggle">
-          <span class="color-picker-trigger" data-color-trigger="edit-color">Dot color</span>
-          <label class="inline-toggle color-toggle-switch" for="edit-color-toggle">
-            <span class="sr-only">Task color toggle</span>
-            <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
-            <span class="inline-toggle-track" aria-hidden="true">
-              <span class="inline-toggle-thumb"></span>
-            </span>
-            <span
-              id="edit-color-toggle-text"
-              class="inline-toggle-text"
-              data-on="On"
-              data-off="Off"
-            >On</span>
-          </label>
-          <span id="edit-preview-category" class="category-pill preview-category" hidden>
-            <span class="category-color-dot" aria-hidden="true"></span>
-            <span class="category-pill-label"></span>
-          </span>
+        <div class="color-toggle-row" role="group" aria-label="Task colors">
+          <div class="color-toggle">
+            <span class="color-picker-trigger" data-color-trigger="edit-color">Dot color</span>
+            <label class="inline-toggle color-toggle-switch" for="edit-color-toggle">
+              <span class="sr-only">Task color toggle</span>
+              <input id="edit-color-toggle" type="checkbox" aria-label="Enable task color" checked />
+              <span class="inline-toggle-track" aria-hidden="true">
+                <span class="inline-toggle-thumb"></span>
+              </span>
+              <span
+                id="edit-color-toggle-text"
+                class="inline-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >On</span>
+            </label>
+          </div>
+          <div class="color-toggle">
+            <span class="color-picker-trigger" data-color-trigger="edit-text-color">Text color</span>
+            <label class="inline-toggle color-toggle-switch" for="edit-text-color-toggle">
+              <span class="sr-only">Task text color toggle</span>
+              <input
+                id="edit-text-color-toggle"
+                type="checkbox"
+                aria-label="Enable custom text color for this task"
+              />
+              <span class="inline-toggle-track" aria-hidden="true">
+                <span class="inline-toggle-thumb"></span>
+              </span>
+              <span
+                id="edit-text-color-toggle-text"
+                class="inline-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >Off</span>
+            </label>
+          </div>
+          <div class="color-toggle">
+            <span class="color-picker-trigger" data-color-trigger="edit-background-color">Background color</span>
+            <label class="inline-toggle color-toggle-switch" for="edit-background-color-toggle">
+              <span class="sr-only">Task background color toggle</span>
+              <input
+                id="edit-background-color-toggle"
+                type="checkbox"
+                aria-label="Enable custom background color for this task"
+              />
+              <span class="inline-toggle-track" aria-hidden="true">
+                <span class="inline-toggle-thumb"></span>
+              </span>
+              <span
+                id="edit-background-color-toggle-text"
+                class="inline-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >Off</span>
+            </label>
+          </div>
         </div>
         <div class="color-input-row">
           <input
@@ -439,26 +477,6 @@
             aria-label="Task color"
           />
         </div>
-        <div class="color-toggle">
-          <span class="color-picker-trigger" data-color-trigger="edit-text-color">Text color</span>
-          <label class="inline-toggle color-toggle-switch" for="edit-text-color-toggle">
-            <span class="sr-only">Task text color toggle</span>
-            <input
-              id="edit-text-color-toggle"
-              type="checkbox"
-              aria-label="Enable custom text color for this task"
-            />
-            <span class="inline-toggle-track" aria-hidden="true">
-              <span class="inline-toggle-thumb"></span>
-            </span>
-            <span
-              id="edit-text-color-toggle-text"
-              class="inline-toggle-text"
-              data-on="On"
-              data-off="Off"
-            >Off</span>
-          </label>
-        </div>
         <div class="color-input-row">
           <input
             id="edit-text-color"
@@ -468,26 +486,6 @@
             value="#e5e7eb"
             aria-label="Task text color"
           />
-        </div>
-        <div class="color-toggle">
-          <span class="color-picker-trigger" data-color-trigger="edit-background-color">Background color</span>
-          <label class="inline-toggle color-toggle-switch" for="edit-background-color-toggle">
-            <span class="sr-only">Task background color toggle</span>
-            <input
-              id="edit-background-color-toggle"
-              type="checkbox"
-              aria-label="Enable custom background color for this task"
-            />
-            <span class="inline-toggle-track" aria-hidden="true">
-              <span class="inline-toggle-thumb"></span>
-            </span>
-            <span
-              id="edit-background-color-toggle-text"
-              class="inline-toggle-text"
-              data-on="On"
-              data-off="Off"
-            >Off</span>
-          </label>
         </div>
         <div class="color-input-row">
           <input
@@ -499,25 +497,181 @@
             aria-label="Task background color"
           />
         </div>
+        <div class="preview-row" aria-live="polite">
+          <p class="field-label preview-label">Preview</p>
+          <div id="edit-preview-card" class="todo-preview-card">
+            <div class="todo-shell">
+              <span id="edit-preview-color" class="color-dot"></span>
+              <span id="edit-preview-title" class="todo-title">Task name</span>
+              <span id="edit-preview-category" class="category-pill preview-category" hidden>
+                <span class="category-color-dot" aria-hidden="true"></span>
+                <span class="category-pill-label"></span>
+              </span>
+              <div id="edit-preview-time" class="time-meta" hidden>
+                <span id="edit-preview-range" class="time-range-chip"></span>
+                <span id="edit-preview-left" class="meta-chip accent"></span>
+              </div>
+            </div>
+          </div>
+        </div>
         <label class="sr-only" for="edit-start-datetime">Start time</label>
-        <div class="date-time-inputs">
-          <input
-            id="edit-start-datetime"
-            name="edit-start-datetime"
-            type="datetime-local"
-            lang="en-GB"
-            inputmode="numeric"
-          />
+        <div class="start-row">
+          <div class="duration-group start-offset" role="group" aria-labelledby="edit-start-offset-label">
+            <div class="duration-label-row">
+              <span id="edit-start-offset-label" class="field-label">Delay</span>
+              <label class="delay-toggle" for="edit-start-offset-enabled">
+                <input
+                  id="edit-start-offset-enabled"
+                  name="edit-start-offset-enabled"
+                  type="checkbox"
+                  aria-label="Enable delay by duration"
+                />
+                <span class="delay-toggle-track" aria-hidden="true">
+                  <span class="delay-toggle-thumb"></span>
+                </span>
+                <span
+                  id="edit-start-offset-toggle-label"
+                  class="delay-toggle-text"
+                  data-on="On"
+                  data-off="Off"
+                >Off</span>
+                </label>
+                <div class="duration-inputs">
+                <label class="duration-input" for="edit-start-offset-days">
+                  <input
+                    id="edit-start-offset-days"
+                    name="edit-start-offset-days"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="0"
+                  />
+                  <span class="duration-input-label">Days</span>
+                </label>
+                <label class="duration-input" for="edit-start-offset-hours">
+                  <input
+                    id="edit-start-offset-hours"
+                    name="edit-start-offset-hours"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Hours</span>
+                </label>
+                <label class="duration-input" for="edit-start-offset-mins">
+                  <input
+                    id="edit-start-offset-mins"
+                    name="edit-start-offset-mins"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Mins</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="start-date-field">
+            <label class="field-label" for="edit-start-datetime">Start</label>
+            <span id="edit-start-now-chip" class="start-now-chip" hidden>Now</span>
+            <div class="date-time-inputs">
+              <input
+                id="edit-start-datetime"
+                name="edit-start-datetime"
+                type="datetime-local"
+                lang="en-GB"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
         </div>
         <label class="sr-only" for="edit-end-datetime">End time</label>
-        <div class="date-time-inputs">
-          <input
-            id="edit-end-datetime"
-            name="edit-end-datetime"
-            type="datetime-local"
-            lang="en-GB"
-            inputmode="numeric"
-          />
+        <div class="finish-row">
+          <div class="field-label-with-toggle end-field-toggle">
+            <label class="field-label" for="edit-end-datetime">End</label>
+            <label class="delay-toggle end-duration-toggle" for="edit-end-duration-toggle">
+              <input
+                id="edit-end-duration-toggle"
+                name="edit-end-duration-enabled"
+                type="checkbox"
+                aria-label="Toggle time inputs"
+                checked
+              />
+              <span class="delay-toggle-track" aria-hidden="true">
+                <span class="delay-toggle-thumb"></span>
+              </span>
+              <span
+                id="edit-end-duration-toggle-label"
+                class="delay-toggle-text"
+                data-on="On"
+                data-off="Off"
+              >On</span>
+            </label>
+          </div>
+          <div
+            id="edit-finish-duration-group"
+            class="duration-group start-offset"
+            role="group"
+            aria-labelledby="edit-duration-label"
+          >
+            <div class="duration-label-row">
+              <span id="edit-duration-label" class="field-label sr-only">Duration</span>
+              <div class="duration-inputs">
+                <label class="duration-input" for="edit-end-days">
+                  <input
+                    id="edit-end-days"
+                    name="edit-end-days"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="0"
+                  />
+                  <span class="duration-input-label">Days</span>
+                </label>
+                <label class="duration-input" for="edit-end-hours">
+                  <input
+                    id="edit-end-hours"
+                    name="edit-end-hours"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Hours</span>
+                </label>
+                <label class="duration-input" for="edit-end-mins">
+                  <input
+                    id="edit-end-mins"
+                    name="edit-end-mins"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    maxlength="5"
+                    placeholder="00"
+                  />
+                  <span class="duration-input-label">Mins</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="start-date-field end-date-field">
+            <div class="date-time-inputs">
+              <input
+                id="edit-end-datetime"
+                name="edit-end-datetime"
+                type="datetime-local"
+                lang="en-GB"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
         </div>
         <select id="edit-category" name="edit-category" aria-label="Task category">
           <option value="">No category</option>
