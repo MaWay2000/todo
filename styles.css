@@ -658,6 +658,31 @@ button.danger:hover {
   min-width: 220px;
 }
 
+.clear-start-button {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.clear-start-button:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: none;
+}
+
+.clear-start-button:active {
+  transform: translateY(0);
+}
+
+.clear-start-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .field-label {
   color: var(--muted);
   font-weight: 600;
