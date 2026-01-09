@@ -233,6 +233,7 @@ const DURATION_INPUT_MAX_LENGTH = 5;
 const DRAG_PERSIST_INTERVAL = 200;
 const CALENDAR_SNAP_MINUTES = 5;
 const CALENDAR_DEFAULT_DURATION_MINUTES = 60;
+const CALENDAR_MIN_BLOCK_MINUTES = 30;
 const CALENDAR_DAY_WINDOW = 7;
 const MINUTES_IN_DAY = 1440;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -1919,6 +1920,29 @@ function isTaskOnDay(task, day) {
   return false;
 }
 
+function ensureCalendarRangeMinimum(startMinutes, endMinutes) {
+  let start = clamp(startMinutes, 0, MINUTES_IN_DAY);
+  let end = clamp(endMinutes, 0, MINUTES_IN_DAY);
+  if (end <= start) {
+    end = Math.min(start + 1, MINUTES_IN_DAY);
+  }
+
+  const minimum = CALENDAR_MIN_BLOCK_MINUTES;
+  if (end - start < minimum) {
+    const extendForward = Math.min(minimum - (end - start), MINUTES_IN_DAY - end);
+    end += extendForward;
+    if (end - start < minimum) {
+      const extendBackward = Math.min(minimum - (end - start), start);
+      start -= extendBackward;
+    }
+  }
+
+  if (end <= start) {
+    end = Math.min(start + 1, MINUTES_IN_DAY);
+  }
+  return { start, end };
+}
+
 function getCalendarRangeForTask(task, referenceDate = null) {
   const reference = referenceDate ?? getCalendarReferenceDate(task);
   if (!reference) return null;
@@ -1952,7 +1976,7 @@ function getCalendarRangeForTask(task, referenceDate = null) {
     if (endMinutes <= startMinutes) {
       endMinutes = Math.min(startMinutes + 1, MINUTES_IN_DAY);
     }
-    return { start: startMinutes, end: endMinutes };
+    return ensureCalendarRangeMinimum(startMinutes, endMinutes);
   }
 
   if (startOnDay) {
@@ -1962,7 +1986,7 @@ function getCalendarRangeForTask(task, referenceDate = null) {
       1,
       MINUTES_IN_DAY
     );
-    return { start: startMinutes, end: endMinutes };
+    return ensureCalendarRangeMinimum(startMinutes, endMinutes);
   }
 
   if (endOnDay) {
@@ -1972,7 +1996,7 @@ function getCalendarRangeForTask(task, referenceDate = null) {
       0,
       MINUTES_IN_DAY - 1
     );
-    return { start: startMinutes, end: endMinutes };
+    return ensureCalendarRangeMinimum(startMinutes, endMinutes);
   }
 
   return null;
