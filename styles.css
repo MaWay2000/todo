@@ -1713,6 +1713,10 @@ button.danger:hover {
   z-index: 1;
 }
 
+.calendar-block.actions-visible {
+  z-index: 5;
+}
+
 .calendar-block--draggable {
   cursor: grab;
   touch-action: none;
@@ -1755,6 +1759,8 @@ button.danger:hover {
 
 .calendar-block.actions-visible .action-row {
   display: flex;
+  position: relative;
+  z-index: 2;
 }
 
 .category-form {
