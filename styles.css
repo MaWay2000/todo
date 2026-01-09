@@ -1661,13 +1661,14 @@ button.danger:hover {
 }
 
 .calendar-now-line {
+  position: relative;
   height: 3px;
   background: #f87171;
   box-shadow: 0 0 12px rgba(248, 113, 113, 0.85);
   border-radius: 999px;
   align-self: center;
   pointer-events: none;
-  z-index: 2;
+  z-index: 6;
 }
 
 .calendar-grid::before {
