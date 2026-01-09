@@ -4233,6 +4233,10 @@ function attachDrag(handle, item, id, callbacks = {}) {
       "button, .resize-handle, input, textarea, select, option, a";
     if (event.target.closest(interactiveSelector)) return;
 
+    if (event.pointerType === "touch" && event.cancelable) {
+      event.preventDefault();
+    }
+
     const todo = todos.find((t) => t.id === id);
     if (!todo || todo.deleted) return;
     const containerRect = listEl.getBoundingClientRect();
@@ -4272,6 +4276,9 @@ function attachDrag(handle, item, id, callbacks = {}) {
     };
 
     const onMove = (moveEvent) => {
+      if (moveEvent.pointerType === "touch" && moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
       if (
