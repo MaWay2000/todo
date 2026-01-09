@@ -18,6 +18,7 @@ const commentToggleEl = document.getElementById("todo-comment-toggle");
 const commentToggleTextEl = document.getElementById("todo-comment-toggle-text");
 const commentFieldEl = commentEl?.closest(".comment-field");
 const startEl = document.getElementById("todo-start-datetime");
+const startClearButtonEl = document.getElementById("todo-start-clear");
 const endEl = document.getElementById("todo-end-datetime");
 const startOffsetDaysEl = document.getElementById("todo-start-offset-days");
 const startOffsetHoursEl = document.getElementById("todo-start-offset-hours");
@@ -79,6 +80,7 @@ const editCommentToggleEl = document.getElementById("edit-comment-toggle");
 const editCommentToggleTextEl = document.getElementById("edit-comment-toggle-text");
 const editCommentFieldEl = editCommentEl?.closest(".comment-field");
 const editStartEl = document.getElementById("edit-start-datetime");
+const editStartClearButtonEl = document.getElementById("edit-start-clear");
 const editEndEl = document.getElementById("edit-end-datetime");
 const editStartOffsetDaysEl = document.getElementById("edit-start-offset-days");
 const editStartOffsetHoursEl = document.getElementById("edit-start-offset-hours");
@@ -802,6 +804,14 @@ function updateStartNowIndicator() {
   }
 }
 
+function updateStartClearButtonState() {
+  if (!startClearButtonEl || !startEl) return;
+  const delayEnabled = startOffsetToggleEl?.checked ?? false;
+  startClearButtonEl.hidden = delayEnabled;
+  const hasValue = Boolean(startEl.value) || startEl.dataset.startNow === "true";
+  startClearButtonEl.disabled = !hasValue;
+}
+
 function revealStartInputFromNow() {
   if (!startEl || startEl.dataset.startNow !== "true") return;
   const stored =
@@ -809,8 +819,10 @@ function revealStartInputFromNow() {
   setDateTimeInput(startEl, stored);
   startEl.dataset.startNow = "false";
   startEl.dataset.startNowValue = "";
+  startEl.dataset.startCleared = "false";
   startEl.placeholder = "";
   updateStartNowIndicator();
+  updateStartClearButtonState();
   syncEndTimeWithStart();
   startEl.focus({ preventScroll: true });
 }
@@ -836,11 +848,14 @@ function setStartInputValue(value, displayAsNow = false, markAsAuto = null) {
     startEl.dataset.startNow = "false";
     startEl.dataset.startNowValue = "";
   }
+  const isCleared = !displayAsNow && !parsed && !value;
+  startEl.dataset.startCleared = isCleared ? "true" : "false";
   if (markAsAuto !== null) {
     startEl.dataset.startAuto = markAsAuto ? "true" : "false";
   }
   validateDateTimeInput(startEl);
   updateStartNowIndicator();
+  updateStartClearButtonState();
 }
 
 function getStartTimeValue() {
@@ -875,6 +890,9 @@ function setStartOffsetEnabled(enabled) {
   if (startDateFieldEl) {
     startDateFieldEl.classList.toggle("is-delay-enabled", enabled);
   }
+  if (startEl && enabled) {
+    startEl.dataset.startCleared = "false";
+  }
   syncStartOffsetToggleLabel();
   if (enabled) {
     updateStartFromOffsetPreview();
@@ -882,9 +900,17 @@ function setStartOffsetEnabled(enabled) {
     if (startOffsetDaysEl) startOffsetDaysEl.value = "";
     if (startOffsetHoursEl) startOffsetHoursEl.value = "";
     if (startOffsetMinsEl) startOffsetMinsEl.value = "";
-    setStartInputValue(new Date().toISOString(), true, true);
-    syncEndTimeWithStart();
+    if (startEl?.dataset.startCleared !== "true") {
+      setStartInputValue(new Date().toISOString(), true, true);
+      syncEndTimeWithStart();
+    } else {
+      startEl.dataset.startAuto = "false";
+      syncEndTimeWithStart();
+      updateStartNowIndicator();
+      renderTodoPreview();
+    }
   }
+  updateStartClearButtonState();
 }
 
 function setFinishDateFieldVisibility(enabled) {
@@ -975,6 +1001,14 @@ function updateEditStartNowIndicator() {
   }
 }
 
+function updateEditStartClearButtonState() {
+  if (!editStartClearButtonEl || !editStartEl) return;
+  const delayEnabled = editStartOffsetToggleEl?.checked ?? false;
+  editStartClearButtonEl.hidden = delayEnabled;
+  const hasValue = Boolean(editStartEl.value) || editStartEl.dataset.startNow === "true";
+  editStartClearButtonEl.disabled = !hasValue;
+}
+
 function revealEditStartInputFromNow() {
   if (!editStartEl || editStartEl.dataset.startNow !== "true") return;
   const stored =
@@ -982,8 +1016,10 @@ function revealEditStartInputFromNow() {
   setDateTimeInput(editStartEl, stored);
   editStartEl.dataset.startNow = "false";
   editStartEl.dataset.startNowValue = "";
+  editStartEl.dataset.startCleared = "false";
   editStartEl.placeholder = "";
   updateEditStartNowIndicator();
+  updateEditStartClearButtonState();
   syncEditEndTimeWithStart();
   editStartEl.focus({ preventScroll: true });
 }
@@ -1009,11 +1045,14 @@ function setEditStartInputValue(value, displayAsNow = false, markAsAuto = null) 
     editStartEl.dataset.startNow = "false";
     editStartEl.dataset.startNowValue = "";
   }
+  const isCleared = !displayAsNow && !parsed && !value;
+  editStartEl.dataset.startCleared = isCleared ? "true" : "false";
   if (markAsAuto !== null) {
     editStartEl.dataset.startAuto = markAsAuto ? "true" : "false";
   }
   validateDateTimeInput(editStartEl);
   updateEditStartNowIndicator();
+  updateEditStartClearButtonState();
 }
 
 function getEditStartTimeValue() {
@@ -1040,6 +1079,9 @@ function setEditStartOffsetEnabled(enabled) {
   if (editStartDateFieldEl) {
     editStartDateFieldEl.classList.toggle("is-delay-enabled", enabled);
   }
+  if (editStartEl && enabled) {
+    editStartEl.dataset.startCleared = "false";
+  }
   syncEditStartOffsetToggleLabel();
   if (enabled) {
     updateEditStartFromOffsetPreview();
@@ -1050,6 +1092,7 @@ function setEditStartOffsetEnabled(enabled) {
     updateEditStartNowIndicator();
     renderEditTodoPreview();
   }
+  updateEditStartClearButtonState();
 }
 
 function setEditFinishDateFieldVisibility(enabled) {
@@ -1179,14 +1222,19 @@ function updateTimeToFinishPreference(enabled) {
 function updateStartFromOffsetPreview() {
   const isAutoUpdatingStart = startEl?.dataset.startAuto === "true";
   const isOffsetEnabled = startOffsetToggleEl?.checked ?? false;
+  const isCleared = startEl?.dataset.startCleared === "true";
 
   if (!isOffsetEnabled) {
-    if (isAutoUpdatingStart || startEl?.dataset.startNow === "true" || !startEl?.value) {
+    if (
+      !isCleared &&
+      (isAutoUpdatingStart || startEl?.dataset.startNow === "true" || !startEl?.value)
+    ) {
       setStartInputValue(new Date().toISOString(), true, isAutoUpdatingStart);
     }
     syncEndTimeWithStart();
     updateStartNowIndicator();
     renderTodoPreview();
+    updateStartClearButtonState();
     return;
   }
 
@@ -1217,13 +1265,21 @@ function updateStartFromOffsetPreview() {
 function updateEditStartFromOffsetPreview() {
   const isAutoUpdatingStart = editStartEl?.dataset.startAuto === "true";
   const isOffsetEnabled = editStartOffsetToggleEl?.checked ?? false;
+  const isCleared = editStartEl?.dataset.startCleared === "true";
 
   if (!isOffsetEnabled) {
+    if (isCleared) {
+      syncEditEndTimeWithStart();
+      renderEditTodoPreview();
+      updateEditStartClearButtonState();
+      return;
+    }
     if (isAutoUpdatingStart) {
       setEditStartInputValue(new Date().toISOString(), true, isAutoUpdatingStart);
     }
     syncEditEndTimeWithStart();
     renderEditTodoPreview();
+    updateEditStartClearButtonState();
     return;
   }
 
@@ -4395,6 +4451,7 @@ formEl.addEventListener("submit", (event) => {
   const startNowValue = startEl?.dataset.startNow === "true"
     ? parseDateInput(startEl.dataset.startNowValue) ?? new Date().toISOString()
     : null;
+  const startCleared = startEl?.dataset.startCleared === "true";
   const startValidation = startEl?.dataset.startNow === "true"
     ? { value: startNowValue, valid: true }
     : validateDateTimeInput(startEl);
@@ -4402,7 +4459,8 @@ formEl.addEventListener("submit", (event) => {
     startEl?.reportValidity();
     return;
   }
-  const startTime = offsetStartTime ?? startValidation.value ?? startNowValue ?? new Date().toISOString();
+  const startTime = offsetStartTime ??
+    (startCleared ? null : startValidation.value ?? startNowValue ?? new Date().toISOString());
   const finishDurationEnabled = isFinishDurationEnabled();
   const endValidation = finishDurationEnabled
     ? validateDateTimeInput(endEl)
@@ -4590,6 +4648,32 @@ startDateFieldEl?.addEventListener("click", (event) => {
   revealStartInputFromNow();
 });
 
+const clearStartInput = () => {
+  if (!startEl) return;
+  startEl.value = "";
+  startEl.placeholder = "";
+  startEl.dataset.startNow = "false";
+  startEl.dataset.startNowValue = "";
+  startEl.dataset.startAuto = "false";
+  startEl.dataset.startCleared = "true";
+  validateDateTimeInput(startEl);
+  if (endEl) {
+    endEl.value = "";
+    endEl.dataset.synced = "false";
+    validateDateTimeInput(endEl);
+  }
+  [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
+    if (!input) return;
+    input.value = "";
+  });
+  syncEndTimeWithStart();
+  updateStartNowIndicator();
+  updateStartClearButtonState();
+  renderTodoPreview();
+};
+
+startClearButtonEl?.addEventListener("click", clearStartInput);
+
 [
   editStartOffsetDaysEl,
   editStartOffsetHoursEl,
@@ -4609,6 +4693,32 @@ editStartDateFieldEl?.addEventListener("click", (event) => {
   revealEditStartInputFromNow();
 });
 
+const clearEditStartInput = () => {
+  if (!editStartEl) return;
+  editStartEl.value = "";
+  editStartEl.placeholder = "";
+  editStartEl.dataset.startNow = "false";
+  editStartEl.dataset.startNowValue = "";
+  editStartEl.dataset.startAuto = "false";
+  editStartEl.dataset.startCleared = "true";
+  validateDateTimeInput(editStartEl);
+  if (editEndEl) {
+    editEndEl.value = "";
+    editEndEl.dataset.synced = "false";
+    validateDateTimeInput(editEndEl);
+  }
+  [editEndDaysEl, editEndHoursEl, editEndMinsEl].forEach((input) => {
+    if (!input) return;
+    input.value = "";
+  });
+  syncEditEndTimeWithStart();
+  updateEditStartNowIndicator();
+  updateEditStartClearButtonState();
+  renderEditTodoPreview();
+};
+
+editStartClearButtonEl?.addEventListener("click", clearEditStartInput);
+
 const handleStartInputInteraction = () => {
   if (!startEl) return;
   if (startEl.value) {
@@ -4616,6 +4726,8 @@ const handleStartInputInteraction = () => {
     startEl.dataset.startNowValue = "";
     startEl.placeholder = "";
   }
+  const isCleared = !startEl.value && startEl.dataset.startNow !== "true";
+  startEl.dataset.startCleared = isCleared ? "true" : "false";
   startEl.dataset.startAuto = "false";
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
@@ -4623,6 +4735,7 @@ const handleStartInputInteraction = () => {
   validateDateTimeInput(startEl);
   syncEndTimeWithStart();
   updateStartNowIndicator();
+  updateStartClearButtonState();
 };
 
 startEl?.addEventListener("input", handleStartInputInteraction);
@@ -4644,6 +4757,8 @@ const handleEditStartInputInteraction = () => {
     editStartEl.dataset.startNowValue = "";
     editStartEl.placeholder = "";
   }
+  const isCleared = !editStartEl.value && editStartEl.dataset.startNow !== "true";
+  editStartEl.dataset.startCleared = isCleared ? "true" : "false";
   editStartEl.dataset.startAuto = "false";
   if (editEndEl && !editEndEl.dataset.synced) {
     editEndEl.dataset.synced = "true";
@@ -4651,6 +4766,7 @@ const handleEditStartInputInteraction = () => {
   validateDateTimeInput(editStartEl);
   syncEditEndTimeWithStart();
   updateEditStartNowIndicator();
+  updateEditStartClearButtonState();
 };
 
 editStartEl?.addEventListener("input", handleEditStartInputInteraction);
@@ -5086,6 +5202,7 @@ const validateDailyEditDateInputs = () => {
     const startNowValue = editStartEl?.dataset.startNow === "true"
       ? parseDateInput(editStartEl.dataset.startNowValue) ?? new Date().toISOString()
       : null;
+    const startCleared = editStartEl?.dataset.startCleared === "true";
     const startValidation =
       editStartEl?.dataset.startNow === "true"
         ? { value: startNowValue, valid: true }
@@ -5095,7 +5212,8 @@ const validateDailyEditDateInputs = () => {
       return;
     }
     const startTime =
-      offsetStartTime ?? startValidation.value ?? startNowValue ?? new Date().toISOString();
+      offsetStartTime ??
+      (startCleared ? null : startValidation.value ?? startNowValue ?? new Date().toISOString());
     const finishDurationEnabled = isEditFinishDurationEnabled();
     const endValidation = finishDurationEnabled
       ? validateDateTimeInput(editEndEl)
@@ -5363,6 +5481,8 @@ renderCategoryOptions();
 updateAllCategoryPreviews();
 renderTodoPreview();
 renderEditTodoPreview();
+updateStartClearButtonState();
+updateEditStartClearButtonState();
 maybeAutoTriggerDailyTasks();
 setFilter(filter);
 
