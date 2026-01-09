@@ -3321,16 +3321,10 @@ function renderCalendarView() {
   grid.setAttribute("role", "grid");
 
   if (Number.isFinite(nowMinutes)) {
-    const currentHourBlock = document.createElement("div");
-    currentHourBlock.className = "calendar-current-hour";
-    currentHourBlock.style.gridColumn = "1 / -1";
-    currentHourBlock.style.gridRow = `${currentHour * 60 + 1} / ${currentHour * 60 + 61}`;
-    grid.appendChild(currentHourBlock);
-
     const nowLine = document.createElement("div");
     nowLine.className = "calendar-now-line";
     nowLine.style.gridColumn = "1 / -1";
-    nowLine.style.gridRow = `${nowMinutes + 1} / ${nowMinutes + 2}`;
+    nowLine.style.gridRow = `${currentHour * 60 + 1} / ${currentHour * 60 + 2}`;
     grid.appendChild(nowLine);
   }
 

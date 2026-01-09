@@ -1651,15 +1651,6 @@ button.danger:hover {
   padding: 0.15rem 0.35rem;
 }
 
-.calendar-current-hour {
-  background: rgba(56, 189, 248, 0.12);
-  border-top: 1px solid rgba(56, 189, 248, 0.55);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.55);
-  border-radius: 10px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 .calendar-now-line {
   position: relative;
   height: 3px;
