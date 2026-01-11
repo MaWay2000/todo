@@ -1725,6 +1725,36 @@ function setAutoShiftToggleState(enabled) {
   autoShiftToggleEl.classList.toggle("active", pressed);
 }
 
+function setAutoShiftActive(enabled, { skipRender = false } = {}) {
+  const nextEnabled = Boolean(enabled);
+  const previouslyEnabled = Boolean(options.autoShiftExisting);
+
+  if (nextEnabled === previouslyEnabled) {
+    if (!skipRender) {
+      renderCurrentView();
+    }
+    return;
+  }
+
+  if (nextEnabled) {
+    cacheManualPositions();
+    if (calendarActive) {
+      setCalendarActive(false, { skipRender: true });
+    }
+  } else {
+    restoreManualPositions();
+  }
+
+  setAutoShiftToggleState(nextEnabled);
+  options = { ...options, autoShiftExisting: nextEnabled };
+  saveOptions();
+  syncAutoShiftClass();
+
+  if (!skipRender) {
+    renderCurrentView();
+  }
+}
+
 function syncOptionsUI() {
   setAutoShiftToggleState(options.autoShiftExisting);
   if (endDurationToggleEl) {
@@ -4186,6 +4216,9 @@ function closeDailyEditDialog() {
 
 function setCalendarActive(active, { skipRender = false } = {}) {
   calendarActive = Boolean(active);
+  if (calendarActive) {
+    setAutoShiftActive(false, { skipRender: true });
+  }
   if (openCalendarEl) {
     openCalendarEl.classList.toggle("active", calendarActive);
     openCalendarEl.setAttribute("aria-pressed", calendarActive ? "true" : "false");
@@ -5163,20 +5196,8 @@ dailyEditEndDurationToggleEl?.addEventListener("change", () => {
 });
 
 autoShiftToggleEl?.addEventListener("click", () => {
-  const previouslyEnabled = options.autoShiftExisting;
   const enabled = !autoShiftToggleEl.classList.contains("active");
-
-  if (enabled && !previouslyEnabled) {
-    cacheManualPositions();
-  } else if (!enabled && previouslyEnabled) {
-    restoreManualPositions();
-  }
-
-  setAutoShiftToggleState(enabled);
-  options = { ...options, autoShiftExisting: enabled };
-  saveOptions();
-  syncAutoShiftClass();
-  renderCurrentView();
+  setAutoShiftActive(enabled);
 });
 
 inputEl?.addEventListener("input", () => {
