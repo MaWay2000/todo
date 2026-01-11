@@ -1228,9 +1228,9 @@ button.danger:hover {
 
 .todo-shell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.45rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   width: 100%;
   min-width: 0;
   cursor: grab;
@@ -1383,8 +1383,9 @@ button.danger:hover {
 .time-meta {
   display: flex;
   gap: 0.35rem;
-  flex-wrap: nowrap;
-  margin-top: 0;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+  flex: 1 0 100%;
 }
 
 .status-pill:empty {
