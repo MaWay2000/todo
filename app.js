@@ -1439,6 +1439,33 @@ function deriveDurationFromRange(start, end) {
   return { days, hours, mins };
 }
 
+function deriveOffsetFromNow(start) {
+  if (!start) return null;
+  const startDate = new Date(start);
+  if (!Number.isFinite(startDate.getTime())) return null;
+  const diffMs = Math.max(0, startDate.getTime() - Date.now());
+  let remainingMinutes = Math.floor(diffMs / 60000);
+  const days = Math.floor(remainingMinutes / 1440);
+  remainingMinutes -= days * 1440;
+  const hours = Math.floor(remainingMinutes / 60);
+  remainingMinutes -= hours * 60;
+  const mins = remainingMinutes;
+  return { days, hours, mins };
+}
+
+function syncOffsetInputsFromStartValue(startValue, daysEl, hoursEl, minsEl) {
+  const offset = deriveOffsetFromNow(startValue);
+  if (!offset) {
+    if (daysEl) daysEl.value = "";
+    if (hoursEl) hoursEl.value = "";
+    if (minsEl) minsEl.value = "";
+    return;
+  }
+  if (daysEl) daysEl.value = String(offset.days);
+  if (hoursEl) hoursEl.value = String(offset.hours);
+  if (minsEl) minsEl.value = String(offset.mins);
+}
+
 function parseSelectedWeekdays(inputs) {
   return Array.from(inputs)
     .filter((input) => input.checked)
@@ -4786,6 +4813,14 @@ const handleStartInputInteraction = () => {
   if (endEl && !endEl.dataset.synced) {
     endEl.dataset.synced = "true";
   }
+  if (startOffsetToggleEl?.checked) {
+    syncOffsetInputsFromStartValue(
+      parseDateInput(startEl.value),
+      startOffsetDaysEl,
+      startOffsetHoursEl,
+      startOffsetMinsEl
+    );
+  }
   validateDateTimeInput(startEl);
   syncEndTimeWithStart();
   updateStartNowIndicator();
@@ -4816,6 +4851,14 @@ const handleEditStartInputInteraction = () => {
   editStartEl.dataset.startAuto = "false";
   if (editEndEl && !editEndEl.dataset.synced) {
     editEndEl.dataset.synced = "true";
+  }
+  if (editStartOffsetToggleEl?.checked) {
+    syncOffsetInputsFromStartValue(
+      parseDateInput(editStartEl.value),
+      editStartOffsetDaysEl,
+      editStartOffsetHoursEl,
+      editStartOffsetMinsEl
+    );
   }
   validateDateTimeInput(editStartEl);
   syncEditEndTimeWithStart();
