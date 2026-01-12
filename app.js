@@ -3374,12 +3374,9 @@ function renderCalendarView() {
     title.className = "calendar-block-title";
     title.textContent = range.task.text || DEFAULT_TASK_PLACEHOLDER;
 
-    const time = document.createElement("div");
-    time.className = "calendar-block-time";
     const startLabel = formatTime(range.task.startTime) || formatMinutesLabel(range.start);
     const explicitEndLabel = formatTime(range.task.endTime);
     const endLabel = explicitEndLabel || formatMinutesLabel(range.end);
-    time.textContent = `${startLabel} – ${endLabel}`;
 
     item.setAttribute(
       "aria-label",
@@ -3454,10 +3451,9 @@ function renderCalendarView() {
     });
 
     item.appendChild(title);
-    item.appendChild(time);
     item.appendChild(actions);
     grid.appendChild(item);
-    attachCalendarMove(item, range, grid, time);
+    attachCalendarMove(item, range, grid, null);
   });
 
   gridCell.appendChild(grid);
