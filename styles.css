@@ -626,6 +626,12 @@ button.danger:hover {
   min-width: 220px;
 }
 
+.date-time-inputs input[type="time"] {
+  width: 140px;
+  min-width: 140px;
+  flex: 0 0 auto;
+}
+
 .clear-start-button {
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
