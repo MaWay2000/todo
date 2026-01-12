@@ -248,6 +248,7 @@ let manualPositionCache = null;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const toDate = (value) => (value instanceof Date ? value : new Date(value));
+const TIME_INPUT_REGEX = /^(\d{2}):(\d{2})$/;
 const isSameDay = (first, second) =>
   first.getFullYear() === second.getFullYear() &&
   first.getMonth() === second.getMonth() &&
@@ -429,14 +430,18 @@ function formatDateTimeForInput(value) {
 
 function setDateTimeInput(inputEl, value) {
   if (!inputEl) return;
-  inputEl.value = formatDateTimeForInput(value);
+  inputEl.value =
+    inputEl.type === "time" ? formatTime(value) : formatDateTimeForInput(value);
 }
 
 function validateDateTimeInput(inputEl) {
   const hasValue = Boolean(inputEl?.value);
   const parsed = parseDateInput(inputEl?.value);
   const isValid = !hasValue || Boolean(parsed);
-  const message = "Enter a valid date and 24-hour time (YYYY-MM-DD HH:MM)";
+  const message =
+    inputEl?.type === "time"
+      ? "Enter a valid time (HH:MM)"
+      : "Enter a valid date and 24-hour time (YYYY-MM-DD HH:MM)";
 
   if (inputEl) {
     inputEl.setCustomValidity(isValid ? "" : message);
@@ -447,7 +452,18 @@ function validateDateTimeInput(inputEl) {
 
 function parseDateInput(value) {
   if (!value) return null;
-  const date = new Date(value);
+  const trimmed = value.trim();
+  const timeMatch = TIME_INPUT_REGEX.exec(trimmed);
+  if (timeMatch) {
+    const hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    const reference = new Date();
+    reference.setHours(hours, minutes, 0, 0);
+    return reference.toISOString();
+  }
+  const date = new Date(trimmed);
   if (!Number.isFinite(date.getTime())) return null;
   return date.toISOString();
 }
@@ -1540,12 +1556,37 @@ function updateDailyOptionsVisibility() {
     }
     handleDailyWeekdayChange();
   }
+  updateAddFormTimeInputs(isDailyTask);
 }
 
 function updateAddDialogTitle() {
   if (!addDialogTitleEl) return;
   const isDailyTask = typeSelectEl.value === "daily";
   addDialogTitleEl.textContent = isDailyTask ? "New daily task" : "New task";
+}
+
+function updateAddFormTimeInputs(isDailyTask) {
+  if (!startEl || !endEl) return;
+  const nextType = isDailyTask ? "time" : "datetime-local";
+  const startValue = getStartTimeValue() ?? new Date().toISOString();
+  const explicitEnd = parseDateInput(endEl.value);
+  const derivedEnd = computeEndFromDuration(
+    startValue,
+    endDaysEl.value,
+    endHoursEl.value,
+    endMinsEl.value
+  );
+  const endValue = explicitEnd ?? derivedEnd;
+
+  if (startEl.type !== nextType) {
+    startEl.type = nextType;
+    setStartInputValue(startValue, false, startEl.dataset.startAuto === "true");
+  }
+  if (endEl.type !== nextType) {
+    endEl.type = nextType;
+    setDateTimeInput(endEl, endValue ?? startValue);
+    validateDateTimeInput(endEl);
+  }
 }
 
 function getContentMinSize(item) {
@@ -2993,17 +3034,15 @@ function renderDailyTasks() {
     const categoryName = task.category?.trim() || UNCATEGORIZED_LABEL;
     const scheduleParts = [];
     if (task.startTime) {
-      scheduleParts.push(
-        `<div><strong>Start:</strong> ${formatStartLabel(task.startTime, task.createdAt)}</div>`
-      );
+      scheduleParts.push(`<div><strong>Start:</strong> ${formatTime(task.startTime)}</div>`);
     }
     if (task.endTime) {
       const duration = task.startTime
         ? formatDuration(task.startTime, task.endTime)
         : null;
       const endMeta = duration
-        ? `${formatDateTime(task.endTime)} (${duration})`
-        : formatDateTime(task.endTime);
+        ? `${formatTime(task.endTime)} (${duration})`
+        : formatTime(task.endTime);
       scheduleParts.push(`<div><strong>End:</strong> ${endMeta}</div>`);
     }
     scheduleParts.push(`<div><strong>Schedule:</strong> ${describeDailySchedule(task)}</div>`);
