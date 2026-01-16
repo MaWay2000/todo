@@ -2872,12 +2872,16 @@ function toggleDailyDetails(id, item, button) {
     const nextShowDetails = !task.showDetails;
     if (nextShowDetails) {
       item.classList.add("details-open");
-      button.textContent = "▣";
-      button.setAttribute("aria-label", "Hide info");
+      if (button) {
+        button.textContent = "▣";
+        button.setAttribute("aria-label", "Hide info");
+      }
     } else {
       item.classList.remove("details-open");
-      button.textContent = "▢";
-      button.setAttribute("aria-label", "Expand info");
+      if (button) {
+        button.textContent = "▢";
+        button.setAttribute("aria-label", "Expand info");
+      }
     }
     return { ...task, showDetails: nextShowDetails };
   });
@@ -3009,6 +3013,7 @@ function renderDailyTasks() {
 
     shell.appendChild(status);
     shell.appendChild(title);
+    shell.addEventListener("click", () => toggleDailyDetails(task.id, item));
 
     if (task.endTime) {
       const timeLeftInfo = getTimeLeftInfo(task.endTime, null);
@@ -3069,27 +3074,27 @@ function renderDailyTasks() {
     actions.className = "action-row";
     const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
     const canTrigger = canTriggerDailyTaskToday(task);
-    const triggerBtn = makeActionButton(
-      "➕",
-      alreadyTriggered
-        ? "Already created today"
+    const linkedTodo = task.lastTriggeredId
+      ? todos.find((todo) => todo.id === task.lastTriggeredId)
+      : null;
+    const canCompleteExisting =
+      alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed;
+    const completeLabel = canCompleteExisting
+      ? "Mark today's task completed"
+      : alreadyTriggered
+        ? linkedTodo?.completed
+          ? "Already completed today"
+          : "Already created today"
         : canTrigger
-          ? "Create today's task"
-          : "Not scheduled today",
-      () => triggerDailyTask(task.id)
-    );
-    triggerBtn.disabled = alreadyTriggered || !canTrigger;
-
-    const infoBtn = makeActionButton(
-      task.showDetails ? "▣" : "▢",
-      task.showDetails ? "Hide info" : "Expand info",
-      () => toggleDailyDetails(task.id, item, infoBtn)
-    );
+          ? "Mark completed for today"
+          : "Not scheduled today";
+    const completeBtn = makeActionButton("✅", completeLabel, () => completeDailyTask(task.id));
+    completeBtn.disabled = !canCompleteExisting && (alreadyTriggered || !canTrigger);
 
     const editBtn = makeActionButton("✏️", "Edit daily task", () => editDailyTask(task.id));
 
     const deleteBtn = makeActionButton(
-      "🗑️",
+      "❌",
       "Delete daily task",
       () => deleteDailyTask(task.id),
       "danger"
@@ -3099,10 +3104,9 @@ function renderDailyTasks() {
       item.classList.add("details-open");
     }
 
-    actions.appendChild(triggerBtn);
-    actions.appendChild(infoBtn);
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+    actions.appendChild(completeBtn);
 
     item.appendChild(shell);
     item.appendChild(actions);
@@ -3797,7 +3801,8 @@ function addTodo(
   color = null,
   category = "",
   textColor = null,
-  backgroundColor = null
+  backgroundColor = null,
+  options = {}
 ) {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -3805,11 +3810,13 @@ function addTodo(
   const cleanedCategory = (category ?? "").trim();
   const id = crypto.randomUUID();
   const position = getInitialNewTodoPosition({ endTime });
+  const isCompleted = options?.completed ?? false;
+  const completedAt = isCompleted ? options.completedAt ?? new Date().toISOString() : null;
   const newTodo = {
     id,
     text: trimmed,
-    completed: false,
-    completedAt: null,
+    completed: isCompleted,
+    completedAt,
     position,
     size: { width: DEFAULT_CARD_WIDTH, height: null, autoWidth: DEFAULT_AUTO_WIDTH },
     sizeStates: EMPTY_SIZE_STATES,
@@ -3830,7 +3837,7 @@ function addTodo(
   maybeAutoShiftNewTodo(newTodo);
   saveTodos();
   renderCurrentView();
-  return true;
+  return newTodo;
 }
 
 function addDailyTask(
@@ -4090,11 +4097,12 @@ function describeDailySchedule(task) {
   return parts.join(" · ");
 }
 
-function triggerDailyTask(id) {
+function triggerDailyTask(id, options = {}) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
   if (!canTriggerDailyTaskToday(template)) return;
   if (template.lastTriggeredAt && isToday(template.lastTriggeredAt)) return;
+  const markCompleted = options?.markCompleted ?? false;
 
   const now = new Date();
   const startTime =
@@ -4109,12 +4117,60 @@ function triggerDailyTask(id) {
     template.color ?? null,
     template.category ?? "",
     template.textColor ?? null,
-    template.backgroundColor ?? null
+    template.backgroundColor ?? null,
+    { completed: markCompleted }
   );
   if (!created) return;
 
   dailyTasks = dailyTasks.map((task) =>
-    task.id === id ? { ...task, lastTriggeredAt: new Date().toISOString() } : task
+    task.id === id
+      ? { ...task, lastTriggeredAt: new Date().toISOString(), lastTriggeredId: created.id }
+      : task
+  );
+  saveDailyTasks();
+  renderCurrentView();
+}
+
+function completeDailyTask(id) {
+  const template = dailyTasks.find((task) => task.id === id);
+  if (!template) return;
+  const alreadyTriggered = template.lastTriggeredAt && isToday(template.lastTriggeredAt);
+  if (alreadyTriggered && template.lastTriggeredId) {
+    const existing = todos.find((todo) => todo.id === template.lastTriggeredId);
+    if (existing && !existing.deleted && !existing.completed) {
+      todos = todos.map((todo) =>
+        todo.id === existing.id
+          ? { ...todo, completed: true, completedAt: new Date().toISOString() }
+          : todo
+      );
+      saveTodos();
+      renderCurrentView();
+      return;
+    }
+  }
+  if (!canTriggerDailyTaskToday(template)) return;
+  if (alreadyTriggered) return;
+
+  const now = new Date();
+  const startTime =
+    rebaseDateTimeToReference(template.startTime, now) ?? now.toISOString();
+  const endTime = computeRebasedEnd(template.startTime, template.endTime, startTime);
+  const created = addTodo(
+    template.text,
+    template.comments ?? "",
+    startTime,
+    endTime,
+    template.color ?? null,
+    template.category ?? "",
+    template.textColor ?? null,
+    template.backgroundColor ?? null,
+    { completed: true }
+  );
+  if (!created) return;
+  dailyTasks = dailyTasks.map((task) =>
+    task.id === id
+      ? { ...task, lastTriggeredAt: new Date().toISOString(), lastTriggeredId: created.id }
+      : task
   );
   saveDailyTasks();
   renderCurrentView();
