@@ -3469,6 +3469,11 @@ function renderCalendarView() {
         range.task.lastTriggeredAt &&
         isSameDay(new Date(range.task.lastTriggeredAt), referenceDate);
       const canTrigger = isReferenceToday && canTriggerDailyTaskToday(range.task, referenceDate);
+      const linkedTodo = range.task.lastTriggeredId
+        ? todos.find((todo) => todo.id === range.task.lastTriggeredId)
+        : null;
+      const canCompleteExisting =
+        isReferenceToday && alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed;
       const triggerBtn = makeCalendarActionButton(
         "➕",
         alreadyTriggered
@@ -3481,6 +3486,24 @@ function renderCalendarView() {
         () => triggerDailyTask(range.task.id)
       );
       triggerBtn.disabled = alreadyTriggered || !canTrigger;
+      const completeLabel = isReferenceToday
+        ? canCompleteExisting
+          ? "Mark today's task completed"
+          : alreadyTriggered
+            ? linkedTodo?.completed
+              ? "Already completed today"
+              : "Already created today"
+            : canTrigger
+              ? "Mark completed for today"
+              : "Not scheduled today"
+        : "Switch to today to complete tasks";
+      const completeBtn = makeCalendarActionButton(
+        "✅",
+        completeLabel,
+        () => completeDailyTask(range.task.id)
+      );
+      completeBtn.disabled =
+        !isReferenceToday || (!canCompleteExisting && (alreadyTriggered || !canTrigger));
       const editBtn = makeCalendarActionButton(
         "✏️",
         "Edit daily task",
@@ -3493,6 +3516,7 @@ function renderCalendarView() {
         "danger"
       );
       actions.appendChild(triggerBtn);
+      actions.appendChild(completeBtn);
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
     } else {
