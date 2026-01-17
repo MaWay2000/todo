@@ -3468,7 +3468,9 @@ function renderCalendarView() {
         isReferenceToday &&
         range.task.lastTriggeredAt &&
         isSameDay(new Date(range.task.lastTriggeredAt), referenceDate);
-      const canTrigger = isReferenceToday && canTriggerDailyTaskToday(range.task, referenceDate);
+      const triggerReference = isReferenceToday ? now : referenceDate;
+      const canTrigger =
+        isReferenceToday && canTriggerDailyTaskToday(range.task, triggerReference);
       const linkedTodo = range.task.lastTriggeredId
         ? todos.find((todo) => todo.id === range.task.lastTriggeredId)
         : null;
