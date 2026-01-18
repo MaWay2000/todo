@@ -3074,22 +3074,28 @@ function renderDailyTasks() {
     actions.className = "action-row";
     const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
     const canTrigger = canTriggerDailyTaskToday(task);
-    const linkedTodo = task.lastTriggeredId
-      ? todos.find((todo) => todo.id === task.lastTriggeredId)
-      : null;
+    const linkedTodo = findLinkedTodoForDailyTask(task);
     const canCompleteExisting =
       alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed;
+    const canCreateCompletion =
+      alreadyTriggered && (!linkedTodo || linkedTodo.deleted);
     const completeLabel = canCompleteExisting
       ? "Mark today's task completed"
       : alreadyTriggered
         ? linkedTodo?.completed
           ? "Already completed today"
-          : "Already created today"
+          : linkedTodo?.deleted
+            ? "Recreate completed task"
+            : linkedTodo
+              ? "Already created today"
+              : "Mark completed for today"
         : canTrigger
           ? "Mark completed for today"
           : "Not scheduled today";
     const completeBtn = makeActionButton("✅", completeLabel, () => completeDailyTask(task.id));
-    completeBtn.disabled = !canCompleteExisting && (alreadyTriggered || !canTrigger);
+    const canCompleteToday =
+      canCompleteExisting || canCreateCompletion || (!alreadyTriggered && canTrigger);
+    completeBtn.disabled = !canCompleteToday;
 
     const editBtn = makeActionButton("✏️", "Edit daily task", () => editDailyTask(task.id));
 
@@ -3471,11 +3477,15 @@ function renderCalendarView() {
       const triggerReference = isReferenceToday ? now : referenceDate;
       const canTrigger =
         isReferenceToday && canTriggerDailyTaskToday(range.task, triggerReference);
-      const linkedTodo = range.task.lastTriggeredId
-        ? todos.find((todo) => todo.id === range.task.lastTriggeredId)
-        : null;
+      const linkedTodo = findLinkedTodoForDailyTask(range.task, referenceDate);
       const canCompleteExisting =
-        isReferenceToday && alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed;
+        isReferenceToday &&
+        alreadyTriggered &&
+        linkedTodo &&
+        !linkedTodo.deleted &&
+        !linkedTodo.completed;
+      const canCreateCompletion =
+        isReferenceToday && alreadyTriggered && (!linkedTodo || linkedTodo.deleted);
       const triggerBtn = makeCalendarActionButton(
         "➕",
         alreadyTriggered
@@ -3494,7 +3504,11 @@ function renderCalendarView() {
           : alreadyTriggered
             ? linkedTodo?.completed
               ? "Already completed today"
-              : "Already created today"
+              : linkedTodo?.deleted
+                ? "Recreate completed task"
+                : linkedTodo
+                  ? "Already created today"
+                  : "Mark completed for today"
             : canTrigger
               ? "Mark completed for today"
               : "Not scheduled today"
@@ -3504,8 +3518,10 @@ function renderCalendarView() {
         completeLabel,
         () => completeDailyTask(range.task.id)
       );
-      completeBtn.disabled =
-        !isReferenceToday || (!canCompleteExisting && (alreadyTriggered || !canTrigger));
+      const canCompleteToday =
+        isReferenceToday &&
+        (canCompleteExisting || canCreateCompletion || (!alreadyTriggered && canTrigger));
+      completeBtn.disabled = !canCompleteToday;
       const editBtn = makeCalendarActionButton(
         "✏️",
         "Edit daily task",
@@ -4123,6 +4139,32 @@ function describeDailySchedule(task) {
   return parts.join(" · ");
 }
 
+function findLinkedTodoForDailyTask(task, referenceDate = new Date()) {
+  if (!task) return null;
+  if (task.lastTriggeredId) {
+    return todos.find((todo) => todo.id === task.lastTriggeredId) ?? null;
+  }
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(reference.getTime())) return null;
+  const taskText = (task.text ?? "").trim();
+  const taskCategory = (task.category ?? "").trim();
+  const candidates = todos.filter((todo) => {
+    if (todo.deleted) return false;
+    if (!todo.createdAt) return false;
+    const createdAt = new Date(todo.createdAt);
+    if (!Number.isFinite(createdAt.getTime())) return false;
+    if (!isSameDay(createdAt, reference)) return false;
+    if ((todo.text ?? "").trim() !== taskText) return false;
+    const todoCategory = (todo.category ?? "").trim();
+    return todoCategory === taskCategory;
+  });
+  if (candidates.length === 0) return null;
+  candidates.sort(
+    (first, second) => new Date(second.createdAt) - new Date(first.createdAt)
+  );
+  return candidates[0] ?? null;
+}
+
 function triggerDailyTask(id, options = {}) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
@@ -4161,21 +4203,25 @@ function completeDailyTask(id) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
   const alreadyTriggered = template.lastTriggeredAt && isToday(template.lastTriggeredAt);
-  if (alreadyTriggered && template.lastTriggeredId) {
-    const existing = todos.find((todo) => todo.id === template.lastTriggeredId);
-    if (existing && !existing.deleted && !existing.completed) {
-      todos = todos.map((todo) =>
-        todo.id === existing.id
-          ? { ...todo, completed: true, completedAt: new Date().toISOString() }
-          : todo
+  const linkedTodo = findLinkedTodoForDailyTask(template);
+  if (alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed) {
+    todos = todos.map((todo) =>
+      todo.id === linkedTodo.id
+        ? { ...todo, completed: true, completedAt: new Date().toISOString() }
+        : todo
+    );
+    if (!template.lastTriggeredId) {
+      dailyTasks = dailyTasks.map((task) =>
+        task.id === id ? { ...task, lastTriggeredId: linkedTodo.id } : task
       );
-      saveTodos();
-      renderCurrentView();
-      return;
+      saveDailyTasks();
     }
+    saveTodos();
+    renderCurrentView();
+    return;
   }
-  if (!canTriggerDailyTaskToday(template)) return;
-  if (alreadyTriggered) return;
+  if (alreadyTriggered && linkedTodo && linkedTodo.completed) return;
+  if (!alreadyTriggered && !canTriggerDailyTaskToday(template)) return;
 
   const now = new Date();
   const startTime =
