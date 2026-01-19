@@ -4757,13 +4757,16 @@ function updateCanvasHeight() {
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskType = typeSelectEl.value;
-  const offsetStartTime = startOffsetToggleEl?.checked
-    ? computeStartFromOffset(
-        startOffsetDaysEl.value,
-        startOffsetHoursEl.value,
-        startOffsetMinsEl.value
-      )
-    : null;
+  const hasManualStartInput =
+    Boolean(startEl?.value) || startEl?.dataset.startNow === "true";
+  const offsetStartTime =
+    startOffsetToggleEl?.checked && !hasManualStartInput
+      ? computeStartFromOffset(
+          startOffsetDaysEl.value,
+          startOffsetHoursEl.value,
+          startOffsetMinsEl.value
+        )
+      : null;
   const startNowValue = startEl?.dataset.startNow === "true"
     ? parseDateInput(startEl.dataset.startNowValue) ?? new Date().toISOString()
     : null;
