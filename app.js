@@ -3459,13 +3459,12 @@ function renderCalendarView() {
   const rangeDuration = (range) => range.end - range.start;
 
   const sortedRanges = ranges.sort((first, second) => {
+    if (first.start !== second.start) return first.start - second.start;
+    const durationDifference = rangeDuration(first) - rangeDuration(second);
+    if (durationDifference !== 0) return durationDifference;
+    if (first.end !== second.end) return first.end - second.end;
     if (first.isLong !== second.isLong) return first.isLong ? 1 : -1;
-    if (first.start === second.start) {
-      const durationDifference = rangeDuration(first) - rangeDuration(second);
-      if (durationDifference !== 0) return durationDifference;
-      return first.end - second.end;
-    }
-    return first.start - second.start;
+    return 0;
   });
 
   const columnEndTimes = [];
