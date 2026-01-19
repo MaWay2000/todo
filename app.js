@@ -181,6 +181,12 @@ const dailyEditBackgroundColorToggleTextEl = document.getElementById(
 );
 const dailyEditCategoryEl = document.getElementById("daily-edit-category");
 const dailyEditCategoryPreviewEl = document.getElementById("daily-edit-preview-category");
+const dailyEditPreviewCardEl = document.getElementById("daily-edit-preview-card");
+const dailyEditPreviewTitleEl = document.getElementById("daily-edit-preview-title");
+const dailyEditPreviewColorEl = document.getElementById("daily-edit-preview-color");
+const dailyEditPreviewTimeEl = document.getElementById("daily-edit-preview-time");
+const dailyEditPreviewRangeEl = document.getElementById("daily-edit-preview-range");
+const dailyEditPreviewLeftEl = document.getElementById("daily-edit-preview-left");
 const dailyEditWeekdayInputs = document.querySelectorAll(
   "input[name='daily-edit-weekday']"
 );
@@ -714,6 +720,67 @@ function renderEditTodoPreview() {
 
   if (editPreviewTimeEl) {
     editPreviewTimeEl.hidden = true;
+  }
+}
+
+function renderDailyEditPreview() {
+  if (!dailyEditPreviewCardEl) return;
+
+  const title = dailyEditInputEl?.value?.trim() || DEFAULT_TASK_PLACEHOLDER;
+  if (dailyEditPreviewTitleEl) {
+    dailyEditPreviewTitleEl.textContent = title;
+  }
+
+  const colorEnabled = dailyEditColorToggleEl?.checked ?? true;
+  const colorValue = colorEnabled ? dailyEditColorEl?.value?.trim() : null;
+  const textColorValue = getEnabledColorValue(
+    dailyEditTextColorToggleEl,
+    dailyEditTextColorEl
+  );
+  const backgroundColorValue = getEnabledColorValue(
+    dailyEditBackgroundColorToggleEl,
+    dailyEditBackgroundColorEl
+  );
+  dailyEditPreviewCardEl.classList.toggle("has-color", Boolean(colorValue));
+  dailyEditPreviewCardEl.classList.toggle("has-text-color", Boolean(textColorValue));
+  dailyEditPreviewCardEl.classList.toggle("has-background", Boolean(backgroundColorValue));
+  if (colorValue) {
+    dailyEditPreviewCardEl.style.setProperty("--task-color", colorValue);
+  } else {
+    dailyEditPreviewCardEl.style.removeProperty("--task-color");
+  }
+  if (textColorValue) {
+    dailyEditPreviewCardEl.style.setProperty("--task-text-color", textColorValue);
+  } else {
+    dailyEditPreviewCardEl.style.removeProperty("--task-text-color");
+  }
+  if (backgroundColorValue) {
+    dailyEditPreviewCardEl.style.setProperty("--task-background-color", backgroundColorValue);
+  } else {
+    dailyEditPreviewCardEl.style.removeProperty("--task-background-color");
+  }
+  if (dailyEditPreviewColorEl) {
+    dailyEditPreviewColorEl.hidden = !colorValue;
+    if (colorValue) {
+      dailyEditPreviewColorEl.style.backgroundColor = colorValue;
+    }
+  }
+
+  updateCategoryPreview(dailyEditCategoryEl, dailyEditCategoryPreviewEl);
+
+  if (dailyEditPreviewRangeEl) {
+    dailyEditPreviewRangeEl.hidden = true;
+    dailyEditPreviewRangeEl.textContent = "";
+  }
+
+  if (dailyEditPreviewLeftEl) {
+    dailyEditPreviewLeftEl.hidden = true;
+    dailyEditPreviewLeftEl.classList.remove("danger");
+    dailyEditPreviewLeftEl.textContent = "";
+  }
+
+  if (dailyEditPreviewTimeEl) {
+    dailyEditPreviewTimeEl.hidden = true;
   }
 }
 
@@ -2956,6 +3023,7 @@ function editDailyTask(id) {
   dailyEditTextColorEl.dataset.touched = "false";
   dailyEditBackgroundColorEl.dataset.touched = "false";
   updateColorTriggerLabel(dailyEditColorTriggerEl, "");
+  renderDailyEditPreview();
   dailyEditDialogEl.showModal();
   dailyEditInputEl.focus();
 }
@@ -5278,6 +5346,26 @@ syncColorToggleSwatch(
   input?.addEventListener("change", renderEditTodoPreview);
 });
 
+[
+  dailyEditInputEl,
+  dailyEditColorEl,
+  dailyEditColorToggleEl,
+  dailyEditTextColorEl,
+  dailyEditTextColorToggleEl,
+  dailyEditBackgroundColorEl,
+  dailyEditBackgroundColorToggleEl,
+  dailyEditCategoryEl,
+  dailyEditStartEl,
+  dailyEditEndEl,
+  dailyEditEndDaysEl,
+  dailyEditEndHoursEl,
+  dailyEditEndMinsEl,
+  dailyEditEndDurationToggleEl,
+].forEach((input) => {
+  input?.addEventListener("input", renderDailyEditPreview);
+  input?.addEventListener("change", renderDailyEditPreview);
+});
+
 attachColorPickerTrigger(colorTriggerEl, colorEl, colorToggleEl);
 attachColorPickerTrigger(editColorTriggerEl, editColorEl, editColorToggleEl);
 attachColorPickerTrigger(
@@ -5733,6 +5821,7 @@ renderCategoryOptions();
 updateAllCategoryPreviews();
 renderTodoPreview();
 renderEditTodoPreview();
+renderDailyEditPreview();
 updateStartClearButtonState();
 updateEditStartClearButtonState();
 maybeAutoTriggerDailyTasks();
