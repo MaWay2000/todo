@@ -156,6 +156,9 @@ const dailyDurationLabelDefaultText = dailyDurationLabelEl?.textContent?.trim() 
 const dailyEditDurationInputsEl = dailyEditDurationGroupEl?.querySelector(".duration-inputs");
 const dailyEditFinishDateFieldEl =
   dailyEditEndEl?.closest(".start-date-field") ?? dailyEditEndEl;
+if (dailyEditEndEl) {
+  dailyEditEndEl.dataset.synced = "true";
+}
 const dailyEditColorEl = document.getElementById("daily-edit-color");
 const dailyEditColorTriggerEl = document.querySelector(
   "[data-color-trigger='daily-edit-color']"
@@ -1267,6 +1270,45 @@ function syncDailyEditDurationFromRange() {
   dailyEditEndMinsEl.value = duration?.mins ?? "";
 }
 
+function syncDailyEditEndTimeWithStart() {
+  if (!dailyEditStartEl || !dailyEditEndEl) {
+    renderDailyEditPreview();
+    return;
+  }
+  if (!isDailyEditDurationEnabled()) {
+    renderDailyEditPreview();
+    return;
+  }
+
+  const startValue = parseDateInput(dailyEditStartEl.value);
+  if (!startValue) {
+    renderDailyEditPreview();
+    return;
+  }
+
+  const derivedEnd = computeEndFromDuration(
+    startValue,
+    dailyEditEndDaysEl.value,
+    dailyEditEndHoursEl.value,
+    dailyEditEndMinsEl.value
+  );
+
+  if (derivedEnd) {
+    setDateTimeInput(dailyEditEndEl, derivedEnd);
+    dailyEditEndEl.dataset.synced = "true";
+    validateDateTimeInput(dailyEditEndEl);
+    renderDailyEditPreview();
+    return;
+  }
+
+  if (dailyEditEndEl.dataset.synced === "true") {
+    setDateTimeInput(dailyEditEndEl, startValue);
+    validateDateTimeInput(dailyEditEndEl);
+  }
+
+  renderDailyEditPreview();
+}
+
 function setDailyEditDurationEnabled(enabled) {
   [dailyEditEndDaysEl, dailyEditEndHoursEl, dailyEditEndMinsEl].forEach((input) => {
     if (!input) return;
@@ -1292,6 +1334,7 @@ function setDailyEditDurationEnabled(enabled) {
   syncDailyEditDurationToggleLabel();
   if (enabled) {
     syncDailyEditDurationFromRange();
+    syncDailyEditEndTimeWithStart();
   }
 }
 
@@ -5076,6 +5119,15 @@ startEl?.addEventListener("change", handleStartInputInteraction);
   });
 });
 
+[dailyEditEndDaysEl, dailyEditEndHoursEl, dailyEditEndMinsEl].forEach((input) => {
+  input?.addEventListener("input", () => {
+    if (dailyEditEndEl) {
+      dailyEditEndEl.dataset.synced = "true";
+    }
+    syncDailyEditEndTimeWithStart();
+  });
+});
+
 const handleEditStartInputInteraction = () => {
   if (!editStartEl) return;
   if (editStartEl.value) {
@@ -5106,6 +5158,18 @@ const handleEditStartInputInteraction = () => {
 editStartEl?.addEventListener("input", handleEditStartInputInteraction);
 editStartEl?.addEventListener("change", handleEditStartInputInteraction);
 
+const handleDailyEditStartInputInteraction = () => {
+  if (!dailyEditStartEl) return;
+  if (dailyEditEndEl && !dailyEditEndEl.dataset.synced) {
+    dailyEditEndEl.dataset.synced = "true";
+  }
+  validateDateTimeInput(dailyEditStartEl);
+  syncDailyEditEndTimeWithStart();
+};
+
+dailyEditStartEl?.addEventListener("input", handleDailyEditStartInputInteraction);
+dailyEditStartEl?.addEventListener("change", handleDailyEditStartInputInteraction);
+
 [endDaysEl, endHoursEl, endMinsEl].forEach((input) => {
   input?.addEventListener("input", () => {
     if (endEl) {
@@ -5132,6 +5196,15 @@ const handleEditEndInputInteraction = () => {
 
 editEndEl?.addEventListener("input", handleEditEndInputInteraction);
 editEndEl?.addEventListener("change", handleEditEndInputInteraction);
+
+const handleDailyEditEndInputInteraction = () => {
+  if (!dailyEditEndEl) return;
+  dailyEditEndEl.dataset.synced = "false";
+  validateDateTimeInput(dailyEditEndEl);
+};
+
+dailyEditEndEl?.addEventListener("input", handleDailyEditEndInputInteraction);
+dailyEditEndEl?.addEventListener("change", handleDailyEditEndInputInteraction);
 
 commentToggleEl?.addEventListener("change", () =>
   setCommentFieldState(commentToggleEl, commentFieldEl, commentEl, commentToggleTextEl)
