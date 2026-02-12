@@ -4312,20 +4312,30 @@ function triggerDailyTask(id, options = {}) {
 function completeDailyTask(id) {
   const template = dailyTasks.find((task) => task.id === id);
   if (!template) return;
+  const nowIso = new Date().toISOString();
   const alreadyTriggered = template.lastTriggeredAt && isToday(template.lastTriggeredAt);
   const linkedTodo = findLinkedTodoForDailyTask(template);
-  if (alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed) {
+  const linkedTodoIsToday = linkedTodo?.createdAt
+    ? isToday(linkedTodo.createdAt)
+    : linkedTodo?.startTime
+      ? isToday(linkedTodo.startTime)
+      : false;
+  if (linkedTodo && linkedTodoIsToday && !linkedTodo.deleted && !linkedTodo.completed) {
     todos = todos.map((todo) =>
       todo.id === linkedTodo.id
-        ? { ...todo, completed: true, completedAt: new Date().toISOString() }
+        ? { ...todo, completed: true, completedAt: nowIso }
         : todo
     );
-    if (!template.lastTriggeredId) {
-      dailyTasks = dailyTasks.map((task) =>
-        task.id === id ? { ...task, lastTriggeredId: linkedTodo.id } : task
-      );
-      saveDailyTasks();
-    }
+    dailyTasks = dailyTasks.map((task) =>
+      task.id === id
+        ? {
+            ...task,
+            lastTriggeredAt: task.lastTriggeredAt ?? nowIso,
+            lastTriggeredId: linkedTodo.id,
+          }
+        : task
+    );
+    saveDailyTasks();
     saveTodos();
     renderCurrentView();
     return;
