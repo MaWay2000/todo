@@ -3571,6 +3571,7 @@ function renderCalendarView() {
 
     const actions = document.createElement("div");
     actions.className = "action-row";
+    let secondaryActions = null;
     const makeCalendarActionButton = (icon, label, handler, extraClass = "") => {
       const button = makeActionButton(icon, label, handler, extraClass);
       button.addEventListener("click", (event) => {
@@ -3596,18 +3597,13 @@ function renderCalendarView() {
         !linkedTodo.completed;
       const canCreateCompletion =
         isReferenceToday && alreadyTriggered && (!linkedTodo || linkedTodo.deleted);
-      const triggerBtn = makeCalendarActionButton(
-        "➕",
-        alreadyTriggered
-          ? "Already created today"
-          : canTrigger
-            ? "Create today's task"
-            : isReferenceToday
-              ? "Not scheduled today"
-              : "Switch to today to create tasks",
-        () => triggerDailyTask(range.task.id)
-      );
-      triggerBtn.disabled = alreadyTriggered || !canTrigger;
+      const triggerLabel = alreadyTriggered
+        ? "Already created today"
+        : canTrigger
+          ? "Create today's task"
+          : isReferenceToday
+            ? "Not scheduled today"
+            : "Switch to today to create tasks";
       const completeLabel = isReferenceToday
         ? canCompleteExisting
           ? "Mark today's task completed"
@@ -3623,30 +3619,52 @@ function renderCalendarView() {
               ? "Mark completed for today"
               : "Not scheduled today"
         : "Switch to today to complete tasks";
-      const completeBtn = makeCalendarActionButton(
-        "✅",
-        completeLabel,
-        () => completeDailyTask(range.task.id)
-      );
       const canCompleteToday =
         isReferenceToday &&
         (canCompleteExisting || canCreateCompletion || (!alreadyTriggered && canTrigger));
-      completeBtn.disabled = !canCompleteToday;
       const editBtn = makeCalendarActionButton(
         "✏️",
         "Edit daily task",
         () => editDailyTask(range.task.id)
       );
       const deleteBtn = makeCalendarActionButton(
-        "🗑️",
+        "❌",
         "Delete daily task",
         () => deleteDailyTask(range.task.id),
         "danger"
       );
-      actions.appendChild(triggerBtn);
-      actions.appendChild(completeBtn);
+      const completeBtn = makeCalendarActionButton(
+        "✅",
+        completeLabel,
+        () => completeDailyTask(range.task.id)
+      );
+      completeBtn.disabled = !canCompleteToday;
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
+      actions.appendChild(completeBtn);
+
+      secondaryActions = document.createElement("div");
+      secondaryActions.className = "action-row calendar-secondary-actions";
+      secondaryActions.hidden = true;
+      const triggerBtn = makeCalendarActionButton(
+        "➕",
+        triggerLabel,
+        () => triggerDailyTask(range.task.id)
+      );
+      triggerBtn.disabled = alreadyTriggered || !canTrigger;
+      secondaryActions.appendChild(triggerBtn);
+
+      const extraBtn = makeCalendarActionButton(
+        "▢",
+        "Show extra actions",
+        () => {
+          const isHidden = secondaryActions.hidden;
+          secondaryActions.hidden = !isHidden;
+          extraBtn.textContent = isHidden ? "▣" : "▢";
+          extraBtn.setAttribute("aria-label", isHidden ? "Hide extra actions" : "Show extra actions");
+        }
+      );
+      actions.appendChild(extraBtn);
     } else {
       const editBtn = makeCalendarActionButton(
         "✏️",
@@ -3674,6 +3692,9 @@ function renderCalendarView() {
 
     item.appendChild(title);
     item.appendChild(actions);
+    if (secondaryActions) {
+      item.appendChild(secondaryActions);
+    }
     grid.appendChild(item);
     attachCalendarMove(item, range, grid, null);
   });
