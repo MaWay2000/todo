@@ -3629,8 +3629,8 @@ function renderCalendarView() {
       );
       const deleteBtn = makeCalendarActionButton(
         "❌",
-        "Delete daily task",
-        () => deleteDailyTask(range.task.id),
+        "Delete today's task",
+        () => deleteDailyTaskOccurrence(range.task.id, referenceDate),
         "danger"
       );
       const completeBtn = makeCalendarActionButton(
@@ -4272,15 +4272,32 @@ function describeDailySchedule(task) {
 
 function findLinkedTodoForDailyTask(task, referenceDate = new Date()) {
   if (!task) return null;
-  if (task.lastTriggeredId) {
-    return todos.find((todo) => todo.id === task.lastTriggeredId) ?? null;
-  }
   const reference = new Date(referenceDate);
   if (!Number.isFinite(reference.getTime())) return null;
+
+  const isTodoOnReferenceDay = (todo) => {
+    if (!todo) return false;
+    const candidate = todo.createdAt
+      ? new Date(todo.createdAt)
+      : todo.startTime
+        ? new Date(todo.startTime)
+        : todo.endTime
+          ? new Date(todo.endTime)
+          : null;
+    if (!Number.isFinite(candidate?.getTime())) return false;
+    return isSameDay(candidate, reference);
+  };
+
+  if (task.lastTriggeredId) {
+    const linkedById = todos.find((todo) => todo.id === task.lastTriggeredId) ?? null;
+    if (linkedById && isTodoOnReferenceDay(linkedById)) {
+      return linkedById;
+    }
+  }
+
   const taskText = (task.text ?? "").trim();
   const taskCategory = (task.category ?? "").trim();
   const candidates = todos.filter((todo) => {
-    if (todo.deleted) return false;
     if (!todo.createdAt) return false;
     const createdAt = new Date(todo.createdAt);
     if (!Number.isFinite(createdAt.getTime())) return false;
@@ -4328,6 +4345,14 @@ function triggerDailyTask(id, options = {}) {
   );
   saveDailyTasks();
   renderCurrentView();
+}
+
+function deleteDailyTaskOccurrence(id, referenceDate = new Date()) {
+  const template = dailyTasks.find((task) => task.id === id);
+  if (!template) return;
+  const linkedTodo = findLinkedTodoForDailyTask(template, referenceDate);
+  if (!linkedTodo || linkedTodo.deleted) return;
+  deleteTodo(linkedTodo.id);
 }
 
 function completeDailyTask(id) {
