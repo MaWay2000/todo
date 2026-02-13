@@ -199,6 +199,10 @@ const durationNumberInputs = document.querySelectorAll(".duration-inputs input[t
 const cancelDailyEditEl = document.getElementById("cancel-daily-edit");
 const filterButtons = document.querySelectorAll(".filter-button");
 const dailyPanelEl = document.getElementById("daily-panel");
+const dailySummaryEl = document.getElementById("daily-summary");
+const dailyFilterButtons = document.querySelectorAll(".daily-filter-button");
+const dailyPreviewCountEl = document.getElementById("daily-preview-count");
+const dailyDayStripEl = document.getElementById("daily-day-strip");
 const categoryPanelEl = document.getElementById("category-panel");
 const calendarPanelEl = document.getElementById("calendar-panel");
 const calendarTableBodyEl = document.getElementById("calendar-table-body");
@@ -247,6 +251,7 @@ const CALENDAR_DAY_WINDOW = 7;
 const MINUTES_IN_DAY = 1440;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const UNCATEGORIZED_LABEL = "Uncategorized";
+const DAILY_QUICK_FILTERS = new Set(["all", "needs_action", "today", "week", "paused"]);
 let activeEditId = null;
 let activeDailyEditId = null;
 let activeCategoryEditId = null;
@@ -254,6 +259,8 @@ let timeRefreshHandle = null;
 let addFormTimeRefreshHandle = null;
 let editFormTimeRefreshHandle = null;
 let manualPositionCache = null;
+let dailyQuickFilter = "all";
+let dailyPreviewDate = getStartOfDay(new Date());
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const toDate = (value) => (value instanceof Date ? value : new Date(value));
@@ -2015,10 +2022,72 @@ function saveTodos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
 }
 
+function normalizeDailyTasks(list = []) {
+  if (!Array.isArray(list)) {
+    return { normalized: [], mutated: true };
+  }
+
+  let mutated = false;
+  const normalized = list.map((task) => {
+    const normalizedTask = task && typeof task === "object" ? { ...task } : {};
+
+    const triggerDays = Array.isArray(normalizedTask.triggerDays)
+      ? [...new Set(normalizedTask.triggerDays
+        .map((day) => Number.parseInt(day, 10))
+        .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))]
+          .sort((a, b) => a - b)
+      : [];
+
+    if (
+      !Array.isArray(normalizedTask.triggerDays) ||
+      JSON.stringify(normalizedTask.triggerDays) !== JSON.stringify(triggerDays)
+    ) {
+      mutated = true;
+    }
+
+    const parsedInterval = Number.parseInt(normalizedTask.intervalDays, 10);
+    const intervalDays =
+      Number.isFinite(parsedInterval) && parsedInterval > 0 ? parsedInterval : null;
+    if ((normalizedTask.intervalDays ?? null) !== intervalDays) {
+      mutated = true;
+    }
+
+    const paused = Boolean(normalizedTask.paused);
+    if (normalizedTask.paused !== paused) {
+      mutated = true;
+    }
+
+    const showDetails = Boolean(normalizedTask.showDetails);
+    if (normalizedTask.showDetails !== showDetails) {
+      mutated = true;
+    }
+
+    if (!("lastTriggeredId" in normalizedTask)) {
+      mutated = true;
+    }
+
+    return {
+      ...normalizedTask,
+      triggerDays,
+      intervalDays,
+      paused,
+      showDetails,
+      lastTriggeredId: normalizedTask.lastTriggeredId ?? null,
+    };
+  });
+
+  return { normalized, mutated };
+}
+
 function loadDailyTasks() {
   try {
     const stored = localStorage.getItem(DAILY_STORAGE_KEY);
-    dailyTasks = stored ? JSON.parse(stored) : [];
+    const parsed = stored ? JSON.parse(stored) : [];
+    const { normalized, mutated } = normalizeDailyTasks(parsed);
+    dailyTasks = normalized;
+    if (mutated) {
+      saveDailyTasks();
+    }
   } catch (error) {
     console.error("Failed to load daily tasks", error);
     dailyTasks = [];
@@ -3119,157 +3188,554 @@ function editDailyTask(id) {
   dailyEditInputEl.focus();
 }
 
-function renderDailyTasks() {
-  listEl.innerHTML = "";
-  listEl.classList.add("stacked-layout");
-  const sortedTasks = [...dailyTasks].sort((a, b) =>
-    (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+function setDailyQuickFilter(nextFilter) {
+  if (!DAILY_QUICK_FILTERS.has(nextFilter)) return;
+  dailyQuickFilter = nextFilter;
+  dailyFilterButtons.forEach((button) => {
+    const isActive = button.dataset.dailyFilter === dailyQuickFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+  if (filter === "daily" && !calendarActive) {
+    renderCurrentView();
+  }
+}
+
+function getDailyPreviewDays(referenceDate = new Date()) {
+  const base = getStartOfDay(referenceDate);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(base);
+    day.setDate(base.getDate() + index);
+    return day;
+  });
+}
+
+function setDailyPreviewDate(nextDate) {
+  if (!nextDate) return;
+  dailyPreviewDate = getStartOfDay(nextDate);
+  if (filter === "daily" && !calendarActive) {
+    renderCurrentView();
+  }
+}
+
+function renderDailyDayStrip(referenceDate = new Date()) {
+  if (!dailyDayStripEl) return;
+  dailyDayStripEl.innerHTML = "";
+  const days = getDailyPreviewDays(referenceDate);
+  const selectedDay = getStartOfDay(dailyPreviewDate ?? referenceDate);
+  const selectedInRange = days.some((day) => isSameDay(day, selectedDay));
+  const activeDay = selectedInRange ? selectedDay : getStartOfDay(referenceDate);
+
+  if (!selectedInRange) {
+    dailyPreviewDate = activeDay;
+  }
+
+  days.forEach((day) => {
+    const visibleCount = dailyTasks.filter((task) => canShowDailyTaskToday(task, day)).length;
+    const isActive = isSameDay(day, activeDay);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "daily-day-button";
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    button.setAttribute(
+      "aria-label",
+      `${formatCalendarDay(day, { weekday: "long", month: "long", day: "numeric" })}: ${visibleCount} visible`
+    );
+
+    const weekday = document.createElement("span");
+    weekday.className = "calendar-day-weekday";
+    weekday.textContent = formatCalendarDay(day, { weekday: "short" });
+
+    const number = document.createElement("span");
+    number.className = "calendar-day-number";
+    number.textContent = formatCalendarDay(day, { day: "2-digit" });
+
+    const count = document.createElement("span");
+    count.className = "daily-day-count";
+    count.textContent = `${visibleCount} visible`;
+
+    button.appendChild(weekday);
+    button.appendChild(number);
+    button.appendChild(count);
+    button.addEventListener("click", () => setDailyPreviewDate(day));
+    dailyDayStripEl.appendChild(button);
+  });
+
+  if (dailyPreviewCountEl) {
+    const selectedVisible = dailyTasks.filter((task) =>
+      canShowDailyTaskToday(task, activeDay)
+    ).length;
+    const weekdayLabel = formatCalendarDay(activeDay, { weekday: "short" });
+    dailyPreviewCountEl.textContent = `${weekdayLabel}: ${selectedVisible} visible`;
+  }
+}
+
+function getDailyScheduleChips(task) {
+  const chips = [];
+  if (task.triggerDays?.length) {
+    const ordered = [...task.triggerDays].sort((a, b) => a - b);
+    chips.push(ordered.map((day) => WEEKDAY_LABELS[day] ?? day).join(" "));
+  } else {
+    chips.push("Every day");
+  }
+  if (Number.isFinite(task.intervalDays) && task.intervalDays > 0) {
+    chips.push(`Every ${task.intervalDays} day${task.intervalDays === 1 ? "" : "s"}`);
+  }
+  if (task.startTime && task.endTime) {
+    chips.push(`${formatTime(task.startTime)}-${formatTime(task.endTime)}`);
+  } else if (task.startTime) {
+    chips.push(`Starts ${formatTime(task.startTime)}`);
+  }
+  return chips;
+}
+
+function getDailyTaskNextRun(task, referenceDate = new Date()) {
+  if (task.paused) return null;
+  const reference = new Date(referenceDate);
+  if (!Number.isFinite(reference.getTime())) return null;
+
+  const lastTriggeredDate = task.lastTriggeredAt ? new Date(task.lastTriggeredAt) : null;
+  const alreadyTriggeredToday =
+    Number.isFinite(lastTriggeredDate?.getTime()) && isSameDay(lastTriggeredDate, reference);
+
+  const dayStart = getStartOfDay(reference);
+  for (let offset = 0; offset < 90; offset += 1) {
+    const candidateDay = new Date(dayStart);
+    candidateDay.setDate(dayStart.getDate() + offset);
+    if (offset === 0 && alreadyTriggeredToday) continue;
+    if (!isWeekdayEligible(task, candidateDay)) continue;
+    if (!isIntervalEligible(task, candidateDay)) continue;
+
+    const candidateDayEnd = new Date(candidateDay);
+    candidateDayEnd.setHours(23, 59, 59, 999);
+    if (!isStartTimeEligible(task, candidateDayEnd)) continue;
+
+    const rebasedStartIso = task.startTime
+      ? rebaseDateTimeToReference(task.startTime, candidateDay)
+      : candidateDay.toISOString();
+    const runAt = rebasedStartIso ? new Date(rebasedStartIso) : null;
+    const validRunAt =
+      runAt && Number.isFinite(runAt.getTime()) ? runAt : new Date(candidateDay);
+
+    if (offset === 0 && validRunAt < reference) {
+      return new Date(reference);
+    }
+    return validRunAt;
+  }
+
+  return null;
+}
+
+function getDailyTaskViewModel(task, referenceDate = new Date()) {
+  const reference = new Date(referenceDate);
+  const linkedTodo = findLinkedTodoForDailyTask(task, reference);
+  const lastTriggeredDate = task.lastTriggeredAt ? new Date(task.lastTriggeredAt) : null;
+  const alreadyTriggered =
+    Number.isFinite(lastTriggeredDate?.getTime()) && isSameDay(lastTriggeredDate, reference);
+  const weekdayEligible = isWeekdayEligible(task, reference);
+  const intervalEligible = isIntervalEligible(task, reference);
+  const startEligible = isStartTimeEligible(task, reference);
+  const blockedByInterval = !task.paused && weekdayEligible && !intervalEligible;
+  const dueNow =
+    !task.paused && !alreadyTriggered && weekdayEligible && intervalEligible && startEligible;
+  const dueLaterToday =
+    !task.paused && !alreadyTriggered && weekdayEligible && intervalEligible && !startEligible;
+  const linkedActive = Boolean(linkedTodo && !linkedTodo.deleted && !linkedTodo.completed);
+  const completedToday = Boolean(
+    linkedTodo &&
+      linkedTodo.completed &&
+      isToday(linkedTodo.completedAt ?? linkedTodo.createdAt ?? linkedTodo.startTime)
+  );
+  const skippedToday = Boolean(alreadyTriggered && linkedTodo?.deleted);
+  const canTrigger = !task.paused && !alreadyTriggered && dueNow;
+  const canCompleteExisting = linkedActive;
+  const canCreateCompletion = alreadyTriggered && (!linkedTodo || linkedTodo.deleted);
+  const canCompleteToday =
+    canCompleteExisting || canCreateCompletion || (!alreadyTriggered && dueNow);
+  const canSkipToday = Boolean(alreadyTriggered && linkedTodo && !linkedTodo.deleted);
+  const nextRun = getDailyTaskNextRun(task, reference);
+  const previewVisible = canShowDailyTaskToday(task, dailyPreviewDate ?? reference);
+
+  let stateId = "not_triggered";
+  let stateLabel = "Not triggered";
+  let stateClass = "";
+  if (task.paused) {
+    stateId = "paused";
+    stateLabel = "Paused";
+    stateClass = "daily-status--paused";
+  } else if (completedToday) {
+    stateId = "completed_today";
+    stateLabel = "Completed";
+    stateClass = "daily-status--completed";
+  } else if (dueNow) {
+    stateId = "needs_action";
+    stateLabel = "Needs action";
+    stateClass = "daily-status--needs-action";
+  } else if (alreadyTriggered || linkedActive) {
+    stateId = "triggered";
+    stateLabel = "Triggered";
+    stateClass = "daily-status--triggered";
+  } else if (blockedByInterval) {
+    stateId = "blocked_interval";
+    stateLabel = "Blocked by interval";
+    stateClass = "daily-status--blocked";
+  }
+
+  return {
+    task,
+    alreadyTriggered,
+    dueNow,
+    dueLaterToday,
+    completedToday,
+    skippedToday,
+    canTrigger,
+    canCompleteToday,
+    canSkipToday,
+    nextRun,
+    previewVisible,
+    stateId,
+    stateLabel,
+    stateClass,
+    weekdayEligible,
+    intervalEligible,
+  };
+}
+
+function matchesDailyQuickFilter(viewModel, referenceDate = new Date()) {
+  switch (dailyQuickFilter) {
+    case "needs_action":
+      return viewModel.stateId === "needs_action";
+    case "today":
+      return (
+        viewModel.dueNow ||
+        viewModel.dueLaterToday ||
+        viewModel.alreadyTriggered ||
+        viewModel.completedToday ||
+        (viewModel.weekdayEligible && viewModel.intervalEligible)
+      );
+    case "week": {
+      if (!viewModel.nextRun) return false;
+      const now = new Date(referenceDate);
+      const windowEnd = new Date(now);
+      windowEnd.setDate(now.getDate() + 7);
+      return viewModel.nextRun <= windowEnd;
+    }
+    case "paused":
+      return Boolean(viewModel.task.paused);
+    case "all":
+    default:
+      return true;
+  }
+}
+
+function renderDailySummary(viewModels) {
+  if (!dailySummaryEl) return;
+  dailySummaryEl.innerHTML = "";
+
+  const totals = viewModels.reduce(
+    (summary, viewModel) => {
+      if (viewModel.dueNow) summary.dueNow += 1;
+      if (viewModel.dueLaterToday) summary.dueLater += 1;
+      if (viewModel.completedToday) summary.completed += 1;
+      if (viewModel.skippedToday) summary.skipped += 1;
+      return summary;
+    },
+    { dueNow: 0, dueLater: 0, completed: 0, skipped: 0 }
   );
 
-  if (sortedTasks.length === 0) {
+  [
+    { label: "Due now", value: totals.dueNow },
+    { label: "Due later today", value: totals.dueLater },
+    { label: "Completed today", value: totals.completed },
+    { label: "Skipped today", value: totals.skipped },
+  ].forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "daily-summary-card";
+    const label = document.createElement("span");
+    label.className = "daily-summary-label";
+    label.textContent = item.label;
+    const value = document.createElement("span");
+    value.className = "daily-summary-value";
+    value.textContent = String(item.value);
+    card.appendChild(label);
+    card.appendChild(value);
+    dailySummaryEl.appendChild(card);
+  });
+}
+
+function appendDailySectionHeader(title, count) {
+  const header = document.createElement("li");
+  header.className = "daily-section-header";
+  const heading = document.createElement("span");
+  heading.className = "daily-section-title";
+  heading.textContent = title;
+  const total = document.createElement("span");
+  total.className = "daily-section-count";
+  total.textContent = `${count} task${count === 1 ? "" : "s"}`;
+  header.appendChild(heading);
+  header.appendChild(total);
+  listEl.appendChild(header);
+}
+
+function renderDailyTasksEnhanced() {
+  listEl.innerHTML = "";
+  listEl.classList.add("stacked-layout");
+  const referenceDate = new Date();
+
+  dailyFilterButtons.forEach((button) => {
+    const isActive = button.dataset.dailyFilter === dailyQuickFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+  renderDailyDayStrip(referenceDate);
+
+  const viewModels = dailyTasks
+    .map((task) => getDailyTaskViewModel(task, referenceDate))
+    .sort((first, second) => {
+      const firstNext = first.nextRun ? first.nextRun.getTime() : Number.POSITIVE_INFINITY;
+      const secondNext = second.nextRun ? second.nextRun.getTime() : Number.POSITIVE_INFINITY;
+      if (firstNext !== secondNext) return firstNext - secondNext;
+      return (second.task.createdAt ?? "").localeCompare(first.task.createdAt ?? "");
+    });
+
+  renderDailySummary(viewModels);
+
+  const filtered = viewModels.filter((viewModel) =>
+    matchesDailyQuickFilter(viewModel, referenceDate)
+  );
+
+  if (filtered.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty-state";
-    empty.textContent = "No daily tasks. Add one above!";
+    const messages = {
+      all: "No daily tasks. Add one above!",
+      needs_action: "No tasks need action right now.",
+      today: "No tasks scheduled for today.",
+      week: "No tasks scheduled for the next 7 days.",
+      paused: "No paused daily tasks.",
+    };
+    empty.textContent = messages[dailyQuickFilter] ?? messages.all;
     listEl.appendChild(empty);
     listEl.style.height = `${canvasMinHeight}px`;
     return;
   }
 
-  sortedTasks.forEach((task) => {
-    const item = document.createElement("li");
-    item.className = "todo-item daily-template actions-visible";
-    if (task.color) {
-      item.classList.add("has-color");
-      item.style.setProperty("--task-color", task.color);
-    }
-    if (task.textColor) {
-      item.classList.add("has-text-color");
-      item.style.setProperty("--task-text-color", task.textColor);
-    }
-    if (task.backgroundColor) {
-      item.classList.add("has-background");
-      item.style.setProperty("--task-background-color", task.backgroundColor);
-    }
+  const sections = {
+    action: filtered.filter((viewModel) => viewModel.stateId === "needs_action"),
+    scheduled: filtered.filter(
+      (viewModel) => viewModel.stateId !== "needs_action" && !viewModel.completedToday
+    ),
+    completed: filtered.filter((viewModel) => viewModel.completedToday),
+  };
 
-    const shell = document.createElement("div");
-    shell.className = "todo-shell";
+  const previewDayLabel = formatCalendarDay(
+    dailyPreviewDate ?? referenceDate,
+    { weekday: "short", month: "short", day: "numeric" }
+  );
 
-    const status = document.createElement("span");
-    status.className = "status-pill";
-    status.textContent = "Daily";
-
-    const title = document.createElement("span");
-    title.className = "todo-title";
-    title.textContent = task.text;
-
-    if (task.color) {
-      const colorDot = document.createElement("span");
-      colorDot.className = "color-dot";
-      colorDot.style.backgroundColor = task.color;
-      colorDot.title = `Task color ${task.color}`;
-      shell.appendChild(colorDot);
-    }
-
-    shell.appendChild(status);
-    shell.appendChild(title);
-    shell.addEventListener("click", () => toggleDailyDetails(task.id, item));
-
-    if (task.endTime) {
-      const timeLeftInfo = getTimeLeftInfo(task.endTime, null);
-      if (timeLeftInfo) {
-        const timeLeftChip = document.createElement("span");
-        timeLeftChip.className = "meta-chip accent";
-        timeLeftChip.textContent = timeLeftInfo.text;
-        if (timeLeftInfo.isPast) {
-          timeLeftChip.classList.add("danger");
-        }
-        shell.appendChild(timeLeftChip);
+  const renderSection = (title, items) => {
+    if (!items.length) return;
+    appendDailySectionHeader(title, items.length);
+    items.forEach((viewModel) => {
+      const task = viewModel.task;
+      const item = document.createElement("li");
+      item.className = "todo-item daily-template actions-visible";
+      if (task.color) {
+        item.classList.add("has-color");
+        item.style.setProperty("--task-color", task.color);
       }
-    }
+      if (task.textColor) {
+        item.classList.add("has-text-color");
+        item.style.setProperty("--task-text-color", task.textColor);
+      }
+      if (task.backgroundColor) {
+        item.classList.add("has-background");
+        item.style.setProperty("--task-background-color", task.backgroundColor);
+      }
 
-    const meta = document.createElement("div");
-    meta.className = "todo-details";
-    const lastTrigger = task.lastTriggeredAt
-      ? `Last triggered ${formatDateTime(task.lastTriggeredAt)}`
-      : "Not triggered yet";
-    const created = task.createdAt
-      ? `Created ${formatDateTime(task.createdAt)}`
-      : "Creation time unknown";
-    const categoryName = task.category?.trim() || UNCATEGORIZED_LABEL;
-    const comments = task.comments?.trim()
-      ? task.comments
-      : "No comments";
+      const shell = document.createElement("div");
+      shell.className = "todo-shell";
+      shell.addEventListener("click", () => toggleDailyDetails(task.id, item));
 
-    meta.appendChild(createStrongDetailRow(lastTrigger));
-    meta.appendChild(createTextDetailRow(created));
-    meta.appendChild(createDetailRow("Category", categoryName));
-    if (task.startTime) {
-      meta.appendChild(createDetailRow("Start", formatTime(task.startTime)));
-    }
-    if (task.endTime) {
-      const duration = task.startTime
-        ? formatDuration(task.startTime, task.endTime)
-        : null;
-      const endMeta = duration
-        ? `${formatTime(task.endTime)} (${duration})`
-        : formatTime(task.endTime);
-      meta.appendChild(createDetailRow("End", endMeta));
-    }
-    meta.appendChild(createDetailRow("Schedule", describeDailySchedule(task)));
-    meta.appendChild(createColorDetailRow(task.color));
-    meta.appendChild(createDetailRow("Comments", comments));
+      if (task.color) {
+        const colorDot = document.createElement("span");
+        colorDot.className = "color-dot";
+        colorDot.style.backgroundColor = task.color;
+        colorDot.title = `Task color ${task.color}`;
+        shell.appendChild(colorDot);
+      }
 
-    const actions = document.createElement("div");
-    actions.className = "action-row";
-    const alreadyTriggered = task.lastTriggeredAt && isToday(task.lastTriggeredAt);
-    const canTrigger = canTriggerDailyTaskToday(task);
-    const linkedTodo = findLinkedTodoForDailyTask(task);
-    const canCompleteExisting =
-      alreadyTriggered && linkedTodo && !linkedTodo.deleted && !linkedTodo.completed;
-    const canCreateCompletion =
-      alreadyTriggered && (!linkedTodo || linkedTodo.deleted);
-    const completeLabel = canCompleteExisting
-      ? "Mark today's task completed"
-      : alreadyTriggered
-        ? linkedTodo?.completed
-          ? "Already completed today"
-          : linkedTodo?.deleted
-            ? "Recreate completed task"
-            : linkedTodo
-              ? "Already created today"
-              : "Mark completed for today"
-        : canTrigger
-          ? "Mark completed for today"
-          : "Not scheduled today";
-    const completeBtn = makeActionButton("✅", completeLabel, () => completeDailyTask(task.id));
-    const canCompleteToday =
-      canCompleteExisting || canCreateCompletion || (!alreadyTriggered && canTrigger);
-    completeBtn.disabled = !canCompleteToday;
+      const status = document.createElement("span");
+      status.className = "status-pill";
+      if (viewModel.stateClass) {
+        status.classList.add(viewModel.stateClass);
+      }
+      status.textContent = viewModel.stateLabel;
 
-    const editBtn = makeActionButton("✏️", "Edit daily task", () => editDailyTask(task.id));
+      const titleEl = document.createElement("span");
+      titleEl.className = "todo-title";
+      titleEl.textContent = task.text;
+      shell.appendChild(status);
+      shell.appendChild(titleEl);
 
-    const deleteBtn = makeActionButton(
-      "❌",
-      "Delete daily task",
-      () => deleteDailyTask(task.id),
-      "danger"
-    );
+      const categoryName = task.category?.trim();
+      if (categoryName) {
+        const categoryBadge = document.createElement("span");
+        categoryBadge.className = "category-pill";
+        const categoryColor = getCategoryColor(categoryName);
+        if (categoryColor) {
+          categoryBadge.classList.add("has-color");
+          categoryBadge.style.setProperty("--category-color", categoryColor);
+          const dot = document.createElement("span");
+          dot.className = "category-color-dot";
+          dot.style.setProperty("--category-color", categoryColor);
+          dot.setAttribute("aria-hidden", "true");
+          categoryBadge.appendChild(dot);
+        }
+        const label = document.createElement("span");
+        label.className = "category-pill-label";
+        label.textContent = categoryName;
+        categoryBadge.appendChild(label);
+        shell.appendChild(categoryBadge);
+      }
 
-    if (task.showDetails) {
-      item.classList.add("details-open");
-    }
+      const quickMeta = document.createElement("div");
+      quickMeta.className = "time-meta";
 
-    actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
-    actions.appendChild(completeBtn);
+      const nextRunChip = document.createElement("span");
+      nextRunChip.className = "meta-chip accent";
+      nextRunChip.textContent = viewModel.nextRun
+        ? `Next: ${formatDateTime(viewModel.nextRun)}`
+        : "Next: not scheduled";
+      quickMeta.appendChild(nextRunChip);
 
-    item.appendChild(shell);
-    item.appendChild(actions);
-    item.appendChild(meta);
+      const lastRunChip = document.createElement("span");
+      lastRunChip.className = "meta-chip";
+      lastRunChip.textContent = task.lastTriggeredAt
+        ? `Last: ${formatDateTime(task.lastTriggeredAt)}`
+        : "Last: not triggered";
+      quickMeta.appendChild(lastRunChip);
 
-    listEl.appendChild(item);
-  });
+      getDailyScheduleChips(task).forEach((chipText) => {
+        const chip = document.createElement("span");
+        chip.className = "meta-chip";
+        chip.textContent = chipText;
+        quickMeta.appendChild(chip);
+      });
 
+      const previewChip = document.createElement("span");
+      previewChip.className = "meta-chip";
+      previewChip.classList.add(viewModel.previewVisible ? "accent" : "danger");
+      previewChip.textContent = `${previewDayLabel}: ${
+        viewModel.previewVisible ? "Visible" : "Hidden"
+      }`;
+      quickMeta.appendChild(previewChip);
+
+      const actions = document.createElement("div");
+      actions.className = "action-row daily-task-actions";
+      const createBtn = makeActionButton(
+        "Create today",
+        "Create today's task",
+        () => triggerDailyTask(task.id),
+        "action-button--wide action-button--primary"
+      );
+      createBtn.disabled = !viewModel.canTrigger;
+
+      const completeBtn = makeActionButton(
+        "Mark done",
+        "Mark today's task completed",
+        () => completeDailyTask(task.id),
+        "action-button--wide action-button--primary"
+      );
+      completeBtn.disabled = !viewModel.canCompleteToday;
+
+      const skipBtn = makeActionButton(
+        "Skip today",
+        "Skip today's task",
+        () => deleteDailyTaskOccurrence(task.id, referenceDate),
+        "action-button--wide"
+      );
+      skipBtn.disabled = !viewModel.canSkipToday;
+
+      const editBtn = makeActionButton(
+        "Edit",
+        "Edit daily task",
+        () => editDailyTask(task.id),
+        "action-button--wide"
+      );
+      const pauseBtn = makeActionButton(
+        task.paused ? "Resume" : "Pause",
+        task.paused ? "Resume daily task schedule" : "Pause daily task schedule",
+        () => toggleDailyTaskPaused(task.id),
+        "action-button--wide"
+      );
+      const deleteBtn = makeActionButton(
+        "Delete template",
+        "Delete daily task template",
+        () => deleteDailyTask(task.id),
+        "action-button--wide danger"
+      );
+
+      actions.appendChild(createBtn);
+      actions.appendChild(completeBtn);
+      actions.appendChild(skipBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(pauseBtn);
+      actions.appendChild(deleteBtn);
+
+      const meta = document.createElement("div");
+      meta.className = "todo-details";
+      const comments = task.comments?.trim() ? task.comments : "No comments";
+      meta.appendChild(
+        createStrongDetailRow(
+          task.lastTriggeredAt
+            ? `Last triggered ${formatDateTime(task.lastTriggeredAt)}`
+            : "Not triggered yet"
+        )
+      );
+      meta.appendChild(
+        createTextDetailRow(
+          task.createdAt ? `Created ${formatDateTime(task.createdAt)}` : "Creation time unknown"
+        )
+      );
+      meta.appendChild(createDetailRow("State", viewModel.stateLabel));
+      meta.appendChild(
+        createDetailRow(
+          "Next run",
+          viewModel.nextRun ? formatDateTime(viewModel.nextRun) : "Not scheduled"
+        )
+      );
+      meta.appendChild(createDetailRow("Category", categoryName || UNCATEGORIZED_LABEL));
+      if (task.startTime) {
+        meta.appendChild(createDetailRow("Start", formatTime(task.startTime)));
+      }
+      if (task.endTime) {
+        const duration = task.startTime ? formatDuration(task.startTime, task.endTime) : null;
+        const endMeta = duration
+          ? `${formatTime(task.endTime)} (${duration})`
+          : formatTime(task.endTime);
+        meta.appendChild(createDetailRow("End", endMeta));
+      }
+      meta.appendChild(createDetailRow("Schedule", describeDailySchedule(task)));
+      meta.appendChild(createColorDetailRow(task.color));
+      meta.appendChild(createDetailRow("Comments", comments));
+
+      if (task.showDetails) {
+        item.classList.add("details-open");
+      }
+
+      item.appendChild(shell);
+      item.appendChild(quickMeta);
+      item.appendChild(actions);
+      item.appendChild(meta);
+      listEl.appendChild(item);
+    });
+  };
+
+  renderSection("Action Needed", sections.action);
+  renderSection("Scheduled", sections.scheduled);
+  renderSection("Completed Today", sections.completed);
   listEl.style.height = "";
 }
 
@@ -3972,7 +4438,7 @@ function renderCurrentView() {
   }
 
   if (isDailyView) {
-    renderDailyTasks();
+    renderDailyTasksEnhanced();
     return;
   }
   renderTodos();
@@ -4055,6 +4521,8 @@ function addDailyTask(
     intervalDays: intervalDays ?? null,
     createdAt: new Date().toISOString(),
     lastTriggeredAt: null,
+    lastTriggeredId: null,
+    paused: false,
     showDetails: false,
   });
   saveDailyTasks();
@@ -4066,6 +4534,18 @@ function deleteDailyTask(id) {
   const originalLength = dailyTasks.length;
   dailyTasks = dailyTasks.filter((task) => task.id !== id);
   if (dailyTasks.length === originalLength) return;
+  saveDailyTasks();
+  renderCurrentView();
+}
+
+function toggleDailyTaskPaused(id) {
+  let changed = false;
+  dailyTasks = dailyTasks.map((task) => {
+    if (task.id !== id) return task;
+    changed = true;
+    return { ...task, paused: !task.paused };
+  });
+  if (!changed) return;
   saveDailyTasks();
   renderCurrentView();
 }
@@ -4240,6 +4720,7 @@ function isWeekdayEligible(task, referenceDate = new Date()) {
 }
 
 function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
+  if (task?.paused) return false;
   return (
     isWeekdayEligible(task, referenceDate) &&
     isIntervalEligible(task, referenceDate) &&
@@ -4248,6 +4729,7 @@ function canTriggerDailyTaskToday(task, referenceDate = new Date()) {
 }
 
 function canShowDailyTaskToday(task, referenceDate = new Date()) {
+  if (task?.paused) return false;
   return isWeekdayEligible(task, referenceDate) && isIntervalEligible(task, referenceDate);
 }
 
@@ -5916,6 +6398,10 @@ openCalendarEl?.addEventListener("click", () => {
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => setFilter(button.dataset.filter));
+});
+
+dailyFilterButtons.forEach((button) => {
+  button.addEventListener("click", () => setDailyQuickFilter(button.dataset.dailyFilter));
 });
 
 dialogEl?.addEventListener("close", () => {

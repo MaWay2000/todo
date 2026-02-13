@@ -994,10 +994,40 @@
       </form>
     </dialog>
 
-    <section id="daily-panel" class="info-panel" hidden>
-      <p class="eyebrow">Daily tasks</p>
-      <h2 class="info-panel-title">Organize your work</h2>
-      <p class="subtitle">Create reusable tasks to help you stay on track.</p>
+    <section id="daily-panel" class="info-panel daily-panel" hidden>
+      <div class="daily-panel-header">
+        <p class="eyebrow">Daily tasks</p>
+        <h2 class="info-panel-title">Daily planner</h2>
+        <p class="subtitle">Track what needs action right now and what is coming next.</p>
+      </div>
+
+      <div id="daily-summary" class="daily-summary" aria-live="polite"></div>
+
+      <div
+        id="daily-quick-filters"
+        class="daily-quick-filters"
+        role="group"
+        aria-label="Daily quick filters"
+      >
+        <button type="button" class="daily-filter-button active" data-daily-filter="all">All</button>
+        <button type="button" class="daily-filter-button" data-daily-filter="needs_action">Needs action</button>
+        <button type="button" class="daily-filter-button" data-daily-filter="today">Today</button>
+        <button type="button" class="daily-filter-button" data-daily-filter="week">This week</button>
+        <button type="button" class="daily-filter-button" data-daily-filter="paused">Paused</button>
+      </div>
+
+      <div class="daily-preview">
+        <div class="daily-preview-header">
+          <span class="field-label">7-day preview</span>
+          <span id="daily-preview-count" class="meta-chip"></span>
+        </div>
+        <div
+          id="daily-day-strip"
+          class="daily-day-strip"
+          role="radiogroup"
+          aria-label="Preview daily task visibility by day"
+        ></div>
+      </div>
     </section>
 
     <section id="calendar-panel" class="calendar-panel" hidden aria-live="polite">
