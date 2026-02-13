@@ -1643,6 +1643,59 @@ function makeActionButton(icon, label, handler, extraClass = "") {
   return button;
 }
 
+function createDetailRow(label, value) {
+  const row = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = `${label}:`;
+  row.appendChild(strong);
+  row.append(` ${value}`);
+  return row;
+}
+
+function createStrongDetailRow(value) {
+  const row = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = value;
+  row.appendChild(strong);
+  return row;
+}
+
+function createTextDetailRow(value) {
+  const row = document.createElement("div");
+  row.textContent = value;
+  return row;
+}
+
+function createColorDetailRow(colorValue) {
+  const row = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = "Color:";
+  row.appendChild(strong);
+  row.append(" ");
+
+  if (!colorValue) {
+    row.append("None");
+    return row;
+  }
+
+  const colorWrap = document.createElement("span");
+  colorWrap.style.display = "inline-flex";
+  colorWrap.style.alignItems = "center";
+  colorWrap.style.gap = "0.35rem";
+
+  const colorDot = document.createElement("span");
+  colorDot.className = "color-dot";
+  colorDot.setAttribute("aria-hidden", "true");
+  colorDot.style.backgroundColor = colorValue;
+  colorDot.style.boxShadow = "0 0 0 2px rgba(0, 0, 0, 0.2)";
+
+  const colorText = document.createTextNode(colorValue);
+  colorWrap.appendChild(colorDot);
+  colorWrap.appendChild(colorText);
+  row.appendChild(colorWrap);
+  return row;
+}
+
 const isToday = (value) => {
   if (!value) return false;
   const date = new Date(value);
@@ -2091,7 +2144,7 @@ function hasTaskStarted(task, referenceDate = new Date()) {
   return isSameDay(start, reference);
 }
 
-function getCalendarReferenceDate(task) {
+function getTaskCalendarReferenceDate(task) {
   if (task.startTime) {
     const start = new Date(task.startTime);
     if (Number.isFinite(start.getTime())) return start;
@@ -2152,7 +2205,7 @@ function ensureCalendarRangeMinimum(startMinutes, endMinutes) {
 }
 
 function getCalendarRangeForTask(task, referenceDate = null) {
-  const reference = referenceDate ?? getCalendarReferenceDate(task);
+  const reference = referenceDate ?? getTaskCalendarReferenceDate(task);
   if (!reference) return null;
 
   const referenceDay = toDate(reference);
@@ -2878,69 +2931,64 @@ function renderTodos() {
 
     const details = document.createElement("div");
     details.className = "todo-details";
-    const created = document.createElement("div");
-    created.innerHTML = `<strong>Created:</strong> ${formatDateTime(
-      todo.createdAt
-    )}`;
-    const colorMeta = document.createElement("div");
-    if (todo.color) {
-      colorMeta.innerHTML = `<strong>Color:</strong> <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span class="color-dot" aria-hidden="true" style="background-color: ${todo.color}; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);"></span> ${todo.color}</span>`;
-    } else {
-      colorMeta.innerHTML = `<strong>Color:</strong> None`;
-    }
-    const startMeta = document.createElement("div");
+    const created = createDetailRow("Created", formatDateTime(todo.createdAt));
+    const colorMeta = createColorDetailRow(todo.color);
+    let startMeta = null;
     if (todo.startTime && todo.endTime) {
-      startMeta.innerHTML = `<strong>Start:</strong> ${formatStartLabel(
+      startMeta = createDetailRow(
+        "Start",
+        formatStartLabel(
         todo.startTime,
         todo.createdAt
-      )}`;
+        )
+      );
     }
-    const categoryMeta = document.createElement("div");
-    categoryMeta.innerHTML = `<strong>Category:</strong> ${
+    const categoryMeta = createDetailRow(
+      "Category",
       categoryName || UNCATEGORIZED_LABEL
-    }`;
-    const timeLeftMeta = document.createElement("div");
+    );
+    let timeLeftMeta = null;
     const timeLeftReference =
       todo.completed && todo.completedAt ? todo.completedAt : null;
     const timeLeftInfo = getTimeLeftInfo(todo.endTime, timeLeftReference);
     if (timeLeftInfo) {
-      timeLeftMeta.innerHTML = `<strong>Time left:</strong> ${timeLeftInfo.text}`;
+      timeLeftMeta = createDetailRow("Time left", timeLeftInfo.text);
       if (timeLeftInfo.isPast) {
         timeLeftMeta.classList.add("overdue-text");
       }
     } else {
-      timeLeftMeta.innerHTML = `<strong>End time:</strong> 00 days 00 hours 00 mins`;
+      timeLeftMeta = createDetailRow("End time", "00 days 00 hours 00 mins");
     }
-    const completedMeta = document.createElement("div");
+    let completedMeta = null;
     if (todo.completed && !todo.deleted) {
-      completedMeta.innerHTML = `<strong>Completed:</strong> ${
+      completedMeta = createDetailRow(
+        "Completed",
         todo.completedAt ? formatDateTime(todo.completedAt) : "Unknown"
-      }`;
+      );
     }
-    const deletedMeta = document.createElement("div");
+    let deletedMeta = null;
     if (todo.deleted) {
-      deletedMeta.innerHTML = `<strong>Deleted:</strong> ${
+      deletedMeta = createDetailRow(
+        "Deleted",
         todo.deletedAt ? formatDateTime(todo.deletedAt) : "Unknown"
-      }`;
+      );
     }
-    const comments = document.createElement("div");
+    let comments = null;
     const hasComment = todo.comments && todo.comments.trim().length > 0;
-    comments.innerHTML = `<strong>Comments:</strong> ${
-      hasComment ? todo.comments : "No comments"
-    }`;
+    comments = createDetailRow("Comments", hasComment ? todo.comments : "No comments");
     details.appendChild(created);
     details.appendChild(colorMeta);
     details.appendChild(categoryMeta);
-    if (todo.startTime) {
+    if (todo.startTime && startMeta) {
       details.appendChild(startMeta);
     }
-    if (timeLeftInfo || !todo.endTime) {
+    if ((timeLeftInfo || !todo.endTime) && timeLeftMeta) {
       details.appendChild(timeLeftMeta);
     }
-    if (todo.completed && !todo.deleted) {
+    if (todo.completed && !todo.deleted && completedMeta) {
       details.appendChild(completedMeta);
     }
-    if (todo.deleted) {
+    if (todo.deleted && deletedMeta) {
       details.appendChild(deletedMeta);
     }
     details.appendChild(comments);
@@ -3148,9 +3196,15 @@ function renderDailyTasks() {
       ? `Created ${formatDateTime(task.createdAt)}`
       : "Creation time unknown";
     const categoryName = task.category?.trim() || UNCATEGORIZED_LABEL;
-    const scheduleParts = [];
+    const comments = task.comments?.trim()
+      ? task.comments
+      : "No comments";
+
+    meta.appendChild(createStrongDetailRow(lastTrigger));
+    meta.appendChild(createTextDetailRow(created));
+    meta.appendChild(createDetailRow("Category", categoryName));
     if (task.startTime) {
-      scheduleParts.push(`<div><strong>Start:</strong> ${formatTime(task.startTime)}</div>`);
+      meta.appendChild(createDetailRow("Start", formatTime(task.startTime)));
     }
     if (task.endTime) {
       const duration = task.startTime
@@ -3159,27 +3213,11 @@ function renderDailyTasks() {
       const endMeta = duration
         ? `${formatTime(task.endTime)} (${duration})`
         : formatTime(task.endTime);
-      scheduleParts.push(`<div><strong>End:</strong> ${endMeta}</div>`);
+      meta.appendChild(createDetailRow("End", endMeta));
     }
-    scheduleParts.push(`<div><strong>Schedule:</strong> ${describeDailySchedule(task)}</div>`);
-    const comments = task.comments?.trim()
-      ? task.comments
-      : "No comments";
-    const colorMeta = task.color
-      ? [
-          '<div><strong>Color:</strong> <span style="display: inline-flex; align-items: center; gap: 0.35rem;">',
-          `<span class="color-dot" aria-hidden="true" style="background-color: ${task.color}; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);"></span> ${task.color}`,
-          "</span></div>",
-        ].join("")
-      : `<div><strong>Color:</strong> None</div>`;
-    meta.innerHTML = [
-      `<div><strong>${lastTrigger}</strong></div>`,
-      `<div>${created}</div>`,
-      `<div><strong>Category:</strong> ${categoryName}</div>`,
-      ...scheduleParts,
-      colorMeta,
-      `<div><strong>Comments:</strong> ${comments}</div>`,
-    ].join("");
+    meta.appendChild(createDetailRow("Schedule", describeDailySchedule(task)));
+    meta.appendChild(createColorDetailRow(task.color));
+    meta.appendChild(createDetailRow("Comments", comments));
 
     const actions = document.createElement("div");
     actions.className = "action-row";
@@ -3441,36 +3479,10 @@ function renderCalendarView() {
     .filter((todo) => isTaskOnDay(todo, referenceDate))
     .map((todo) => ({ todo, date: referenceDate, source: "todo" }));
 
-  const scheduledDailyTasks = dailyTasks
-    .filter((task) => {
-      if (!task.lastTriggeredAt) return true;
-      const triggeredAt = new Date(task.lastTriggeredAt);
-      if (!Number.isFinite(triggeredAt.getTime())) return true;
-      return !isSameDay(triggeredAt, referenceDate);
-    })
-    .filter((task) => canShowDailyTaskToday(task, referenceDate))
-    .map((task) => {
-      const startTime = task.startTime
-        ? rebaseDateTimeToReference(task.startTime, referenceDate)
-        : null;
-      const endTime = computeRebasedEnd(task.startTime, task.endTime, startTime);
-      const dayReference = startTime
-        ? new Date(startTime)
-        : endTime
-          ? new Date(endTime)
-          : referenceDate;
-
-      return {
-        todo: { ...task, startTime, endTime },
-        date: dayReference,
-        source: "daily",
-      };
-    })
-    .filter(({ date }) => date && isSameDay(date, referenceDate));
-
   const hourLabelFor = (hour) => `${`${hour}`.padStart(2, "0")}:00`;
 
-  const calendarEntries = [...activeTodos, ...scheduledDailyTasks];
+  // Keep calendar aligned with Active/Deadline behavior: render real todo items only.
+  const calendarEntries = [...activeTodos];
 
   const ranges = calendarEntries.flatMap(({ todo, date, source }) => {
     const range = getCalendarRangeForTask(todo, date);
@@ -4213,7 +4225,9 @@ function isIntervalEligible(task, referenceDate = new Date()) {
   const baseline = task.lastTriggeredAt;
   if (!baseline) return true;
 
-  const last = getStartOfDay(new Date(baseline));
+  const lastDate = new Date(baseline);
+  if (!Number.isFinite(lastDate.getTime())) return true;
+  const last = getStartOfDay(lastDate);
   const reference = getStartOfDay(referenceDate);
   const diffDays = Math.floor((reference - last) / 86400000);
   return diffDays >= interval;
